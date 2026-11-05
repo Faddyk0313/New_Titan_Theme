@@ -369,6 +369,7 @@
     },
     "products": {
       "type": "products",
+      "disabled": true,
       "settings": {
         "img_ratio": "square",
         "img_ratio_resize": "fit",
