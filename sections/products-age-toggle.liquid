@@ -43,56 +43,39 @@
   comment
     Age group toggle. Each block is one option with its own product tag.
 
-    Selecting an option hides every product carrying ANY of the OTHER
-    options' tags (exclusion). A product with none of those tags always
-    stays visible, so untagged products appear under every option.
+    State lives in the URL as a collection tag route
+    (/collections/<handle>/<tag>), readable in Liquid through
+    `current_tags`. Query parameters are NOT readable in Liquid, and this
+    section is re-rendered server-side on every AJAX update, so the
+    selection has to survive that refetch: a tag route is what does.
 
-    Liquid cannot read arbitrary query parameters, so the active option is
-    tracked through Shopify's own tag filter: the toggle links point at the
-    `filter.p.tag` value for the option's tag, and the active state is read
-    back off that filter. That keeps the choice in the URL (so it survives
-    refresh, back/forward and sharing) and lets Shopify do the filtering
-    server-side, which keeps pagination and the result count correct.
-
-    A tag filter is inclusive, so selecting Youth shows Youth-tagged
-    products only. To honour the exclusion rule, untagged products are
-    added back in the grid below.
+    A tag route is inclusive, so /collections/x/senior returns Senior-tagged
+    products only. The exclusion rule (untagged products stay visible under
+    every option) is applied by the grid below, which also orders the
+    selected group first.
   endcomment
 
   assign heading = options.heading
   assign toggle_blocks = section.blocks | where: 'type', 'age_option'
 
   comment
-    Find the tag filter that backs the toggle.
-  endcomment
-  assign age_filter = nil
-  for filter in collection.filters
-    if filter.type == 'list' and filter.param_name == 'filter.p.tag'
-      assign age_filter = filter
-      break
-    endif
-  endfor
-
-  comment
-    Which option is active: the first toggle tag that is active on the tag
-    filter, else the configured default, else the first block.
+    Which option is active: the tag in the current route when it belongs to
+    a block, else the configured default, else the first block.
   endcomment
   assign active_age = blank
-  if age_filter != nil
-    for block in toggle_blocks
-      assign block_key = block.settings.tag | downcase | strip
-      for value in age_filter.active_values
-        assign value_key = value.value | downcase | strip
-        if value_key == block_key
-          assign active_age = block.settings.tag | strip
-          break
-        endif
-      endfor
-      if active_age != blank
+  for block in toggle_blocks
+    assign block_key = block.settings.tag | downcase | strip
+    for tag in current_tags
+      assign tag_key = tag | downcase | strip
+      if tag_key == block_key
+        assign active_age = block.settings.tag | strip
         break
       endif
     endfor
-  endif
+    if active_age != blank
+      break
+    endif
+  endfor
 
   if active_age == blank
     assign default_tag_downcase = options.default_age_tag | downcase | strip
@@ -112,8 +95,7 @@
   assign active_age_downcase = active_age | downcase | strip
 
   comment
-    Tags belonging to the non-selected options. Used to exclude products in
-    the grid when the tag filter itself is not driving the toggle.
+    Tags belonging to the non-selected options: what the grid excludes.
   endcomment
   assign excluded_tags = ''
   for block in toggle_blocks
@@ -126,23 +108,12 @@
   assign excluded_tag_list = excluded_tags | split: ','
 
   comment
-    When the native tag filter drives the toggle, Shopify has already
-    filtered server-side, so no extra exclusion is applied at render time.
-    The Liquid exclusion pass is only a fallback for a shop where that tag
-    filter is not enabled in Search & Discovery.
+    The grid always applies the exclusion: a tag route narrows to the tagged
+    products only, and the untagged ones have to be added back.
   endcomment
   assign apply_liquid_exclusion = false
-  if age_filter == nil and excluded_tag_list.size > 0
+  if excluded_tag_list.size > 0
     assign apply_liquid_exclusion = true
-  endif
-
-  comment
-    Hide the tag filter from the sidebar when the toggle already shows it,
-    so the two cannot disagree.
-  endcomment
-  assign hide_age_filter = false
-  if age_filter != nil and toggle_blocks.size > 0
-    assign hide_age_filter = true
   endif
 
   assign product_card_align = options.product_card_align
@@ -335,9 +306,7 @@
             class='shop-age__toggle'
             role='group'
             aria-label='{{ options.toggle_aria_label | escape }}'
-            {%- if hide_age_filter and age_filter != nil %}
-              data-filter-label='{{ age_filter.label | escape }}'
-            {%- endif %}
+
           >
             {%- for block in toggle_blocks -%}
               {%- liquid
@@ -349,52 +318,31 @@
                 endif
 
                 comment
-                  Build this option's URL.
+                  Build this option's URL as a collection tag route,
+                  /collections/<handle>/<tag>. That is the only state Liquid
+                  can read back (via `current_tags`) after the AJAX refetch
+                  re-renders this section, and it needs no app setup.
 
-                  The tag filter is multi-select, so url_to_add would stack
-                  Youth AND Senior and return nothing. Instead start from the
-                  URL that has every toggle tag removed, then add just this
-                  one. Starting from a removal URL also preserves the other
-                  active filters and the sort order.
+                  Active filters and the sort order ride along as the query
+                  string so the toggle composes with the sidebar. Paging is
+                  dropped so the grid restarts at page 1.
                 endcomment
-                assign base_url = collection.url
-                if age_filter != nil
-                  comment
-                    Find a removal URL that already strips an active toggle
-                    tag; if none is active, any value's url_to_add minus its
-                    own parameter is equivalent to the plain collection URL
-                    plus the surrounding filters, so url_to_remove on the
-                    active value is the reliable base.
-                  endcomment
-                  for value in age_filter.active_values
-                    assign value_key = value.value | downcase | strip
-                    assign is_toggle_tag = false
-                    for tb in toggle_blocks
-                      assign tb_key = tb.settings.tag | downcase | strip
-                      if tb_key == value_key
-                        assign is_toggle_tag = true
-                        break
-                      endif
-                    endfor
-                    if is_toggle_tag
-                      assign base_url = value.url_to_remove
-                      break
-                    endif
+                assign tag_handle = block_tag | handleize
+                assign block_url = collection.url | append: '/' | append: tag_handle
+
+                assign current_query = ''
+                for f in collection.filters
+                  for v in f.active_values
+                    assign pair = v.param_name | append: '=' | append: v.value
+                    assign current_query = current_query | append: pair | append: '&'
                   endfor
+                endfor
+                if collection.sort_by != blank
+                  assign current_query = current_query | append: 'sort_by=' | append: collection.sort_by | append: '&'
                 endif
-
-                comment
-                  Append this option's tag to that cleaned base URL.
-                endcomment
-                assign block_url = base_url
-                if block_tag != blank
-                  assign tag_value_encoded = block_tag | url_encode
-                  assign tag_param = 'filter.p.tag=' | append: tag_value_encoded
-                  if base_url contains '?'
-                    assign block_url = base_url | append: '&' | append: tag_param
-                  else
-                    assign block_url = base_url | append: '?' | append: tag_param
-                  endif
+                if current_query != ''
+                  assign current_query = current_query | split: '&' | join: '&'
+                  assign block_url = block_url | append: '?' | append: current_query
                 endif
               -%}
               <a
@@ -635,37 +583,62 @@
           {%- if visible_count > 0 -%}
             <div class='shop__products-grid-wrap'>
               <div class='shop__products-grid' id='ShopProductsGrid'>
-                {%- for product in collection.products -%}
-                  {%- liquid
-                    assign skip_product = false
-                    if apply_liquid_exclusion
+                {%- comment -%}
+                  Two passes so the selected age group leads the grid:
+                  pass 1 renders the products carrying the active tag, pass 2
+                  the untagged ones shown under every option. Products tagged
+                  with a non-selected option are skipped in both passes.
+                {%- endcomment -%}
+                {%- assign grid_position = 0 -%}
+                {%- for render_pass in (1..2) -%}
+                  {%- for product in collection.products -%}
+                    {%- liquid
+                      assign skip_product = false
+                      assign has_active_tag = false
+
                       for product_tag in product.tags
                         assign product_tag_downcase = product_tag | downcase | strip
-                        if excluded_tag_list contains product_tag_downcase
+                        if apply_liquid_exclusion and excluded_tag_list contains product_tag_downcase
                           assign skip_product = true
                           break
                         endif
+                        if product_tag_downcase == active_age_downcase
+                          assign has_active_tag = true
+                        endif
                       endfor
-                    endif
-                  -%}
-                  {%- if skip_product -%}{%- continue -%}{%- endif -%}
-                  <div
-                    class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
-                    {% if enable_content_slide_in %}
-                      style='--gsc-animation-order: {{forloop.index}};'
-                    {% endif %}
-                  >
-                    {% render 'product-card',
-                      with_bottom_spacing: true,
-                      product: product,
-                      img_ratio: img_ratio,
-                      show_mobile_carousel: true,
-                      product_card_align: product_card_align,
-                      add_side_paddings: add_side_paddings,
-                      primary_custom_colors_and_patterns: primary_custom_colors_and_patterns,
-                      section_background_color: section_background_color
-                    %}
-                  </div>
+
+                      comment
+                        Pass 1 takes the tagged products, pass 2 the rest.
+                      endcomment
+                      if skip_product == false
+                        if render_pass == 1 and has_active_tag == false
+                          assign skip_product = true
+                        endif
+                        if render_pass == 2 and has_active_tag
+                          assign skip_product = true
+                        endif
+                      endif
+                    -%}
+                    {%- if skip_product -%}{%- continue -%}{%- endif -%}
+                    {%- assign grid_position = grid_position | plus: 1 -%}
+                    <div
+                      class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                      {% if enable_content_slide_in %}
+                        style='--gsc-animation-order: {{ grid_position }};'
+                      {% endif %}
+                    >
+                      {% render 'product-card',
+                        with_bottom_spacing: true,
+                        product: product,
+                        img_ratio: img_ratio,
+                        show_mobile_carousel: true,
+                        product_card_align: product_card_align,
+                        add_side_paddings: add_side_paddings,
+                        primary_custom_colors_and_patterns: primary_custom_colors_and_patterns,
+                        section_background_color: section_background_color
+                      %}
+                    </div>
+                  {%- endfor -%}
                 {%- endfor -%}
               </div>
               {% render 'loading-overlay', class: 'shop__loading-overlay', id: 'ShopProductsOverlay' %}
@@ -757,24 +730,10 @@
     class AgeToggle extends HTMLElement {
       connectedCallback() {
         this.addEventListener('click', this.handleClick)
-        this.hideDuplicateFilter()
-
-        // Filters are replaced wholesale on every update, so re-apply.
-        this.shop = document.querySelector('shop-component')
-        if (this.shop && typeof this.shop.on === 'function') {
-          this.shop.on('filtersUpdated', this.handleFiltersUpdated)
-        }
       }
 
       disconnectedCallback() {
         this.removeEventListener('click', this.handleClick)
-        if (this.shop && typeof this.shop.off === 'function') {
-          this.shop.off('filtersUpdated', this.handleFiltersUpdated)
-        }
-      }
-
-      handleFiltersUpdated = () => {
-        this.hideDuplicateFilter()
       }
 
       /*
@@ -782,25 +741,11 @@
        * would let them disagree. Hide that one filter group in the sidebar
        * by matching its label, and re-hide it after every filter re-render.
        */
-      hideDuplicateFilter() {
-        const label = (this.dataset.filterLabel || '').trim().toLowerCase()
-        if (!label) return
-
-        document
-          .querySelectorAll('#SidebarFiltersDesktop .filters__item, #SidebarFiltersMobile .filters__item')
-          .forEach((item) => {
-            const itemLabel = item.querySelector('.filters__label')
-            if (!itemLabel) return
-            if (itemLabel.textContent.trim().toLowerCase().startsWith(label)) {
-              item.style.display = 'none'
-            }
-          })
-      }
 
       handleClick = (event) => {
         const option = event.target.closest('[data-age-option]')
         if (!option || option.classList.contains('is-active')) {
-          // Let a click on the already-active option do nothing at all.
+          // A click on the already-active option does nothing.
           if (option) event.preventDefault()
           return
         }
@@ -808,16 +753,29 @@
         const shop = document.querySelector('shop-component')
         // No shop component (or it has not upgraded yet): fall back to a
         // normal link navigation rather than swallowing the click.
-        if (!shop || typeof shop.updateBySearchParams !== 'function') return
-
-        event.preventDefault()
+        if (!shop || typeof shop.updateShop !== 'function') return
 
         const href = option.getAttribute('href') || ''
+        if (!href) return
+
+        event.preventDefault()
+        this.setActive(option)
+
+        /*
+         * The selection lives in the URL *path* (a collection tag route),
+         * not the query string, so shop.updateBySearchParams cannot be used:
+         * it rebuilds the URL from window.location.pathname and would drop
+         * the tag, re-rendering the very same products.
+         *
+         * Drive the same pipeline with the full href, and push that URL so
+         * refresh, back/forward and sharing all keep the selection.
+         */
         const queryIndex = href.indexOf('?')
         const searchParams = queryIndex === -1 ? '' : href.slice(queryIndex + 1)
 
-        this.setActive(option)
-        shop.updateBySearchParams(searchParams)
+        history.pushState({ searchParams }, '', href)
+        shop.updateShop(href)
+        if (typeof shop.updateFilters === 'function') shop.updateFilters(href)
       }
 
       setActive(activeOption) {
