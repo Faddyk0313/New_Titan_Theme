@@ -1,0 +1,1607 @@
+{%- liquid
+  assign initial_visible_option_count = 6
+
+  assign options = section.settings
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+  assign round_level = options.round_level
+
+  assign img_ratio = options.img_ratio
+  assign img_ratio_resize = options.img_ratio_resize
+  if img_ratio != 'default' and img_ratio_resize == 'fit'
+    assign img_ratio = img_ratio_resize | append: '-' | append: options.img_ratio
+  endif
+
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign desktop_columns = options.desktop_columns
+  assign mobile_columns = options.mobile_columns
+  assign enable_filtering = options.enable_filtering
+  assign enable_uppercase_title = options.enable_uppercase_title
+  assign space_between_cards = options.space_between_cards
+  assign space_between_cards_mobile = options.space_between_cards_mobile
+  assign option_style = options.option_style
+  assign product_per_page = options.product_per_page | times: 1.0
+  assign show_product_count = options.show_product_count
+  assign show_column_count_switcher = options.show_column_count_switcher
+  assign enable_sorting = options.enable_sorting
+  assign show_divider = options.show_divider
+  assign show_result_count = options.show_result_count
+  assign show_color_swatches = options.show_color_swatches
+  assign filter_style = options.filter_style
+  assign filters_position = options.filters_position
+  assign categories_style = options.categories_style
+  assign active_filter_count = 0
+  assign container_size = options.container_size
+  assign pagination_type = options.pagination_type
+
+  comment
+    Age group toggle. Each block is one option with its own product tag.
+
+    Selecting an option hides every product carrying ANY of the OTHER
+    options' tags (exclusion). A product with none of those tags always
+    stays visible, so untagged products appear under every option.
+
+    Liquid cannot read arbitrary query parameters, so the active option is
+    tracked through Shopify's own tag filter: the toggle links point at the
+    `filter.p.tag` value for the option's tag, and the active state is read
+    back off that filter. That keeps the choice in the URL (so it survives
+    refresh, back/forward and sharing) and lets Shopify do the filtering
+    server-side, which keeps pagination and the result count correct.
+
+    A tag filter is inclusive, so selecting Youth shows Youth-tagged
+    products only. To honour the exclusion rule, untagged products are
+    added back in the grid below.
+  endcomment
+
+  assign heading = options.heading
+  assign toggle_blocks = section.blocks | where: 'type', 'age_option'
+
+  comment Find the tag filter that backs the toggle. endcomment
+  assign age_filter = nil
+  for filter in collection.filters
+    if filter.type == 'list' and filter.param_name == 'filter.p.tag'
+      assign age_filter = filter
+      break
+    endif
+  endfor
+
+  comment
+    Which option is active: the first toggle tag that is active on the tag
+    filter, else the configured default, else the first block.
+  endcomment
+  assign active_age = blank
+  if age_filter != nil
+    for block in toggle_blocks
+      assign block_key = block.settings.tag | downcase | strip
+      for value in age_filter.active_values
+        assign value_key = value.value | downcase | strip
+        if value_key == block_key
+          assign active_age = block.settings.tag | strip
+          break
+        endif
+      endfor
+      if active_age != blank
+        break
+      endif
+    endfor
+  endif
+
+  if active_age == blank
+    assign default_tag_downcase = options.default_age_tag | downcase | strip
+    if default_tag_downcase != blank
+      for block in toggle_blocks
+        assign block_key = block.settings.tag | downcase | strip
+        if block_key == default_tag_downcase
+          assign active_age = block.settings.tag | strip
+          break
+        endif
+      endfor
+    endif
+  endif
+  if active_age == blank and toggle_blocks.size > 0
+    assign active_age = toggle_blocks[0].settings.tag | strip
+  endif
+  assign active_age_downcase = active_age | downcase | strip
+
+  comment
+    Tags belonging to the non-selected options. Used to exclude products in
+    the grid when the tag filter itself is not driving the toggle.
+  endcomment
+  assign excluded_tags = ''
+  for block in toggle_blocks
+    assign block_tag = block.settings.tag | strip
+    assign block_tag_downcase = block_tag | downcase
+    if block_tag != blank and block_tag_downcase != active_age_downcase
+      assign excluded_tags = excluded_tags | append: block_tag_downcase | append: ','
+    endif
+  endfor
+  assign excluded_tag_list = excluded_tags | split: ','
+
+  comment
+    When the native tag filter drives the toggle, Shopify has already
+    filtered server-side, so no extra exclusion is applied at render time.
+    The Liquid exclusion pass is only a fallback for a shop where that tag
+    filter is not enabled in Search & Discovery.
+  endcomment
+  assign apply_liquid_exclusion = false
+  if age_filter == nil and excluded_tag_list.size > 0
+    assign apply_liquid_exclusion = true
+  endif
+
+  comment
+    Hide the tag filter from the sidebar when the toggle already shows it,
+    so the two cannot disagree.
+  endcomment
+  assign hide_age_filter = false
+  if age_filter != nil and toggle_blocks.size > 0
+    assign hide_age_filter = true
+  endif
+
+  assign product_card_align = options.product_card_align
+
+  for filter in collection.filters
+    assign active_filter_count = active_filter_count | plus: filter.active_values.size
+  endfor
+
+  for filter in collection.filters
+    if filter.type == 'price_range'
+      assign max_price = filter.range_max
+      assign max_value = filter.max_value.value
+      assign min_value = filter.min_value.value
+      if max_value < max_price or min_value > 0
+        assign has_price_filtering = true
+        break
+      endif
+    endif
+  endfor
+
+  if has_price_filtering
+    assign active_filter_count = active_filter_count | plus: 1
+  endif
+
+  if collection.filters.size == 0
+    assign enable_filtering = false
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{% liquid
+  assign swatch_patterns = settings.primary_custom_colors_and_patterns
+  assign primary_custom_colors_and_patterns = swatch_patterns | newline_to_br | split: '<br />'
+%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture section_background_color %}
+  {% render 'get-section-background-color', section: section %}
+{% endcapture %}
+
+{% capture css %}
+    {% style %}
+
+    .section-{{ section.id }}{
+      --gsc-mobile-columns: {{ mobile_columns }};
+      --gsc-desktop-columns: {{ desktop_columns }};
+      --gsc-space-between-cards: var(--gsc-gap-{{ space_between_cards_mobile }});  
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --gsc-age-accent: {{ options.toggle_active_background }};
+      --gsc-age-accent-text: {{ options.toggle_active_text }};
+      --gsc-age-border: {{ options.toggle_border_color }};
+    }
+
+    .section-{{ section.id }} .shop-age__bar{
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .section-{{ section.id }} .shop-age__heading{
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .section-{{ section.id }} .shop-age__heading-spacer{
+      flex: 0 0 auto;
+    }
+
+    .section-{{ section.id }} .shop-age__toggle{
+      display: flex;
+      align-items: center;
+      gap: {{ options.toggle_gap }}px;
+      flex: 1 1 auto;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .section-{{ section.id }} .shop-age__sort{
+      flex: 0 0 auto;
+      margin-left: auto;
+    }
+
+    .section-{{ section.id }} .shop-age__option{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: {{ options.toggle_min_width }}px;
+      padding: {{ options.toggle_padding_block }}px {{ options.toggle_padding_inline }}px;
+      border: 1px solid var(--gsc-age-border);
+      background: transparent;
+      color: currentColor;
+      font-size: {{ options.toggle_font_size }}px;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .section-{{ section.id }} .shop-age__option:hover{
+      border-color: var(--gsc-age-accent);
+    }
+
+    .section-{{ section.id }} .shop-age__option.is-active{
+      background: var(--gsc-age-accent);
+      border-color: var(--gsc-age-accent);
+      color: var(--gsc-age-accent-text);
+    }
+
+    .section-{{ section.id }} .shop-age__option.is-loading{
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    @media (max-width: 767px){
+      .section-{{ section.id }} .shop-age__bar{
+        gap: 12px;
+      }
+
+      .section-{{ section.id }} .shop-age__toggle{
+        order: 3;
+        width: 100%;
+        flex: 1 0 100%;
+        justify-content: stretch;
+      }
+
+      .section-{{ section.id }} .shop-age__option{
+        flex: 1 1 0;
+        min-width: 0;
+      }
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+        .section-{{ section.id }}{
+          --gsc-space-between-cards: var(--gsc-gap-{{ space_between_cards }});  
+        }
+    }
+
+    {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+{% if enable_filtering %}
+  <sidebar-filters-sticky-mobile-button class='shop-mobile-filters-button'>
+    <button
+      data-sidebar-button
+      class='unstyled-button shop-mobile-filters-button__btn'
+      aria-label='{{ 'shop.screen_reader.label_for_filters_toggler' | t }}'
+      data-sidebar-id='SidebarFiltersMobile'
+    >
+      {% render 'icon', icon_name: 'filter-toggle' %}
+      <span class='shop-mobile-filters-button__btn-label'>
+        {{ 'shop.store_front.label_for_filters_toggler' | t }}
+      </span>
+    </button>
+  </sidebar-filters-sticky-mobile-button>
+{% endif %}
+
+<shop-component
+  class='shop {% if round_level != 'default' %}round-level-{{round_level}}{% endif %} section section-{{ section.id }} color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'
+  data-section-id='{{ section.id }}'
+  data-column-switcher-target
+>
+  <div class='shop__container container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    {%- if heading != blank or toggle_blocks.size > 0 -%}
+      <div class='{% if color_container_background == false and add_desktop_side_paddings == false or add_mobile_side_paddings == false  %}spacing-inline-header{% endif %} shop-age__bar'>
+        {%- if heading != blank -%}
+          <h2 class='shop-age__heading {{ options.heading_size }}'>{{ heading }}</h2>
+        {%- else -%}
+          <span class='shop-age__heading-spacer'></span>
+        {%- endif -%}
+
+        {%- if toggle_blocks.size > 0 -%}
+          <age-toggle
+            class='shop-age__toggle'
+            role='group'
+            aria-label='{{ options.toggle_aria_label | escape }}'
+            {%- if hide_age_filter and age_filter != nil %}
+              data-filter-label='{{ age_filter.label | escape }}'
+            {%- endif %}
+          >
+            {%- for block in toggle_blocks -%}
+              {%- liquid
+                assign block_tag = block.settings.tag | strip
+                assign block_tag_downcase = block_tag | downcase
+                assign is_active = false
+                if block_tag_downcase == active_age_downcase
+                  assign is_active = true
+                endif
+
+                comment
+                  Build this option's URL.
+
+                  The tag filter is multi-select, so url_to_add would stack
+                  Youth AND Senior and return nothing. Instead start from the
+                  URL that has every toggle tag removed, then add just this
+                  one. Starting from a removal URL also preserves the other
+                  active filters and the sort order.
+                endcomment
+                assign base_url = collection.url
+                if age_filter != nil
+                  comment
+                    Find a removal URL that already strips an active toggle
+                    tag; if none is active, any value's url_to_add minus its
+                    own parameter is equivalent to the plain collection URL
+                    plus the surrounding filters, so url_to_remove on the
+                    active value is the reliable base.
+                  endcomment
+                  for value in age_filter.active_values
+                    assign value_key = value.value | downcase | strip
+                    assign is_toggle_tag = false
+                    for tb in toggle_blocks
+                      assign tb_key = tb.settings.tag | downcase | strip
+                      if tb_key == value_key
+                        assign is_toggle_tag = true
+                        break
+                      endif
+                    endfor
+                    if is_toggle_tag
+                      assign base_url = value.url_to_remove
+                      break
+                    endif
+                  endfor
+                endif
+
+                comment
+                  Append this option's tag to that cleaned base URL.
+                endcomment
+                assign block_url = base_url
+                if block_tag != blank
+                  assign tag_value_encoded = block_tag | url_encode
+                  assign tag_param = 'filter.p.tag=' | append: tag_value_encoded
+                  if base_url contains '?'
+                    assign block_url = base_url | append: '&' | append: tag_param
+                  else
+                    assign block_url = base_url | append: '?' | append: tag_param
+                  endif
+                endif
+              -%}
+              <a
+                class='shop-age__option{% if is_active %} is-active{% endif %}'
+                href='{{ block_url }}'
+                data-age-option
+                data-age-value='{{ block_tag | escape }}'
+                aria-pressed='{{ is_active }}'
+              >
+                {{- block.settings.label | default: block_tag -}}
+              </a>
+            {%- endfor -%}
+          </age-toggle>
+        {%- endif -%}
+
+        {%- if enable_sorting -%}
+          <div class='shop-age__sort'>
+            {% render 'sort-list', results: collection %}
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class='{% if color_container_background == false and add_desktop_side_paddings == false or add_mobile_side_paddings == false  %}spacing-inline-header{% endif %} shop__header {% if filters_position == 'right' %} shop__header--reverse {% endif %}'>
+      <div
+        class='shop__header-left-panel {% if filters_position == 'right' %} shop__header-left-panel--reverse {% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+        {% if enable_content_slide_in %}
+          style='--gsc-animation-order: 1;'
+          data-remove-animation-class
+        {% endif %}
+      >
+        {%- if enable_filtering or enable_sorting -%}
+          {%- if enable_filtering -%}
+            <sidebar-button class='shop__filters-btn-wrapper shop__filters-btn-wrapper--desktop'>
+              <button
+                data-sidebar-button
+                class='unstyled-button shop__icon-btn shop__filters-btn {% if filter_style == 'open-embed' %} is-opened {% endif %}'
+                aria-label='{{ 'shop.screen_reader.label_for_filters_toggler' | t }}'
+                data-sidebar-id='SidebarFiltersDesktop'
+              >
+                {% render 'icon', icon_name: 'filter-toggle' %}
+                <span class='shop__filters-btn-label'>
+                  {{ 'shop.store_front.label_for_filters_toggler' | t }}
+                </span>
+              </button>
+            </sidebar-button>
+
+            <sidebar-button class='shop__filters-btn-wrapper shop__filters-btn-wrapper--mobile'>
+              <button
+                data-sidebar-button
+                class='unstyled-button shop__icon-btn shop__filters-btn '
+                aria-label='{{ 'shop.screen_reader.label_for_filters_toggler' | t }}'
+                data-sidebar-id='SidebarFiltersMobile'
+              >
+                {% render 'icon', icon_name: 'filter-toggle' %}
+                <span class='shop__filters-btn-label'>
+                  {{ 'shop.store_front.label_for_filters_toggler' | t }}
+                </span>
+              </button>
+            </sidebar-button>
+          {%- endif -%}
+
+          {%- comment -%}
+            Sorting renders in the age bar above; only fall back to the
+            original slot when that bar is not rendered.
+          {%- endcomment -%}
+          {%- if enable_sorting and heading == blank and toggle_blocks.size == 0 -%}
+            {% render 'sort-list', results: collection %}
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+
+      <div
+        class='shop__header-right-panel {% if filters_position == 'right' %} shop__header-right-panel--reverse {% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+        {% if enable_content_slide_in %}
+          style='--gsc-animation-order: 2;'
+        {% endif %}
+      >
+        {%- if show_product_count -%}
+          <div class='shop__product-count' id='ShopProductCount'>
+            {%- liquid
+              comment
+                `collection.products_count` ignores the toggle, so when an
+                exclusion is active count the whole collection instead. Liquid
+                only exposes the current page, so fall back to the unfiltered
+                count once the collection spans more than one page.
+              endcomment
+              assign age_total = collection.products_count
+              if apply_liquid_exclusion and collection.products_count <= collection.products.size
+                assign age_total = 0
+                for product in collection.products
+                  assign skip_total = false
+                  for product_tag in product.tags
+                    assign product_tag_downcase = product_tag | downcase | strip
+                    if excluded_tag_list contains product_tag_downcase
+                      assign skip_total = true
+                      break
+                    endif
+                  endfor
+                  unless skip_total
+                    assign age_total = age_total | plus: 1
+                  endunless
+                endfor
+              endif
+            -%}
+            {{ 'shop.store_front.results_count' | t: count: age_total }}
+          </div>
+        {%- endif -%}
+        {%- if show_column_count_switcher -%}
+          <column-switcher
+            class='shop__column-switcher--mobile column-switcher'
+            data-default='{{ mobile_columns }}'
+            data-column-switcher-css-variable='mobile-columns'
+            data-section-id='{{ section.id }}'
+          >
+            {%- for column_switch in (1..2) -%}
+              {%- assign column_switch_string = column_switch | append: '' -%}
+              <div
+                class='column-switcher__item {% if mobile_columns == column_switch_string %}selected{% endif %}'
+                data-column-switcher-item
+                tabindex='0'
+                data-value='{{ column_switch }}'
+              >
+                {%- for i in (1..column_switch) -%}
+                  <span></span>
+                {%- endfor -%}
+              </div>
+            {%- endfor -%}
+          </column-switcher>
+        {%- endif -%}
+        {%- if show_column_count_switcher -%}
+          <column-switcher
+            class='shop__column-switcher--desktop column-switcher'
+            data-default='{{ desktop_columns }}'
+            data-column-switcher-css-variable='desktop-columns'
+            data-section-id='{{ section.id }}'
+          >
+            {%- for column_switch in (2..4) -%}
+              {%- assign column_switch_string = column_switch | append: '' -%}
+              <div
+                class='column-switcher__item {% if desktop_columns == column_switch_string %}selected{% endif %}'
+                data-column-switcher-item
+                tabindex='0'
+                data-value='{{ column_switch }}'
+              >
+                {%- for i in (1..column_switch) -%}
+                  <span></span>
+                {%- endfor -%}
+              </div>
+            {%- endfor -%}
+          </column-switcher>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- if enable_filtering -%}
+      {% render 'active-filters',
+        results: collection,
+        has_price_filtering: has_price_filtering,
+        active_filter_count: active_filter_count,
+        color_container_background: color_container_background,
+        add_desktop_side_paddings: add_desktop_side_paddings,
+        add_mobile_side_paddings: add_mobile_side_paddings
+      %}
+    {%- endif -%}
+
+    <div
+      class='shop__content {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+      {% if enable_content_slide_in %}
+        style='--gsc-animation-order: 2;'
+        data-remove-animation-class
+      {% endif %}
+    >
+      {%- if enable_filtering -%}
+        {% if filter_style contains 'embed' %}
+          {% render 'desktop-filters',
+            active_filter_count: active_filter_count,
+            show_divider: show_divider,
+            show_result_count: show_result_count,
+            filter_style: filter_style,
+            categories_style: categories_style,
+            filters_position: filters_position,
+            show_color_swatches: show_color_swatches,
+            option_style: option_style,
+            enable_uppercase_title: enable_uppercase_title,
+            initial_visible_option_count: initial_visible_option_count,
+            results: collection
+          %}
+        {% endif %}
+
+        {% render 'mobile-filters',
+          active_filter_count: active_filter_count,
+          show_divider: show_divider,
+          show_result_count: show_result_count,
+          filter_style: filter_style,
+          categories_style: categories_style,
+          filters_position: filters_position,
+          show_color_swatches: show_color_swatches,
+          option_style: option_style,
+          enable_uppercase_title: enable_uppercase_title,
+          initial_visible_option_count: initial_visible_option_count,
+          results: collection
+        %}
+      {%- endif -%}
+
+      <div class='shop__products' id='ShopProducts'>
+        {%- paginate collection.products by product_per_page -%}
+          {%- liquid
+            comment
+              Apply the toggle exclusion to this page of products.
+
+              Liquid cannot build an array of objects, so the exclusion is
+              evaluated per product inside the loop below. Here we only count
+              how many survive, so the empty state and the grid agree.
+
+              Pagination runs over the unfiltered collection, so a page can
+              come back partly or fully empty while later pages still hold
+              matches. `paginate.pages` keeps the pager correct, and the
+              "no results" copy only shows when nothing matched anywhere.
+            endcomment
+            assign visible_count = 0
+            for product in collection.products
+              assign skip_product = false
+              if apply_liquid_exclusion
+                for product_tag in product.tags
+                  assign product_tag_downcase = product_tag | downcase | strip
+                  if excluded_tag_list contains product_tag_downcase
+                    assign skip_product = true
+                    break
+                  endif
+                endfor
+              endif
+              unless skip_product
+                assign visible_count = visible_count | plus: 1
+              endunless
+            endfor
+          -%}
+          {%- if visible_count > 0 -%}
+            <div class='shop__products-grid-wrap'>
+              <div class='shop__products-grid' id='ShopProductsGrid'>
+                {%- for product in collection.products -%}
+                  {%- liquid
+                    assign skip_product = false
+                    if apply_liquid_exclusion
+                      for product_tag in product.tags
+                        assign product_tag_downcase = product_tag | downcase | strip
+                        if excluded_tag_list contains product_tag_downcase
+                          assign skip_product = true
+                          break
+                        endif
+                      endfor
+                    endif
+                  -%}
+                  {%- if skip_product -%}{%- continue -%}{%- endif -%}
+                  <div
+                    class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                  >
+                    {% render 'product-card',
+                      with_bottom_spacing: true,
+                      product: product,
+                      img_ratio: img_ratio,
+                      show_mobile_carousel: true,
+                      product_card_align: product_card_align,
+                      add_side_paddings: add_side_paddings,
+                      primary_custom_colors_and_patterns: primary_custom_colors_and_patterns,
+                      section_background_color: section_background_color
+                    %}
+                  </div>
+                {%- endfor -%}
+              </div>
+              {% render 'loading-overlay', class: 'shop__loading-overlay', id: 'ShopProductsOverlay' %}
+            </div>
+          {%- else -%}
+            {%- if active_filter_count > 0 or apply_liquid_exclusion -%}
+              <div
+                class='shop__products-stub {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                {% if enable_content_slide_in %}
+                  style='--gsc-animation-order: 1;'
+                {% endif %}
+              >
+                <span>{{ 'shop.store_front.text_for_no_results_found_in_stub' | t }}</span>
+                <span>
+                  {{- 'shop.store_front.text_for_use_another_filters' | t }}
+                  <filter-remove-btn class='shop__filters-reset' data-url='{{ collection.url }}'>
+                    {{- 'shop.store_front.text_for_clear_all_in_stub' | t -}}
+                  </filter-remove-btn></span
+                >
+                {% render 'loading-overlay', class: 'shop__loading-overlay', id: 'ShopProductsOverlay' %}
+              </div>
+            {%- else -%}
+              <div
+                class='shop__products-stub {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                {% if enable_content_slide_in %}
+                  style='--gsc-animation-order: 1;'
+                {% endif %}
+              >
+                <span>{{ 'shop.store_front.text_for_change_query' | t }}</span>
+                {% render 'loading-overlay', class: 'shop__loading-overlay', id: 'ShopProductsOverlay' %}
+              </div>
+            {%- endif -%}
+          {%- endif -%}
+
+          {%- liquid
+            if paginate.pages > 1
+              case pagination_type
+                when 'load-button-pagination'
+                  render 'load-button-pagination', class: 'shop__load-button-pagination', paginate: paginate, target: 'shop__grid-item', container_id: 'ShopProductsGrid', all_count: collection.products_count, current_size: paginate.page_size
+                when 'classic-pagination'
+                  render 'classic-pagination', class: 'shop__classic-pagination', paginate: paginate, overlay_id: 'ShopProductsOverlay', container_id: 'ShopProductsGrid'
+                when 'infinite-scroll'
+                  render 'infinite-scroll-pagination', class: '', paginate: paginate, target: 'shop__grid-item', container_id: 'ShopProductsGrid'
+              endcase
+            endif
+          -%}
+        {%- endpaginate -%}
+      </div>
+    </div>
+  </div>
+
+  {%- if enable_filtering and filter_style contains 'drawer' -%}
+    {% render 'desktop-filters',
+      active_filter_count: active_filter_count,
+      show_divider: show_divider,
+      show_result_count: show_result_count,
+      filter_style: filter_style,
+      categories_style: categories_style,
+      filters_position: filters_position,
+      show_color_swatches: show_color_swatches,
+      option_style: option_style,
+      enable_uppercase_title: enable_uppercase_title,
+      initial_visible_option_count: initial_visible_option_count,
+      results: collection
+    %}
+  {%- endif -%}
+</shop-component>
+
+<script>
+  localStorage.setItem(
+    'prevCollectionPage',
+    JSON.stringify({ title: '{{ collection.title }}', url: '{{ collection.url }}' }),
+  )
+</script>
+
+<script>
+  /*
+   * Age toggle.
+   *
+   * Routes clicks through the existing <shop-component>, the same path the
+   * sidebar filters use, so the grid, the result count, the sort list and the
+   * filters all re-render in place instead of reloading the page. The anchors
+   * carry real hrefs, so this is progressive enhancement: without JS, or
+   * before it boots, clicking still works as a normal navigation.
+   */
+  ;(() => {
+    if (window.customElements.get('age-toggle')) return
+
+    class AgeToggle extends HTMLElement {
+      connectedCallback() {
+        this.addEventListener('click', this.handleClick)
+        this.hideDuplicateFilter()
+
+        // Filters are replaced wholesale on every update, so re-apply.
+        this.shop = document.querySelector('shop-component')
+        if (this.shop && typeof this.shop.on === 'function') {
+          this.shop.on('filtersUpdated', this.handleFiltersUpdated)
+        }
+      }
+
+      disconnectedCallback() {
+        this.removeEventListener('click', this.handleClick)
+        if (this.shop && typeof this.shop.off === 'function') {
+          this.shop.off('filtersUpdated', this.handleFiltersUpdated)
+        }
+      }
+
+      handleFiltersUpdated = () => {
+        this.hideDuplicateFilter()
+      }
+
+      /*
+       * The toggle and the sidebar both render the same tag filter, which
+       * would let them disagree. Hide that one filter group in the sidebar
+       * by matching its label, and re-hide it after every filter re-render.
+       */
+      hideDuplicateFilter() {
+        const label = (this.dataset.filterLabel || '').trim().toLowerCase()
+        if (!label) return
+
+        document
+          .querySelectorAll('#SidebarFiltersDesktop .filters__item, #SidebarFiltersMobile .filters__item')
+          .forEach((item) => {
+            const itemLabel = item.querySelector('.filters__label')
+            if (!itemLabel) return
+            if (itemLabel.textContent.trim().toLowerCase().startsWith(label)) {
+              item.style.display = 'none'
+            }
+          })
+      }
+
+      handleClick = (event) => {
+        const option = event.target.closest('[data-age-option]')
+        if (!option || option.classList.contains('is-active')) {
+          // Let a click on the already-active option do nothing at all.
+          if (option) event.preventDefault()
+          return
+        }
+
+        const shop = document.querySelector('shop-component')
+        // No shop component (or it has not upgraded yet): fall back to a
+        // normal link navigation rather than swallowing the click.
+        if (!shop || typeof shop.updateBySearchParams !== 'function') return
+
+        event.preventDefault()
+
+        const href = option.getAttribute('href') || ''
+        const queryIndex = href.indexOf('?')
+        const searchParams = queryIndex === -1 ? '' : href.slice(queryIndex + 1)
+
+        this.setActive(option)
+        shop.updateBySearchParams(searchParams)
+      }
+
+      setActive(activeOption) {
+        this.querySelectorAll('[data-age-option]').forEach((item) => {
+          const isActive = item === activeOption
+          item.classList.toggle('is-active', isActive)
+          item.setAttribute('aria-pressed', String(isActive))
+        })
+      }
+    }
+
+    window.customElements.define('age-toggle', AgeToggle)
+  })()
+</script>
+
+{% render 'save-section-data-in-global-scope', section: section %}
+
+{% schema %}
+{
+  "name": "Products with age toggle",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Heading & age toggle"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Shop Battlegear",
+      "info": "Shown at the top left of the section. Leave empty to hide."
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        }
+      ],
+      "default": "h3",
+      "label": "Heading size"
+    },
+    {
+      "type": "text",
+      "id": "toggle_aria_label",
+      "label": "Toggle accessibility label",
+      "default": "Age group",
+      "info": "Describes the toggle group to screen readers."
+    },
+    {
+      "type": "text",
+      "id": "default_age_tag",
+      "label": "Default selected option",
+      "default": "Senior",
+      "info": "The product tag of the option selected on load, e.g. Senior. Must match one of the Age option blocks below. If it matches none, the first option is used."
+    },
+    {
+      "type": "header",
+      "content": "Age toggle appearance"
+    },
+    {
+      "type": "range",
+      "id": "toggle_min_width",
+      "min": 80,
+      "max": 320,
+      "step": 10,
+      "unit": "px",
+      "default": 200,
+      "label": "Option min width"
+    },
+    {
+      "type": "range",
+      "id": "toggle_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 12,
+      "label": "Space between options"
+    },
+    {
+      "type": "range",
+      "id": "toggle_padding_block",
+      "min": 4,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 14,
+      "label": "Option vertical padding"
+    },
+    {
+      "type": "range",
+      "id": "toggle_padding_inline",
+      "min": 8,
+      "max": 48,
+      "step": 1,
+      "unit": "px",
+      "default": 24,
+      "label": "Option horizontal padding"
+    },
+    {
+      "type": "range",
+      "id": "toggle_font_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14,
+      "label": "Option font size"
+    },
+    {
+      "type": "color",
+      "id": "toggle_border_color",
+      "default": "#ffffff",
+      "label": "Option border"
+    },
+    {
+      "type": "color",
+      "id": "toggle_active_background",
+      "default": "#ffffff",
+      "label": "Selected background"
+    },
+    {
+      "type": "color",
+      "id": "toggle_active_text",
+      "default": "#000000",
+      "label": "Selected text"
+    },
+    {
+      "type": "select",
+      "id": "img_ratio",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.img_ratio_option_default_label"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.general_section_settings.img_ratio_option_square_label"
+        },
+        {
+          "value": "portrait",
+          "label": "t:sections.general_section_settings.img_ratio_option_portrait_label"
+        },
+        {
+          "value": "portrait-xl",
+          "label": "t:sections.general_section_settings.img_ratio_option_portrait_xl_label"
+        },
+        {
+          "value": "landscape",
+          "label": "t:sections.general_section_settings.img_ratio_option_landscape_label"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.ratio_label"
+    },
+    {
+      "type": "select",
+      "id": "img_ratio_resize",
+      "options": [
+        {
+          "value": "fill",
+          "label": "t:sections.general_section_settings.card_img_resize_fill_label"
+        },
+        {
+          "value": "fit",
+          "label": "t:sections.general_section_settings.card_img_resize_fit_label"
+        }
+      ],
+      "default": "fill",
+      "label": "t:sections.general_section_settings.card_img_resize_label",
+      "visible_if": "{{ section.settings.img_ratio != 'default' }}"
+    },
+    {
+      "type": "text_alignment",
+      "id": "product_card_align",
+      "label": "t:sections.general_section_settings.heading_alignment_label",
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "product_per_page",
+      "min": 12,
+      "max": 20,
+      "step": 2,
+      "default": 12,
+      "label": "t:sections.products.label_for_product_per_page_setting"
+    },
+    {
+      "type": "select",
+      "id": "desktop_columns",
+      "options": [
+        {
+          "value": "2",
+          "label": "2"
+        },
+        {
+          "value": "3",
+          "label": "3"
+        },
+        {
+          "value": "4",
+          "label": "4"
+        }
+      ],
+      "default": "3",
+      "label": "t:sections.general_section_settings.columns_label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_columns",
+      "options": [
+        {
+          "value": "1",
+          "label": "1"
+        },
+        {
+          "value": "2",
+          "label": "2"
+        }
+      ],
+      "default": "1",
+      "label": "t:sections.products.label_for_mobile_columns_setting"
+    },
+    {
+      "type": "select",
+      "id": "space_between_cards",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.gap.options.none"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.gap.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.gap.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.gap.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.gap.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.gap.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.gap.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.gap.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.gap.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.gap.options.xxxl"
+        }
+      ],
+      "default": "s",
+      "label": "t:sections.general_section_settings.gap.label.gap"
+    },
+    {
+      "type": "select",
+      "id": "space_between_cards_mobile",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.gap.options.none"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.gap.options.xxxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.gap.options.xxs"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.gap.options.xs"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.gap.options.s"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.gap.options.m"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.gap.options.l"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.gap.options.xl"
+        }
+      ],
+      "default": "l",
+      "label": "t:sections.general_section_settings.gap.label.gap_mobile"
+    },
+    {
+      "type": "select",
+      "id": "pagination_type",
+      "options": [
+        {
+          "value": "infinite-scroll",
+          "label": "t:sections.general_section_settings.pagination_type_option_infinite_scroll_label"
+        },
+        {
+          "value": "load-button-pagination",
+          "label": "t:sections.general_section_settings.pagination_type_option_click_to_load_label"
+        },
+        {
+          "value": "classic-pagination",
+          "label": "t:sections.general_section_settings.pagination_type_option_classic_pagination_label"
+        }
+      ],
+      "default": "load-button-pagination",
+      "label": "t:sections.general_section_settings.pagination_type_label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.products.sorter_settings_header"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sorting",
+      "default": true,
+      "label": "t:sections.products.label_for_enable_sorting_setting"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_product_count",
+      "default": false,
+      "label": "t:sections.products.label_for_show_product_count_setting"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_column_count_switcher",
+      "default": true,
+      "label": "t:sections.products.label_for_show_column_count_switcher_setting"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.products.filter_settings_header"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_filtering",
+      "default": true,
+      "label": "t:sections.products.label_for_enable_filtering_setting",
+      "info": "t:sections.products.info_for_enable_filtering_setting"
+    },
+    {
+      "type": "select",
+      "id": "filters_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.products.filters_position.option_1"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.products.filters_position.option_2"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.products.filters_position.label",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "select",
+      "id": "filter_style",
+      "options": [
+        {
+          "value": "drawer",
+          "label": "t:sections.products.filter_style.option_1"
+        },
+        {
+          "value": "open-embed",
+          "label": "t:sections.products.filter_style.option_2"
+        },
+        {
+          "value": "closed-embed",
+          "label": "t:sections.products.filter_style.option_3"
+        }
+      ],
+      "default": "closed-embed",
+      "label": "t:sections.products.filter_style.label",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "select",
+      "id": "categories_style",
+      "options": [
+        {
+          "value": "static",
+          "label": "t:sections.products.categories_style.option_1"
+        },
+        {
+          "value": "expanded_tabs",
+          "label": "t:sections.products.categories_style.option_2"
+        },
+        {
+          "value": "collapsed_tabs",
+          "label": "t:sections.products.categories_style.option_3"
+        }
+      ],
+      "default": "static",
+      "label": "t:sections.products.categories_style.label",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "select",
+      "id": "option_style",
+      "options": [
+        {
+          "value": "checkbox-solid",
+          "label": "t:sections.products.label_for_checkbox_solid_option_in_option_style_setting"
+        },
+        {
+          "value": "checkbox-outline",
+          "label": "t:sections.products.label_for_checkbox_outline_option_in_option_style_setting"
+        },
+        {
+          "value": "button-solid",
+          "label": "t:sections.products.label_for_button_solid_option_in_option_style_setting"
+        },
+        {
+          "value": "button-outline",
+          "label": "t:sections.products.label_for_button_outline_option_in_option_style_setting"
+        },
+        {
+          "value": "text",
+          "label": "t:sections.products.label_for_text_option_in_option_style_setting"
+        }
+      ],
+      "default": "checkbox-solid",
+      "label": "t:sections.products.label_for_option_style_setting",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_color_swatches",
+      "default": true,
+      "label": "t:sections.products.label_for_show_color_swatches_setting",
+      "info": "t:sections.products.info_for_show_color_swatches_setting",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_divider",
+      "default": true,
+      "label": "t:sections.products.label_for_show_divider_setting",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_result_count",
+      "default": true,
+      "label": "t:sections.products.label_for_show_result_count",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_uppercase_title",
+      "default": true,
+      "label": "t:sections.products.label_for_enable_uppercase_title_setting",
+      "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.appearance.header_title"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "options": [
+        {
+          "value": "full-screen",
+          "label": "t:sections.general_section_settings.container_size.screen_width_option"
+        },
+        {
+          "value": "page-width",
+          "label": "t:sections.general_section_settings.container_size.page_width_option"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.general_section_settings.container_size.large_width_option"
+        },
+        {
+          "value": "medium",
+          "label": "t:sections.general_section_settings.container_size.medium_width_option"
+        },
+        {
+          "value": "small",
+          "label": "t:sections.general_section_settings.container_size.small_width_option"
+        }
+      ],
+      "default": "full-screen",
+      "label": "t:sections.general_section_settings.container_size.label"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:settings_schema.appearance.round_level.options.default"
+        },
+        {
+          "value": "0",
+          "label": "t:settings_schema.appearance.round_level.options.option_0"
+        },
+        {
+          "value": "1",
+          "label": "t:settings_schema.appearance.round_level.options.option_1"
+        },
+        {
+          "value": "2",
+          "label": "t:settings_schema.appearance.round_level.options.option_2"
+        },
+        {
+          "value": "3",
+          "label": "t:settings_schema.appearance.round_level.options.option_3"
+        },
+        {
+          "value": "4",
+          "label": "t:settings_schema.appearance.round_level.options.option_4"
+        },
+        {
+          "value": "5",
+          "label": "t:settings_schema.appearance.round_level.options.option_5"
+        },
+        {
+          "value": "6",
+          "label": "t:settings_schema.appearance.round_level.options.option_6"
+        },
+        {
+          "value": "7",
+          "label": "t:settings_schema.appearance.round_level.options.option_7"
+        },
+        {
+          "value": "8",
+          "label": "t:settings_schema.appearance.round_level.options.option_8"
+        }
+      ],
+      "default": "default",
+      "label": "t:settings_schema.appearance.round_level.label"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.default"
+        },
+        {
+          "value": "own",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.own"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.color_scheme_variant.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "2",
+      "label": "t:sections.general_section_settings.color_scheme_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "t:sections.general_section_settings.enable_background_around_container_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' and settings.default_color_scheme != section.settings.color_scheme }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.paddings.header_title"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.desktop_label"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.mobile_label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "l",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_top.label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "l",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_bottom.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "age_option",
+      "name": "Age option",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Button label",
+          "default": "Youth Battlegear"
+        },
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Product tag",
+          "default": "Youth",
+          "info": "The product tag this option shows, e.g. Youth. Must match the tag in Shopify exactly (case-insensitive). Requires a 'Product tag' filter enabled in Search & Discovery; products must be tagged for either option to show them."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Products with age toggle",
+      "blocks": [
+        {
+          "type": "age_option",
+          "settings": {
+            "label": "Youth Battlegear",
+            "tag": "Youth"
+          }
+        },
+        {
+          "type": "age_option",
+          "settings": {
+            "label": "Senior Battlegear",
+            "tag": "Senior"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
