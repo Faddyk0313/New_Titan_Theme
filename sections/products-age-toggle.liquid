@@ -62,7 +62,9 @@
   assign heading = options.heading
   assign toggle_blocks = section.blocks | where: 'type', 'age_option'
 
-  comment Find the tag filter that backs the toggle. endcomment
+  comment
+    Find the tag filter that backs the toggle.
+  endcomment
   assign age_filter = nil
   for filter in collection.filters
     if filter.type == 'list' and filter.param_name == 'filter.p.tag'
