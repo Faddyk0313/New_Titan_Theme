@@ -326,7 +326,7 @@
         "heading": "Shop Battlegear",
         "heading_size": "h3",
         "toggle_aria_label": "Age group",
-        "default_age_tag": "Senior",
+        "default_age_tag": "Youth",
         "toggle_min_width": 200,
         "toggle_gap": 12,
         "toggle_padding_block": 14,
