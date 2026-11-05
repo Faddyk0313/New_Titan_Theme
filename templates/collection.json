@@ -19,11 +19,11 @@
         "show_collection_description": false,
         "show_breadcrumbs": false,
         "desktop_media_type": "image",
-        "desktop_image": "shopify:\/\/shop_images\/multy_desk_1.webp",
+        "desktop_image": "shopify://shop_images/multy_desk_1.webp",
         "desktop_enable_overlay": true,
         "desktop_overlay_opacity": 0,
         "mobile_media_type": "image",
-        "mobile_image": "shopify:\/\/shop_images\/multy_mobile_1.webp",
+        "mobile_image": "shopify://shop_images/multy_mobile_1.webp",
         "mobile_enable_overlay": true,
         "mobile_overlay_opacity": 0,
         "heading_size": "h2",
@@ -53,50 +53,50 @@
         "card_hXzHgc": {
           "type": "card",
           "settings": {
-            "image": "shopify:\/\/shop_images\/digi_camo_govx_banner_mobile.webp",
+            "image": "shopify://shop_images/digi_camo_govx_banner_mobile.webp",
             "image_alt": "",
             "icon": "feature-full-coverage",
-            "icon_image": "shopify:\/\/shop_images\/titanotex_aero_181f01f0-d378-4e30-8026-b5fdd25543cf.svg",
-            "card_title": "<p>MAXIMUM<br\/>CUT RESISTANCE<\/p>",
-            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3<\/p>",
-            "metric_label": "<p>HIGHEST<\/p>",
-            "metric_value": "<p>A9<\/p>"
+            "icon_image": "shopify://shop_images/titanotex_aero_181f01f0-d378-4e30-8026-b5fdd25543cf.svg",
+            "card_title": "<p>MAXIMUM<br/>CUT RESISTANCE</p>",
+            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>",
+            "metric_label": "<p>HIGHEST</p>",
+            "metric_value": "<p>A9</p>"
           }
         },
         "card_ANttzp": {
           "type": "card",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_4_7d9ac665-5dd7-4c19-9d14-5419ea71ee01.png",
+            "image": "shopify://shop_images/tech_4_7d9ac665-5dd7-4c19-9d14-5419ea71ee01.png",
             "image_alt": "",
             "icon": "feature-full-coverage",
-            "card_title": "<p>Full coverage<\/p>",
-            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3<\/p>",
-            "metric_label": "<p>HIGHEST<\/p>",
-            "metric_value": "<p>A9<\/p>"
+            "card_title": "<p>Full coverage</p>",
+            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>",
+            "metric_label": "<p>HIGHEST</p>",
+            "metric_value": "<p>A9</p>"
           }
         },
         "card_yGtgdR": {
           "type": "card",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_2_206b17d5-6051-4d44-a7d6-dea393579846.png",
+            "image": "shopify://shop_images/tech_2_206b17d5-6051-4d44-a7d6-dea393579846.png",
             "image_alt": "",
             "icon": "feature-full-coverage",
-            "card_title": "<p>max cut resistance<\/p>",
-            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3<\/p>",
-            "metric_label": "<p>HIGHEST<\/p>",
-            "metric_value": "<p>A9<\/p>"
+            "card_title": "<p>max cut resistance</p>",
+            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>",
+            "metric_label": "<p>HIGHEST</p>",
+            "metric_value": "<p>A9</p>"
           }
         },
         "card_mLPL7M": {
           "type": "card",
           "settings": {
-            "image": "shopify:\/\/shop_images\/made_in_usa.jpg",
+            "image": "shopify://shop_images/made_in_usa.jpg",
             "image_alt": "",
             "icon": "feature-full-coverage",
-            "card_title": "<p>Full coverage<\/p>",
-            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3<\/p>",
-            "metric_label": "<p>HIGHEST<\/p>",
-            "metric_value": "<p>A9<\/p>"
+            "card_title": "<p>Full coverage</p>",
+            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>",
+            "metric_label": "<p>HIGHEST</p>",
+            "metric_value": "<p>A9</p>"
           }
         },
         "card_8BJUGr": {
@@ -104,10 +104,10 @@
           "settings": {
             "image_alt": "",
             "icon": "feature-full-coverage",
-            "card_title": "<p>Full coverage<\/p>",
-            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3<\/p>",
-            "metric_label": "<p>HIGHEST<\/p>",
-            "metric_value": "<p>A9<\/p>"
+            "card_title": "<p>Full coverage</p>",
+            "panel_text": "<p>TITANOTEX™ cut-resistant Fabric – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>",
+            "metric_label": "<p>HIGHEST</p>",
+            "metric_value": "<p>A9</p>"
           }
         }
       },
@@ -123,7 +123,7 @@
       "settings": {
         "subheading": "BATTLEGEAR",
         "subheading_size": "body2",
-        "heading": "<p>Next-level features<\/p>",
+        "heading": "<p>Next-level features</p>",
         "heading_size": "h2",
         "header_gap": 12,
         "content_gap": 40,
@@ -183,10 +183,10 @@
         "image_WFXLNg": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_1_b54f6942-8c26-4fcd-bf2a-2de6e24a618b.png",
+            "image": "shopify://shop_images/tech_1_b54f6942-8c26-4fcd-bf2a-2de6e24a618b.png",
             "icon_size": 40,
-            "heading": "<h4>Ditch<br\/>Velcro<\/h4>",
-            "card_description": "<p><strong>Patented Stretch ProCurve™ Collar<\/strong><\/p><p>Adaptive protection that moves with the athlete. No straps. No irritation. No velcro.<\/p>",
+            "heading": "<h4>Ditch<br/>Velcro</h4>",
+            "card_description": "<p><strong>Patented Stretch ProCurve™ Collar</strong></p><p>Adaptive protection that moves with the athlete. No straps. No irritation. No velcro.</p>",
             "link": ""
           }
         },
@@ -194,61 +194,61 @@
           "type": "image",
           "disabled": true,
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_2_206b17d5-6051-4d44-a7d6-dea393579846.png",
-            "small_icon": "shopify:\/\/shop_images\/titanotex_aero_181f01f0-d378-4e30-8026-b5fdd25543cf.svg",
+            "image": "shopify://shop_images/tech_2_206b17d5-6051-4d44-a7d6-dea393579846.png",
+            "small_icon": "shopify://shop_images/titanotex_aero_181f01f0-d378-4e30-8026-b5fdd25543cf.svg",
             "icon_size": 40,
-            "heading": "<h4>Maximum<br\/>Cut Resistance<\/h4>",
-            "card_description": "<p><strong>TITANOTEX™ cut-resistant Fabric<\/strong><\/p><p>Rated up to ANSI A9 (scale of A1-A9), while other brands average A3.<\/p>",
+            "heading": "<h4>Maximum<br/>Cut Resistance</h4>",
+            "card_description": "<p><strong>TITANOTEX™ cut-resistant Fabric</strong></p><p>Rated up to ANSI A9 (scale of A1-A9), while other brands average A3.</p>",
             "link": ""
           }
         },
         "image_xVBNP9": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_4_7d9ac665-5dd7-4c19-9d14-5419ea71ee01.png",
+            "image": "shopify://shop_images/tech_4_7d9ac665-5dd7-4c19-9d14-5419ea71ee01.png",
             "icon_size": 40,
-            "heading": "<h4>FULL<br\/>COVERAGE<\/h4>",
-            "card_description": "<p><strong>Patented Arc~Guard™ Collar&nbsp;<\/strong><\/p><p>Anatomically contoured to protect the carotid and jugular without bunching.<\/p>",
+            "heading": "<h4>FULL<br/>COVERAGE</h4>",
+            "card_description": "<p><strong>Patented Arc~Guard™ Collar&nbsp;</strong></p><p>Anatomically contoured to protect the carotid and jugular without bunching.</p>",
             "link": ""
           }
         },
         "image_QErzyY": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/13.png",
+            "image": "shopify://shop_images/13.png",
             "icon_size": 40,
-            "heading": "<h4>LIGHTWEIGHT<br\/>BREATHABLE<\/h4>",
-            "card_description": "<p>Thermo-regulated 4-way stretch fabric, engineered to wick moisture and provide maximum mobility.<\/p>",
+            "heading": "<h4>LIGHTWEIGHT<br/>BREATHABLE</h4>",
+            "card_description": "<p>Thermo-regulated 4-way stretch fabric, engineered to wick moisture and provide maximum mobility.</p>",
             "link": ""
           }
         },
         "image_Da3mqE": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_5_8c112124-d850-4eb2-8a7a-f570e984cdfa.png",
+            "image": "shopify://shop_images/tech_5_8c112124-d850-4eb2-8a7a-f570e984cdfa.png",
             "icon_size": 40,
-            "heading": "<h4>UNMATCHED<br\/>STYLE<\/h4>",
-            "card_description": "<p>Express your identity with bold designs, limited edition drops, and team colors.&nbsp;<\/p>",
+            "heading": "<h4>UNMATCHED<br/>STYLE</h4>",
+            "card_description": "<p>Express your identity with bold designs, limited edition drops, and team colors.&nbsp;</p>",
             "link": ""
           }
         },
         "image_cX3zbN": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/tech_6_490391e4-5fdf-4b86-8c7f-303f089b6315.png",
+            "image": "shopify://shop_images/tech_6_490391e4-5fdf-4b86-8c7f-303f089b6315.png",
             "icon_size": 40,
-            "heading": "<h4>MADE IN<br\/>THE USA<\/h4>",
-            "card_description": "<p>Built locally <strong>(MN, NJ, FL)<\/strong>, with the best materials. Protection that doesn't need a passport.<\/p>",
+            "heading": "<h4>MADE IN<br/>THE USA</h4>",
+            "card_description": "<p>Built locally <strong>(MN, NJ, FL)</strong>, with the best materials. Protection that doesn't need a passport.</p>",
             "link": ""
           }
         },
         "image_NawY64": {
           "type": "image",
           "settings": {
-            "image": "shopify:\/\/shop_images\/7_b38fd5c8-4233-4272-890f-0e026399ae6d.jpg",
+            "image": "shopify://shop_images/7_b38fd5c8-4233-4272-890f-0e026399ae6d.jpg",
             "icon_size": 36,
-            "heading": "<h4>YOUR TEAM<br\/>YOUR COLORS<\/h4>",
-            "card_description": "<p><strong>Custom Team Baselayer<\/strong><\/p><p>Designed with your team's logo, colors, and unique identity.<\/p>",
+            "heading": "<h4>YOUR TEAM<br/>YOUR COLORS</h4>",
+            "card_description": "<p><strong>Custom Team Baselayer</strong></p><p>Designed with your team's logo, colors, and unique identity.</p>",
             "link": ""
           }
         }
@@ -296,6 +296,74 @@
         "add_desktop_side_paddings": true,
         "add_mobile_side_paddings": true,
         "section_spacing_top": "xs",
+        "section_spacing_bottom": "none"
+      }
+    },
+    "products_age_toggle_tajmLw": {
+      "type": "products-age-toggle",
+      "blocks": {
+        "age_option_rwg7E3": {
+          "type": "age_option",
+          "settings": {
+            "label": "Youth Battlegear",
+            "tag": "Youth"
+          }
+        },
+        "age_option_rxj6Hm": {
+          "type": "age_option",
+          "settings": {
+            "label": "Senior Battlegear",
+            "tag": "Senior"
+          }
+        }
+      },
+      "block_order": [
+        "age_option_rwg7E3",
+        "age_option_rxj6Hm"
+      ],
+      "name": "Products with age toggle",
+      "settings": {
+        "heading": "Shop Battlegear",
+        "heading_size": "h3",
+        "toggle_aria_label": "Age group",
+        "default_age_tag": "Senior",
+        "toggle_min_width": 200,
+        "toggle_gap": 12,
+        "toggle_padding_block": 14,
+        "toggle_padding_inline": 24,
+        "toggle_font_size": 14,
+        "toggle_border_color": "#ffffff",
+        "toggle_active_background": "#ffffff",
+        "toggle_active_text": "#000000",
+        "img_ratio": "square",
+        "img_ratio_resize": "fit",
+        "product_card_align": "left",
+        "product_per_page": 16,
+        "desktop_columns": "4",
+        "mobile_columns": "2",
+        "space_between_cards": "s",
+        "space_between_cards_mobile": "l",
+        "pagination_type": "infinite-scroll",
+        "enable_sorting": true,
+        "show_product_count": true,
+        "show_column_count_switcher": true,
+        "enable_filtering": true,
+        "filters_position": "left",
+        "filter_style": "closed-embed",
+        "categories_style": "expanded_tabs",
+        "option_style": "checkbox-outline",
+        "show_color_swatches": true,
+        "show_divider": true,
+        "show_result_count": false,
+        "enable_uppercase_title": true,
+        "container_size": "page-width",
+        "round_level": "default",
+        "color_scheme_variant": "own",
+        "color_scheme": "3",
+        "show_background": false,
+        "add_desktop_side_paddings": true,
+        "add_mobile_side_paddings": false,
+        "section_spacing_top": "s",
         "section_spacing_bottom": "none"
       }
     },
@@ -385,7 +453,7 @@
             "desktop_columns": 2,
             "desktop_rows": 2,
             "collection": "cut-resistant-baselayer",
-            "image": "shopify:\/\/shop_images\/COLLECTION_BANNER_1.png",
+            "image": "shopify://shop_images/COLLECTION_BANNER_1.png",
             "enable_overlay": false,
             "overlay_opacity": 16,
             "heading_size": "h4",
@@ -411,7 +479,7 @@
             "desktop_columns": 2,
             "desktop_rows": 2,
             "collection": "neck-guard",
-            "image": "shopify:\/\/shop_images\/COLLECTION_BANNER_2.png",
+            "image": "shopify://shop_images/COLLECTION_BANNER_2.png",
             "enable_overlay": false,
             "overlay_opacity": 22,
             "heading_size": "h4",
@@ -437,7 +505,7 @@
             "desktop_columns": 2,
             "desktop_rows": 2,
             "collection": "rinkwear",
-            "image": "shopify:\/\/shop_images\/COLLECTION_BANNER_3.png",
+            "image": "shopify://shop_images/COLLECTION_BANNER_3.png",
             "enable_overlay": false,
             "overlay_opacity": 22,
             "heading_size": "h4",
@@ -488,6 +556,7 @@
     "collection-hero-banner",
     "feature_card_carousel_EiBwpq",
     "featured_images_gkPUBB",
+    "products_age_toggle_tajmLw",
     "products",
     "collection-list",
     "collage_UzyJrA"
