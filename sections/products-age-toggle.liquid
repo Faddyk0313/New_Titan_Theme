@@ -260,6 +260,152 @@
       }
     }
 
+    /* ---------------------------------------------------------------
+       Filter sidebar.
+
+       The sidebar markup comes from the shared desktop-filters /
+       mobile-filters snippets, which the stock products section also
+       uses, so nothing there is edited. Everything below is scoped to
+       this section and keyed off classes a small script adds, tagging
+       each filter group by its label.
+
+       Base option style is set to a pill (button-outline) so every
+       filter renders .pill elements; the groups that should stay
+       checkboxes are converted back here.
+       --------------------------------------------------------------- */
+
+    .section-{{ section.id }} .filters,
+    .shop-sidebar-{{ section.id }} .filters{
+      --gsc-f-accent: {{ options.filter_accent_color }};
+      --gsc-f-muted: {{ options.filter_muted_color }};
+      --gsc-f-pill-gap: {{ options.filter_pill_gap }}px;
+    }
+
+    /* ---- Pill groups ----
+       These render as checkbox markup (label > input + span + text).
+       The tick box is hidden and the label itself becomes the pill, so the
+       underlying input keeps driving the theme's own filter form. */
+    .shop-sidebar-{{ section.id }} .filters__item--pills .filters__options{
+      flex-flow: row wrap;
+      row-gap: var(--gsc-f-pill-gap);
+      column-gap: var(--gsc-f-pill-gap);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox__span{
+      display: none;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox{
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      margin: 0;
+      padding: {{ options.filter_pill_padding_block }}px {{ options.filter_pill_padding_inline }}px;
+      border: 1px solid var(--gsc-f-muted);
+      color: var(--gsc-f-muted);
+      background: transparent;
+      font-size: {{ options.filter_pill_font_size }}px;
+      letter-spacing: 0.02em;
+      line-height: 1.1;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox:hover{
+      border-color: var(--gsc-f-accent);
+      color: var(--gsc-f-accent);
+    }
+
+    /* Selected pill: green text + green border, never filled. */
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox:has(.checkbox__input:checked){
+      border-color: var(--gsc-f-accent);
+      color: var(--gsc-f-accent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox--disabled{
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    /* ---- Size: YOUTH / SENIOR sub-groups ---- */
+    .shop-sidebar-{{ section.id }} .filters__subhead{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      margin: 4px 0 2px;
+      color: var(--gsc-f-muted);
+      font-size: {{ options.filter_subhead_font_size }}px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Force a row break so each sub-group starts on its own line. */
+    .shop-sidebar-{{ section.id }} .filters__subhead::before{
+      content: '\25B8';
+      font-size: 0.9em;
+      line-height: 1;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__subhead + .checkbox{
+      margin-left: 0;
+    }
+
+    /* ---- Checkbox groups: green tick + green text when selected ---- */
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__span--outline{
+      border-color: var(--gsc-f-muted);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__input:checked + .checkbox__span{
+      background: transparent;
+      border-color: var(--gsc-f-accent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__input:checked + .checkbox__span::before{
+      border-color: var(--gsc-f-accent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox:has(.checkbox__input:checked){
+      color: var(--gsc-f-accent);
+    }
+
+    /* ---- In stock only: Yes / No pills in place of the switch ---- */
+    .shop-sidebar-{{ section.id }} .filters__instock{
+      display: flex;
+      gap: var(--gsc-f-pill-gap);
+      padding: 8px 0 0;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__instock-option{
+      padding: {{ options.filter_pill_padding_block }}px {{ options.filter_pill_padding_inline }}px;
+      border: 1px solid var(--gsc-f-muted);
+      color: var(--gsc-f-muted);
+      background: transparent;
+      font-size: {{ options.filter_pill_font_size }}px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__instock-option:hover{
+      border-color: var(--gsc-f-accent);
+      color: var(--gsc-f-accent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__instock-option.is-active{
+      border-color: var(--gsc-f-accent);
+      color: var(--gsc-f-accent);
+    }
+
+    /* The original toggle switch is replaced by the pills above. */
+    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch{
+      display: none;
+    }
+
+
     @media {% render 'media-queries', screen: 'md' %} {
         .section-{{ section.id }}{
           --gsc-space-between-cards: var(--gsc-gap-{{ space_between_cards }});  
@@ -791,6 +937,192 @@
   })()
 </script>
 
+<script>
+  /*
+   * Filter sidebar enhancements.
+   *
+   * The sidebar markup is produced by the shared desktop-filters /
+   * mobile-filters snippets, which the stock products section also renders,
+   * so those files are left untouched. This script only tags and lightly
+   * restructures the markup inside THIS section's sidebars:
+   *
+   *   1. Tags each filter group with a class derived from its label, so the
+   *      scoped CSS can style groups individually. The snippets emit no
+   *      per-filter identifier, so the label is the only usable hook.
+   *   2. Splits the Size options into YOUTH / SENIOR sub-groups by prefix.
+   *   3. Replaces the In-stock toggle switch with Yes / No pills.
+   *
+   * Filters are re-rendered wholesale on every update, so this runs again
+   * whenever the shop component reports new filter markup.
+   */
+  ;(() => {
+    const SECTION_ID = '{{ section.id }}'
+    const PILL_LABELS = {{ options.filter_pill_groups | json }}
+    const SIZE_LABEL = {{ options.filter_size_label | json }}
+    const INSTOCK_LABEL = {{ options.filter_instock_label | json }}
+    const SIZE_GROUPS = {{ options.filter_size_groups | json }}
+    const YES_LABEL = {{ options.filter_instock_yes | json }}
+    const NO_LABEL = {{ options.filter_instock_no | json }}
+
+    const norm = (value) => (value || '').trim().toLowerCase()
+    const pillLabels = PILL_LABELS.split(',').map(norm).filter(Boolean)
+
+    // "YOUTH:YTH-, SENIOR:SR-" -> [{heading, prefix}]
+    const sizeGroups = SIZE_GROUPS.split(',')
+      .map((part) => {
+        const pieces = part.split(':')
+        if (pieces.length < 2) return null
+        const heading = pieces[0].trim()
+        const prefix = norm(pieces[1])
+        if (!heading || !prefix) return null
+        return { heading, prefix }
+      })
+      .filter(Boolean)
+
+    function groupLabel(item) {
+      const label = item.querySelector('.filters__label')
+      if (!label) return ''
+      // The label also holds the active-count, e.g. "Size (2)".
+      return norm((label.textContent || '').replace(/\(\d+\)/g, ''))
+    }
+
+    function tagGroups(root) {
+      root.querySelectorAll('.filters__item').forEach((item) => {
+        const label = groupLabel(item)
+        if (!label) return
+
+        if (INSTOCK_LABEL && label.startsWith(norm(INSTOCK_LABEL))) {
+          item.classList.add('filters__item--instock')
+          buildInStockPills(item)
+          return
+        }
+
+        const isPill = pillLabels.some((candidate) => label.startsWith(candidate))
+        item.classList.add(isPill ? 'filters__item--pills' : 'filters__item--checks')
+
+        if (SIZE_LABEL && label.startsWith(norm(SIZE_LABEL))) buildSizeSubgroups(item)
+      })
+    }
+
+    function buildSizeSubgroups(item) {
+      const list = item.querySelector('.filters__options')
+      if (!list || !sizeGroups.length || list.dataset.subgrouped === 'true') return
+
+      const options = Array.from(list.querySelectorAll('.checkbox'))
+      if (!options.length) return
+
+      const buckets = sizeGroups.map((group) => ({
+        heading: group.heading,
+        prefix: group.prefix,
+        items: [],
+      }))
+      const ungrouped = []
+
+      options.forEach((option) => {
+        const text = norm(option.textContent)
+        const bucket = buckets.find((candidate) => text.indexOf(candidate.prefix) === 0)
+        if (bucket) bucket.items.push(option)
+        else ungrouped.push(option)
+      })
+
+      // Nothing matched a prefix: leave the list exactly as it was.
+      if (!buckets.some((bucket) => bucket.items.length)) return
+
+      const fragment = document.createDocumentFragment()
+      buckets.forEach((bucket) => {
+        if (!bucket.items.length) return
+        const heading = document.createElement('div')
+        heading.className = 'filters__subhead'
+        heading.textContent = bucket.heading
+        fragment.appendChild(heading)
+        bucket.items.forEach((option) => fragment.appendChild(option))
+      })
+      ungrouped.forEach((option) => fragment.appendChild(option))
+
+      // Keep any show-more control last.
+      const more = list.querySelector('.filters__more')
+      list.insertBefore(fragment, more || null)
+      list.dataset.subgrouped = 'true'
+    }
+
+    function buildInStockPills(item) {
+      const input = item.querySelector('.slider-switch__checkbox')
+      if (!input || item.querySelector('.filters__instock')) return
+
+      const wrap = document.createElement('div')
+      wrap.className = 'filters__instock'
+
+      /*
+       * "Yes" mirrors the underlying checkbox, "No" clears it. The theme's
+       * filter form listens for a native change event, so dispatch one
+       * rather than calling into its internals.
+       */
+      const makeOption = (text, checked) => {
+        const option = document.createElement('button')
+        option.type = 'button'
+        option.className = 'filters__instock-option'
+        option.textContent = text
+        option.classList.toggle('is-active', input.checked === checked)
+        option.addEventListener('click', () => {
+          if (input.checked === checked) return
+          input.checked = checked
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        })
+        return option
+      }
+
+      wrap.appendChild(makeOption(YES_LABEL, true))
+      wrap.appendChild(makeOption(NO_LABEL, false))
+
+      const label = item.querySelector('.filters__label')
+      if (label) label.insertAdjacentElement('afterend', wrap)
+    }
+
+    function enhance() {
+      document
+        .querySelectorAll('#SidebarFiltersDesktop, #SidebarFiltersMobile')
+        .forEach((sidebar) => {
+          sidebar.classList.add('shop-sidebar-' + SECTION_ID)
+          tagGroups(sidebar)
+
+          /*
+           * The mobile sidebar keeps its markup in a <template>, which is
+           * inert and invisible to the selectors above until the drawer is
+           * opened and the content cloned. Process the template content too
+           * so the first open already shows the right styling.
+           */
+          sidebar.querySelectorAll('template').forEach((tpl) => {
+            if (tpl.content) tagGroups(tpl.content)
+          })
+        })
+    }
+
+    const run = () => {
+      enhance()
+
+      const shop = document.querySelector('shop-component')
+      // Re-apply after every filter re-render.
+      if (shop && typeof shop.on === 'function') shop.on('filtersUpdated', enhance)
+
+      /*
+       * The drawer clones its template on open, so the live nodes are new
+       * every time. Re-run on any click that could open a filter sidebar.
+       */
+      document.addEventListener('click', (event) => {
+        if (!event.target.closest('[data-sidebar-button]')) return
+        requestAnimationFrame(enhance)
+      })
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run, { once: true })
+    } else {
+      run()
+    }
+  })()
+</script>
+
+
 {% render 'save-section-data-in-global-scope', section: section %}
 
 {% schema %}
@@ -854,6 +1186,117 @@
       "label": "Default selected option",
       "default": "Senior",
       "info": "The product tag of the option selected on load, e.g. Senior. Must match one of the Age option blocks below. If it matches none, the first option is used."
+    },
+    {
+      "type": "header",
+      "content": "Filter sidebar"
+    },
+    {
+      "type": "text",
+      "id": "filter_pill_groups",
+      "label": "Filters shown as pills",
+      "default": "Age Group, Size, Product Type",
+      "info": "Comma-separated filter names, exactly as they appear in Search & Discovery. These render as horizontal pills; every other filter keeps the default checkbox style."
+    },
+    {
+      "type": "text",
+      "id": "filter_size_label",
+      "label": "Size filter name",
+      "default": "Size",
+      "info": "The filter whose options get split into sub-groups below."
+    },
+    {
+      "type": "text",
+      "id": "filter_size_groups",
+      "label": "Size sub-groups",
+      "default": "YOUTH:YTH-, SENIOR:SR-",
+      "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. Options matching nothing stay at the end."
+    },
+    {
+      "type": "text",
+      "id": "filter_instock_label",
+      "label": "In-stock filter name",
+      "default": "In stock only",
+      "info": "This filter's on/off switch is replaced with two pills."
+    },
+    {
+      "type": "text",
+      "id": "filter_instock_yes",
+      "label": "In-stock: on label",
+      "default": "Yes"
+    },
+    {
+      "type": "text",
+      "id": "filter_instock_no",
+      "label": "In-stock: off label",
+      "default": "No"
+    },
+    {
+      "type": "header",
+      "content": "Filter appearance"
+    },
+    {
+      "type": "color",
+      "id": "filter_accent_color",
+      "label": "Selected option",
+      "default": "#d4ff32",
+      "info": "Text, border and tick colour of a selected option."
+    },
+    {
+      "type": "color",
+      "id": "filter_muted_color",
+      "label": "Unselected option",
+      "default": "#8b949e"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_gap",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 6,
+      "label": "Space between pills"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_padding_block",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 6,
+      "label": "Pill vertical padding"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_padding_inline",
+      "min": 4,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "label": "Pill horizontal padding"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_font_size",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 11,
+      "label": "Pill font size"
+    },
+    {
+      "type": "range",
+      "id": "filter_subhead_font_size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "label": "Size sub-heading font size"
     },
     {
       "type": "header",
@@ -1248,9 +1691,10 @@
           "label": "t:sections.products.label_for_text_option_in_option_style_setting"
         }
       ],
-      "default": "checkbox-solid",
+      "default": "checkbox-outline",
       "label": "t:sections.products.label_for_option_style_setting",
-      "visible_if": "{{ section.settings.enable_filtering == true }}"
+      "visible_if": "{{ section.settings.enable_filtering == true }}",
+      "info": "Base style for filter options. Keep this on a checkbox style: the filters listed under 'Filters shown as pills' are restyled into pills, and the rest keep this checkbox look."
     },
     {
       "type": "checkbox",
