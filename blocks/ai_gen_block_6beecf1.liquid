@@ -1,0 +1,301 @@
+{% doc %}
+  @prompt
+    NECESITO GENERAR UNA SEECCION QUE SEA BASICAMENTE UNA LINEA DE SEPARACION DE ESPACIOS . DONDE PUEDA CONTROLAR EL GROSOR DE LA SECCION Y DE LA LINEA ASI COMO SU ESTILO TANTO EN DESKTOP COMO EN MOBILE, NECESITO CONTROLAR EL COLOR DEL FONDO DE LA SEECCION , NECESITO CONTROLAR EL ANCHO DE LA LINEA INDEPENDIENTE DE LA SECCION 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-spacer-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding-top: {{ block.settings.desktop_spacing_top }}px;
+    padding-bottom: {{ block.settings.desktop_spacing_bottom }}px;
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-spacer-line-{{ ai_gen_id }} {
+    width: {{ block.settings.desktop_line_width }}%;
+    height: {{ block.settings.desktop_line_thickness }}px;
+    background-color: {{ block.settings.line_color }};
+    margin: 0 auto;
+    {% if block.settings.line_style == 'dashed' %}
+      background-image: repeating-linear-gradient(
+        to right,
+        {{ block.settings.line_color }} 0px,
+        {{ block.settings.line_color }} {{ block.settings.desktop_dash_length }}px,
+        transparent {{ block.settings.desktop_dash_length }}px,
+        transparent {{ block.settings.desktop_dash_length | plus: block.settings.desktop_dash_gap }}px
+      );
+      background-color: transparent;
+    {% elsif block.settings.line_style == 'dotted' %}
+      background-image: repeating-linear-gradient(
+        to right,
+        {{ block.settings.line_color }} 0px,
+        {{ block.settings.line_color }} {{ block.settings.desktop_line_thickness }}px,
+        transparent {{ block.settings.desktop_line_thickness }}px,
+        transparent {{ block.settings.desktop_line_thickness | plus: block.settings.desktop_dot_gap }}px
+      );
+      background-color: transparent;
+    {% endif %}
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-spacer-{{ ai_gen_id }} {
+      padding-top: {{ block.settings.mobile_spacing_top }}px;
+      padding-bottom: {{ block.settings.mobile_spacing_bottom }}px;
+    }
+
+    .ai-spacer-line-{{ ai_gen_id }} {
+      width: {{ block.settings.mobile_line_width }}%;
+      height: {{ block.settings.mobile_line_thickness }}px;
+      {% if block.settings.line_style == 'dashed' %}
+        background-image: repeating-linear-gradient(
+          to right,
+          {{ block.settings.line_color }} 0px,
+          {{ block.settings.line_color }} {{ block.settings.mobile_dash_length }}px,
+          transparent {{ block.settings.mobile_dash_length }}px,
+          transparent {{ block.settings.mobile_dash_length | plus: block.settings.mobile_dash_gap }}px
+        );
+      {% elsif block.settings.line_style == 'dotted' %}
+        background-image: repeating-linear-gradient(
+          to right,
+          {{ block.settings.line_color }} 0px,
+          {{ block.settings.line_color }} {{ block.settings.mobile_line_thickness }}px,
+          transparent {{ block.settings.mobile_line_thickness }}px,
+          transparent {{ block.settings.mobile_line_thickness | plus: block.settings.mobile_dot_gap }}px
+        );
+      {% endif %}
+    }
+  }
+{% endstyle %}
+
+<div class="ai-spacer-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% if block.settings.show_line %}
+    <div class="ai-spacer-line-{{ ai_gen_id }}"></div>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "Separador de espacios",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Fondo"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Color de fondo",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Línea de separación"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_line",
+      "label": "Mostrar línea",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "line_style",
+      "label": "Estilo de línea",
+      "options": [
+        {
+          "value": "solid",
+          "label": "Sólida"
+        },
+        {
+          "value": "dashed",
+          "label": "Discontinua"
+        },
+        {
+          "value": "dotted",
+          "label": "Punteada"
+        }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Color de línea",
+      "default": "#e0e0e0"
+    },
+    {
+      "type": "header",
+      "content": "Desktop"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Ancho de sección",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "desktop_line_width",
+      "label": "Ancho de línea",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "desktop_spacing_top",
+      "label": "Espacio superior",
+      "min": 0,
+      "max": 200,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "desktop_spacing_bottom",
+      "label": "Espacio inferior",
+      "min": 0,
+      "max": 200,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "desktop_line_thickness",
+      "label": "Grosor de línea",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "desktop_dash_length",
+      "label": "Longitud de guión",
+      "min": 5,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 10,
+      "info": "Solo para estilo discontinuo"
+    },
+    {
+      "type": "range",
+      "id": "desktop_dash_gap",
+      "label": "Espacio entre guiones",
+      "min": 5,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 10,
+      "info": "Solo para estilo discontinuo"
+    },
+    {
+      "type": "range",
+      "id": "desktop_dot_gap",
+      "label": "Espacio entre puntos",
+      "min": 2,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 6,
+      "info": "Solo para estilo punteado"
+    },
+    {
+      "type": "header",
+      "content": "Mobile"
+    },
+    {
+      "type": "range",
+      "id": "mobile_line_width",
+      "label": "Ancho de línea",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "mobile_spacing_top",
+      "label": "Espacio superior",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "mobile_spacing_bottom",
+      "label": "Espacio inferior",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "mobile_line_thickness",
+      "label": "Grosor de línea",
+      "min": 1,
+      "max": 15,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "mobile_dash_length",
+      "label": "Longitud de guión",
+      "min": 5,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "default": 10,
+      "info": "Solo para estilo discontinuo"
+    },
+    {
+      "type": "range",
+      "id": "mobile_dash_gap",
+      "label": "Espacio entre guiones",
+      "min": 5,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "default": 10,
+      "info": "Solo para estilo discontinuo"
+    },
+    {
+      "type": "range",
+      "id": "mobile_dot_gap",
+      "label": "Espacio entre puntos",
+      "min": 2,
+      "max": 15,
+      "step": 1,
+      "unit": "px",
+      "default": 4,
+      "info": "Solo para estilo punteado"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Separador de espacios"
+    }
+  ]
+}
+{% endschema %}

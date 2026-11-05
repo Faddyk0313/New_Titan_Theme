@@ -1,0 +1,164 @@
+{% liquid
+  assign options = section.settings
+  assign cus_color_theme = options.cus_color_theme
+%}
+
+{% capture css %}
+  {% style %}
+    #shopify-section-{{ section.id }} {
+      {% if cus_color_theme == 'light' %}
+        background-color: {{ options.table_light_bg_color | default: '#ffffff' }};
+      {% else %}
+        background-color: {{ options.table_dark_bg_color | default: '#000000' }};
+      {% endif %}
+    }
+
+    .titan-compare-table-{{ section.id }} {
+      margin-top: {{ options.margin_top }}px;
+      margin-bottom: {{ options.margin_bottom }}px;
+      overflow-x: auto;
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class="titan-compare-table-{{ section.id }}">
+  {% render 'titan-compare-table',
+    cus_color_theme: cus_color_theme,
+    unique_id: section.id,
+    mobile_font_size: options.mobile_font_size,
+    desktop_font_size: options.desktop_font_size,
+    light_bg_color: options.table_light_bg_color,
+    dark_bg_color: options.table_dark_bg_color,
+    mobile_row_height: options.mobile_row_height,
+    desktop_row_height: options.desktop_row_height,
+    mobile_logo_scale: options.mobile_logo_scale,
+    desktop_logo_scale: options.desktop_logo_scale
+  %}
+</div>
+
+{% schema %}
+{
+  "name": "Titan Comparison Table",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Settings"
+    },
+    {
+      "type": "color",
+      "id": "table_light_bg_color",
+      "label": "Table background (light theme)",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "table_dark_bg_color",
+      "label": "Table background (dark theme)",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "mobile_row_height",
+      "min": 30,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Row height (mobile)",
+      "default": 62
+    },
+    {
+      "type": "range",
+      "id": "desktop_row_height",
+      "min": 30,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Row height (desktop)",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "mobile_logo_scale",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Brand logo size (mobile)",
+      "info": "Percentage of the header cell.",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "desktop_logo_scale",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Brand logo size (desktop)",
+      "info": "Percentage of the header cell.",
+      "default": 100
+    },
+    {
+      "type": "select",
+      "id": "cus_color_theme",
+      "label": "Color Theme",
+      "default": "light",
+      "options": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "mobile_font_size",
+      "min": 8,
+      "max": 24,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Table font size (mobile)",
+      "info": "Scales every cell, including headings, captions and icons.",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "desktop_font_size",
+      "min": 10,
+      "max": 32,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Table font size (desktop)",
+      "info": "Scales every cell, including headings, captions and icons.",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Top Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Bottom Margin",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Titan Comparison Table"
+    }
+  ]
+}
+{% endschema %}

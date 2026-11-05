@@ -1,0 +1,117 @@
+{% liquid
+  assign show_mobile_carousel = false
+  if mobile_layout contains 'column'
+    assign show_mobile_carousel = true
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+%}
+
+<slider-grid
+  class='slider-grid {% if show_navigation_on_hover %}card-carousel--navigation-on-hover{% endif %}'
+  {% if autoplay_mode != 'disabled' %}
+    autoplay-mode='{{autoplay_mode}}'
+    autoplay-interval='{{autoplay_interval}}'
+  {% endif %}
+  {% if desktop_layout contains 'grid' %}
+    desktop-disabled
+  {% endif %}
+  {% if mobile_layout contains 'column' %}
+    mobile-disabled
+  {% endif %}
+>
+  <div
+    slider-grid-track
+    class='slider-grid-track slider-grid__d-{{desktop_layout}} slider-grid__m-{{mobile_layout}}'
+  >
+    {% if section.blocks.size > 0 %}
+      {%- for block in section.blocks limit: product_limit -%}
+        <div
+          class='slider-grid__slide collection__collection-card-slide {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: {{forloop.index}};'
+          {% endif %}
+          slider-grid-slide
+          {{ block.shopify_attributes }}
+        >
+          {%- render 'featured-image-card',
+            image: block.settings.image,
+            mobile_image: block.settings.mobile_image,
+            icon: block.settings.small_icon,
+            icon_size: block.settings.icon_size,
+            heading: block.settings.heading,
+            description: block.settings.card_description,
+            link_url: block.settings.link,
+            img_ratio: img_ratio,
+            text_style: collection_card_content_position,
+            content_align: collection_card_content_align,
+            heading_size: collection_card_heading_size,
+            enable_overlay: collection_card_enable_overlay,
+            color_scheme: collection_card_color_scheme,
+            show_mobile_carousel: show_mobile_carousel
+          -%}
+        </div>
+      {%- endfor -%}
+    {% else %}
+      {%- for item in prepared_collection_placeholder limit: product_limit -%}
+        <div
+          class='slider-grid__slide collection__collection-card-slide {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: {{forloop.index}};'
+          {% endif %}
+          slider-grid-slide
+        >
+          {%- render 'featured-image-card',
+            img_ratio: img_ratio,
+            text_style: collection_card_content_position,
+            content_align: collection_card_content_align,
+            heading_size: collection_card_heading_size,
+            enable_overlay: collection_card_enable_overlay,
+            color_scheme: collection_card_color_scheme
+          -%}
+        </div>
+      {%- endfor -%}
+    {% endif %}
+  </div>
+
+  {% if desktop_layout != 'grid' %}
+    <div class='card-carousel__position-btn-wrap card-carousel__position-btn-wrap--prev {% if img_ratio == 'nature' %} card-carousel__position-btn-wrap--nature-img-ratio {% endif %}'>
+      <div class='shape shape--{{ img_ratio }}'>
+        <button
+          type='button'
+          class='carousel-btn card-carousel__carousel-btn card-carousel__carousel-btn--prev'
+          data-direction='prev'
+          aria-label='{{ 'accessibility.prev_slide' | t }}'
+          tabindex='0'
+          disabled
+        >
+          {% render 'icon', icon_name: 'arrow', class: 'carousel-btn__icon x-flip' -%}
+        </button>
+      </div>
+    </div>
+
+    <div class='card-carousel__position-btn-wrap card-carousel__position-btn-wrap--next {% if img_ratio == 'nature' %} card-carousel__position-btn-wrap--nature-img-ratio {% endif %}'>
+      <div class='shape shape--{{ img_ratio }}'>
+        <button
+          type='button'
+          class='carousel-btn card-carousel__carousel-btn card-carousel__carousel-btn--next'
+          data-direction='next'
+          aria-label='{{ 'accessibility.next_slide' | t }}'
+          tabindex='0'
+          disabled
+        >
+          {%- render 'icon', icon_name: 'arrow', class: 'carousel-btn__icon' -%}
+        </button>
+      </div>
+    </div>
+  {% endif %}
+
+  {%- if desktop_layout == 'carousel-overflow' -%}
+    <div
+      class='progress-bar progress-bar--with-background card-carousel__progress-bar {% if mobile_layout != 'carousel-overflow' %}progress-bar--desktop-only{% endif %}'
+      data-target='scroll'
+    >
+      <div class='slider-grid__progress-bar-indicator' slider-grid-progress></div>
+    </div>
+  {%- endif -%}
+</slider-grid>

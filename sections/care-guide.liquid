@@ -1,0 +1,1252 @@
+{%- comment -%}TBG custom Code{%- endcomment -%}
+{%- liquid
+  assign options = section.settings
+
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+  assign body = options.body
+  assign body_size = options.body_size
+  assign content_alignment = options.content_alignment
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+
+  assign cards_gap = options.cards_gap
+  assign card_header_padding_block = options.card_header_padding_block
+  assign card_header_padding_inline = options.card_header_padding_inline
+  assign card_body_padding_block = options.card_body_padding_block
+  assign card_body_padding_inline = options.card_body_padding_inline
+  assign items_gap = options.items_gap
+  assign item_icon_gap = options.item_icon_gap
+  assign item_text_indent = options.item_text_indent
+
+  assign header_icon_size = options.header_icon_size
+  assign item_icon_size = options.item_icon_size
+
+  assign card_title_size_desktop = options.card_title_size_desktop
+  assign card_title_size_mobile = options.card_title_size_mobile
+  assign item_title_size_desktop = options.item_title_size_desktop
+  assign item_title_size_mobile = options.item_title_size_mobile
+  assign item_text_size_desktop = options.item_text_size_desktop
+  assign item_text_size_mobile = options.item_text_size_mobile
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --care-guide-cards-gap: {{ cards_gap }}px;
+      --care-guide-items-gap: {{ items_gap }}px;
+      --care-guide-item-icon-gap: {{ item_icon_gap }}px;
+      --care-guide-item-text-indent: {{ item_text_indent }}px;
+      --care-guide-header-icon-size: {{ header_icon_size }}px;
+      --care-guide-item-icon-size: {{ item_icon_size }}px;
+    }
+
+    .section-{{ section.id }} .care-guide {
+      display: flex;
+      flex-direction: column;
+      gap: var(--care-guide-cards-gap);
+    }
+
+    .section-{{ section.id }} .care-guide__intro {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+    }
+
+    .section-{{ section.id }} .care-guide__intro--align-center {
+      text-align: center;
+      align-items: center;
+    }
+
+    .section-{{ section.id }} .care-guide__intro--align-right {
+      text-align: right;
+      align-items: flex-end;
+    }
+
+    .section-{{ section.id }} .care-guide__cards {
+      display: flex;
+      flex-direction: column;
+      gap: var(--care-guide-cards-gap);
+    }
+
+    .section-{{ section.id }} .care-guide__card {
+      overflow: hidden;
+      border-radius: var(--gsc-base-radii, 0);
+      background-color: var(--care-guide-card-background);
+      color: var(--care-guide-card-text-color);
+    }
+
+    .section-{{ section.id }} .care-guide__card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--care-guide-item-icon-gap);
+      padding: {{ card_header_padding_block }}px {{ card_header_padding_inline }}px;
+      background-color: var(--care-guide-header-background);
+      color: var(--care-guide-header-text-color);
+    }
+
+    .section-{{ section.id }} .care-guide__card-title {
+      margin: 0;
+      color: inherit;
+      font-size: {{ card_title_size_mobile }}px;
+      line-height: 1.15;
+      letter-spacing: {{ options.card_title_letter_spacing }}px;
+      {% if options.card_title_uppercase %}text-transform: uppercase;{% endif %}
+    }
+
+    .section-{{ section.id }} .care-guide__card-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--care-guide-items-gap);
+      padding: {{ card_body_padding_block }}px {{ card_body_padding_inline }}px;
+    }
+
+    .section-{{ section.id }} .care-guide__item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .section-{{ section.id }} .care-guide__item-head {
+      display: flex;
+      align-items: center;
+      gap: var(--care-guide-item-icon-gap);
+    }
+
+    .section-{{ section.id }} .care-guide__item-title {
+      margin: 0;
+      color: inherit;
+      font-size: {{ item_title_size_mobile }}px;
+      font-weight: {{ options.item_title_weight }};
+      line-height: 1.3;
+    }
+
+    .section-{{ section.id }} .care-guide__item-text {
+      margin: 0;
+      margin-inline-start: var(--care-guide-item-text-indent);
+      color: inherit;
+      font-size: {{ item_text_size_mobile }}px;
+      line-height: 1.45;
+    }
+
+    .section-{{ section.id }} .care-guide__item-text > * {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .care-guide__icon {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .section-{{ section.id }} .care-guide__icon--header {
+      width: var(--care-guide-header-icon-size);
+      height: var(--care-guide-header-icon-size);
+    }
+
+    .section-{{ section.id }} .care-guide__icon--item {
+      width: var(--care-guide-item-icon-size);
+      height: var(--care-guide-item-icon-size);
+    }
+
+    .section-{{ section.id }} .care-guide__icon img,
+    .section-{{ section.id }} .care-guide__icon svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    {%- comment -%}
+      Icons drawn with currentColor render white; icons that carry their own
+      fill (care-cross) are left alone.
+    {%- endcomment -%}
+    .section-{{ section.id }} .care-guide__icon--recolor svg {
+      color: #FFFFFF;
+    }
+
+    @media screen and (min-width: 750px) {
+      .section-{{ section.id }} .care-guide__card-title {
+        font-size: {{ card_title_size_desktop }}px;
+      }
+
+      .section-{{ section.id }} .care-guide__item-title {
+        font-size: {{ item_title_size_desktop }}px;
+      }
+
+      .section-{{ section.id }} .care-guide__item-text {
+        font-size: {{ item_text_size_desktop }}px;
+      }
+    }
+
+    {% for block in section.blocks %}
+      .section-{{ section.id }} .block-{{ block.id }} {
+        --care-guide-card-background: {{ block.settings.card_background }};
+        --care-guide-card-text-color: {{ block.settings.card_text_color }};
+        --care-guide-header-background: {{ block.settings.header_background }};
+        --care-guide-header-text-color: {{ block.settings.header_text_color }};
+        {% if block.settings.header_icon_size > 0 %}
+          --care-guide-header-icon-size: {{ block.settings.header_icon_size }}px;
+        {% endif %}
+        {% if block.settings.item_icon_size > 0 %}
+          --care-guide-item-icon-size: {{ block.settings.item_icon_size }}px;
+        {% endif %}
+        {% if block.settings.item_text_indent >= 0 %}
+          --care-guide-item-text-indent: {{ block.settings.item_text_indent }}px;
+        {% endif %}
+      }
+    {% endfor %}
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='care-guide'>
+      {%- if heading != blank or body != blank -%}
+        <div class='care-guide__intro care-guide__intro--align-{{ content_alignment }}'>
+          {%- if heading != blank -%}
+            <h2
+              class='{{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 1;'
+            >
+              {{ heading }}
+            </h2>
+          {%- endif -%}
+
+          {%- if body != blank -%}
+            <div
+              class='rte {{ body_size }} body-color body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 2;'
+            >
+              {{ body }}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      <div class='care-guide__cards'>
+        {%- for block in section.blocks -%}
+          <div
+            class='care-guide__card block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+            style='--gsc-animation-order: {{ forloop.index | plus: 2 }};'
+            {{ block.shopify_attributes }}
+          >
+            {%- liquid
+              assign card_title = block.settings.title
+              assign card_title_alt = card_title | strip_html | escape
+              assign show_header = block.settings.show_header
+            -%}
+
+            {%- if show_header and card_title != blank or show_header and block.settings.header_icon_image != blank or show_header and block.settings.header_icon != 'none' -%}
+              <div class='care-guide__card-header'>
+                {%- if block.settings.header_icon_image != blank -%}
+                  <span class='care-guide__icon care-guide__icon--header'>
+                    {{
+                      block.settings.header_icon_image
+                      | image_url: width: 200
+                      | image_tag: loading: 'lazy', widths: '48, 96, 144, 200', alt: card_title_alt
+                    }}
+                  </span>
+                {%- elsif block.settings.header_icon != 'none' -%}
+                  <span class='care-guide__icon care-guide__icon--header{% unless block.settings.header_icon == 'care-cross' %} care-guide__icon--recolor{% endunless %}'>
+                    {% render 'icon', icon_name: block.settings.header_icon %}
+                  </span>
+                {%- endif -%}
+
+                {%- if card_title != blank -%}
+                  <h3 class='care-guide__card-title {{ block.settings.title_size }}'>{{ card_title }}</h3>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+
+            <div class='care-guide__card-body'>
+              {%- for i in (1..6) -%}
+                {%- liquid
+                  assign title_key = 'item_' | append: i | append: '_title'
+                  assign text_key = 'item_' | append: i | append: '_text'
+                  assign item_title = block.settings[title_key]
+                  assign item_text = block.settings[text_key]
+                -%}
+
+                {%- if item_title != blank or item_text != blank -%}
+                  <div class='care-guide__item'>
+                    {%- if item_title != blank -%}
+                      <div class='care-guide__item-head'>
+                        {%- if block.settings.item_icon != 'none' -%}
+                          <span class='care-guide__icon care-guide__icon--item{% unless block.settings.item_icon == 'care-cross' %} care-guide__icon--recolor{% endunless %}'>
+                            {% render 'icon', icon_name: block.settings.item_icon %}
+                          </span>
+                        {%- endif -%}
+
+                        <div
+                          class='care-guide__item-title {{ block.settings.item_title_size }}'
+                          role='heading'
+                          aria-level='4'
+                        >
+                          {{ item_title }}
+                        </div>
+                      </div>
+                    {%- endif -%}
+
+                    {%- if item_text != blank -%}
+                      <div class='care-guide__item-text rte body-font-weight-from-global-settings'>
+                        {{ item_text }}
+                      </div>
+                    {%- endif -%}
+                  </div>
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Care guide",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "t:sections.general_section_settings.label_for_size_setting",
+      "options": [
+        {
+          "value": "display1",
+          "label": "t:sections.general_section_settings.display_size_1_option"
+        },
+        {
+          "value": "display2",
+          "label": "t:sections.general_section_settings.display_size_2_option"
+        },
+        {
+          "value": "display3",
+          "label": "t:sections.general_section_settings.display_size_3_option"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.general_section_settings.heading_size_1_option"
+        },
+        {
+          "value": "h2",
+          "label": "t:sections.general_section_settings.heading_size_2_option"
+        },
+        {
+          "value": "h3",
+          "label": "t:sections.general_section_settings.heading_size_3_option"
+        },
+        {
+          "value": "h4",
+          "label": "t:sections.general_section_settings.heading_size_4_option"
+        },
+        {
+          "value": "h5",
+          "label": "t:sections.general_section_settings.heading_size_5_option"
+        },
+        {
+          "value": "h6",
+          "label": "t:sections.general_section_settings.heading_size_6_option"
+        }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Description"
+    },
+    {
+      "type": "select",
+      "id": "body_size",
+      "label": "Description size",
+      "options": [
+        {
+          "value": "body-font-size-1",
+          "label": "Small"
+        },
+        {
+          "value": "body-font-size-2",
+          "label": "Medium"
+        },
+        {
+          "value": "body-font-size-3",
+          "label": "Large"
+        }
+      ],
+      "default": "body-font-size-2"
+    },
+    {
+      "type": "select",
+      "id": "content_alignment",
+      "label": "Content alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "Cards layout"
+    },
+    {
+      "type": "range",
+      "id": "cards_gap",
+      "label": "Gap between cards",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "card_header_padding_block",
+      "label": "Card header vertical padding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "card_header_padding_inline",
+      "label": "Card header horizontal padding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 25
+    },
+    {
+      "type": "range",
+      "id": "card_body_padding_block",
+      "label": "Card body vertical padding",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "unit": "px",
+      "default": 35
+    },
+    {
+      "type": "range",
+      "id": "card_body_padding_inline",
+      "label": "Card body horizontal padding",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "unit": "px",
+      "default": 25
+    },
+    {
+      "type": "range",
+      "id": "items_gap",
+      "label": "Gap between items",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "item_icon_gap",
+      "label": "Gap between icon and text",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "item_text_indent",
+      "label": "Item text indent",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "header",
+      "content": "Icons"
+    },
+    {
+      "type": "range",
+      "id": "header_icon_size",
+      "label": "Card header icon size",
+      "min": 8,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "item_icon_size",
+      "label": "Item icon size",
+      "min": 6,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 13
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_desktop",
+      "label": "Card title size (desktop)",
+      "min": 12,
+      "max": 64,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_mobile",
+      "label": "Card title size (mobile)",
+      "min": 10,
+      "max": 48,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "card_title_letter_spacing",
+      "label": "Card title letter spacing",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "checkbox",
+      "id": "card_title_uppercase",
+      "label": "Uppercase card titles",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "item_title_weight",
+      "label": "Item title weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Regular"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semibold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        },
+        {
+          "value": "800",
+          "label": "Extra bold"
+        }
+      ],
+      "default": "700"
+    },
+    {
+      "type": "range",
+      "id": "item_title_size_desktop",
+      "label": "Item title size (desktop)",
+      "min": 10,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "item_title_size_mobile",
+      "label": "Item title size (mobile)",
+      "min": 10,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "item_text_size_desktop",
+      "label": "Item text size (desktop)",
+      "min": 10,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "item_text_size_mobile",
+      "label": "Item text size (mobile)",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.appearance.header_title"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "options": [
+        {
+          "value": "full-screen",
+          "label": "t:sections.general_section_settings.container_size.screen_width_option"
+        },
+        {
+          "value": "page-width",
+          "label": "t:sections.general_section_settings.container_size.page_width_option"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.general_section_settings.container_size.large_width_option"
+        },
+        {
+          "value": "medium",
+          "label": "t:sections.general_section_settings.container_size.medium_width_option"
+        },
+        {
+          "value": "small",
+          "label": "t:sections.general_section_settings.container_size.small_width_option"
+        }
+      ],
+      "default": "medium",
+      "label": "t:sections.general_section_settings.container_size.label"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:settings_schema.appearance.round_level.options.default"
+        },
+        {
+          "value": "0",
+          "label": "t:settings_schema.appearance.round_level.options.option_0"
+        },
+        {
+          "value": "1",
+          "label": "t:settings_schema.appearance.round_level.options.option_1"
+        },
+        {
+          "value": "2",
+          "label": "t:settings_schema.appearance.round_level.options.option_2"
+        },
+        {
+          "value": "3",
+          "label": "t:settings_schema.appearance.round_level.options.option_3"
+        },
+        {
+          "value": "4",
+          "label": "t:settings_schema.appearance.round_level.options.option_4"
+        },
+        {
+          "value": "5",
+          "label": "t:settings_schema.appearance.round_level.options.option_5"
+        },
+        {
+          "value": "6",
+          "label": "t:settings_schema.appearance.round_level.options.option_6"
+        },
+        {
+          "value": "7",
+          "label": "t:settings_schema.appearance.round_level.options.option_7"
+        },
+        {
+          "value": "8",
+          "label": "t:settings_schema.appearance.round_level.options.option_8"
+        }
+      ],
+      "default": "default",
+      "label": "t:settings_schema.appearance.round_level.label"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.default"
+        },
+        {
+          "value": "own",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.own"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.color_scheme_variant.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "2",
+      "label": "t:sections.general_section_settings.color_scheme_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "t:sections.general_section_settings.enable_background_around_container_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' and settings.default_color_scheme != section.settings.color_scheme }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.paddings.header_title"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.desktop_label"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.mobile_label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "xxl",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_top.label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "xxl",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_bottom.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "care_group",
+      "name": "Care card",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Card header"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_header",
+          "label": "Show card header",
+          "default": true
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Card title",
+          "default": "Washing"
+        },
+        {
+          "type": "select",
+          "id": "title_size",
+          "label": "Card title style",
+          "info": "Font size is controlled in the section Typography settings.",
+          "options": [
+            {
+              "value": "",
+              "label": "Default"
+            },
+            {
+              "value": "h2",
+              "label": "Heading 2"
+            },
+            {
+              "value": "h3",
+              "label": "Heading 3"
+            },
+            {
+              "value": "h4",
+              "label": "Heading 4"
+            },
+            {
+              "value": "h5",
+              "label": "Heading 5"
+            },
+            {
+              "value": "h6",
+              "label": "Heading 6"
+            }
+          ],
+          "default": ""
+        },
+        {
+          "type": "select",
+          "id": "header_icon",
+          "label": "Card header icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "check",
+              "label": "Check"
+            },
+            {
+              "value": "tick",
+              "label": "Tick"
+            },
+            {
+              "value": "close",
+              "label": "Close"
+            },
+            {
+              "value": "circle",
+              "label": "Bullet"
+            },
+            {
+              "value": "plus",
+              "label": "Plus"
+            },
+            {
+              "value": "minus",
+              "label": "Minus"
+            },
+            {
+              "value": "chevron",
+              "label": "Chevron"
+            },
+            {
+              "value": "arrow",
+              "label": "Arrow"
+            },
+            {
+              "value": "note",
+              "label": "Note"
+            },
+            {
+              "value": "error",
+              "label": "Warning"
+            },
+            {
+              "value": "padlock",
+              "label": "Padlock"
+            },
+            {
+              "value": "shipping-box",
+              "label": "Shipping box"
+            },
+            {
+              "value": "size-chart",
+              "label": "Size chart"
+            },
+            {
+              "value": "feature-cut-resistance",
+              "label": "Cut resistance"
+            },
+            {
+              "value": "feature-no-velcro",
+              "label": "No velcro"
+            },
+            {
+              "value": "feature-full-coverage",
+              "label": "Full coverage"
+            },
+            {
+              "value": "feature-comfort",
+              "label": "Unrestricted comfort"
+            }
+          ],
+          "default": "none"
+        },
+        {
+          "type": "image_picker",
+          "id": "header_icon_image",
+          "label": "Card header icon image",
+          "info": "Overrides the icon above."
+        },
+        {
+          "type": "range",
+          "id": "header_icon_size",
+          "label": "Card header icon size",
+          "info": "0 uses the section value.",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "px",
+          "default": 0
+        },
+        {
+          "type": "header",
+          "content": "Item icon"
+        },
+        {
+          "type": "select",
+          "id": "item_icon",
+          "label": "Item icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "None"
+            },
+            {
+              "value": "care-star",
+              "label": "Star"
+            },
+            {
+              "value": "care-bullet",
+              "label": "Bullet"
+            },
+            {
+              "value": "care-cross",
+              "label": "Cross"
+            }
+          ],
+          "default": "care-bullet"
+        },
+        {
+          "type": "range",
+          "id": "item_icon_size",
+          "label": "Item icon size",
+          "info": "0 uses the section value.",
+          "min": 0,
+          "max": 60,
+          "step": 1,
+          "unit": "px",
+          "default": 0
+        },
+        {
+          "type": "range",
+          "id": "item_text_indent",
+          "label": "Item text indent",
+          "min": 0,
+          "max": 60,
+          "step": 1,
+          "unit": "px",
+          "default": 18
+        },
+        {
+          "type": "header",
+          "content": "Card colors"
+        },
+        {
+          "type": "color",
+          "id": "card_background",
+          "label": "Card background",
+          "default": "#222730"
+        },
+        {
+          "type": "color",
+          "id": "card_text_color",
+          "label": "Card text color",
+          "default": "#FFFFFF"
+        },
+        {
+          "type": "color",
+          "id": "header_background",
+          "label": "Card header background",
+          "default": "#000000"
+        },
+        {
+          "type": "color",
+          "id": "header_text_color",
+          "label": "Card header text color",
+          "default": "#FFFFFF"
+        },
+        {
+          "type": "header",
+          "content": "Items"
+        },
+        {
+          "type": "text",
+          "id": "item_1_title",
+          "label": "Item 1 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_1_text",
+          "label": "Item 1 text"
+        },
+        {
+          "type": "text",
+          "id": "item_2_title",
+          "label": "Item 2 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_2_text",
+          "label": "Item 2 text"
+        },
+        {
+          "type": "text",
+          "id": "item_3_title",
+          "label": "Item 3 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_3_text",
+          "label": "Item 3 text"
+        },
+        {
+          "type": "text",
+          "id": "item_4_title",
+          "label": "Item 4 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_4_text",
+          "label": "Item 4 text"
+        },
+        {
+          "type": "text",
+          "id": "item_5_title",
+          "label": "Item 5 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_5_text",
+          "label": "Item 5 text"
+        },
+        {
+          "type": "text",
+          "id": "item_6_title",
+          "label": "Item 6 title"
+        },
+        {
+          "type": "richtext",
+          "id": "item_6_text",
+          "label": "Item 6 text"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 20,
+  "presets": [
+    {
+      "name": "Care guide",
+      "blocks": [
+        {
+          "type": "care_group",
+          "settings": {
+            "title": "Washing",
+            "item_1_title": "Machine wash cold - gentle cycle, mild detergent",
+            "item_1_text": "<p>Cold water, mild detergent. Think spa day, not power wash. Your BattleGear has been through enough already.</p>",
+            "item_2_title": "Low tumble dry - no heat",
+            "item_2_text": "<p>Your baselayer is built for the ice, not the sauna. Low and slow wins every time - heat degrades the A9 cut protection.</p>",
+            "item_3_title": "Keep away from velcro and abrasive materials",
+            "item_3_text": "<p>Velcro and rough surfaces snag performance fabric. Keep your gear clear of them.</p>",
+            "item_4_title": "Wash separately from heavy garments",
+            "item_4_text": "<p>Jeans, jackets, and zippers like to pick fights with performance fabrics. Keep them out of the mix and let your BattleGear have the machine to itself.</p>"
+          }
+        },
+        {
+          "type": "care_group",
+          "settings": {
+            "title": "Warranty killers",
+            "item_1_title": "Bleach",
+            "item_1_text": "<p>Absolutely not, ever, under any circumstances.</p>",
+            "item_2_title": "Dry cleaning",
+            "item_2_text": "<p>Your gear is not a suit.</p>",
+            "item_3_title": "Heated drying or hot water",
+            "item_3_text": "<p>Kills cut protection.</p>"
+          }
+        },
+        {
+          "type": "care_group",
+          "settings": {
+            "title": "After use",
+            "item_1_title": "Hang to dry immediately",
+            "item_1_text": "<p>Off the ice and onto a hanger. Don't let it sit in a pile - wet gear stewing in its own glory is a smell you'll never forget.</p>",
+            "item_2_title": "Don't leave it in the hockey bag",
+            "item_2_text": "<p>The hockey bag is where equipment goes to marinate. Your BattleGear has serious science protecting it - don't make it fight harder than it has to.</p>",
+            "item_3_title": "Micro-Texpur® antimicrobial protection",
+            "item_3_text": "<p>Built-in defense against bacteria, odor, mold, and mildew. It's doing heavy lifting - but it's not a reason to leave your gear in the bag.</p>"
+          }
+        },
+        {
+          "type": "care_group",
+          "settings": {
+            "title": "Pro tips",
+            "item_1_title": "Wash in a delicates mesh laundry bag",
+            "item_1_text": "<p>It keeps the TITANOTEX fabric protected and your baselayer from tangling with anything it shouldn't.</p>",
+            "item_2_title": "Avoid crumpling into a ball and leaving in the road",
+            "item_2_text": "<p>We probably don't need to say this - but we said it anyway.</p>",
+            "item_3_title": "Skip the fabric softener",
+            "item_3_text": "<p>It coats the fibers and quietly reduces performance over time. Your gear doesn't need to smell like lavender to be elite.</p>"
+          }
+        },
+        {
+          "type": "care_group",
+          "settings": {
+            "title": "Product notice",
+            "item_text_indent": 0,
+            "item_1_title": "Our gear is made for performance and durability, but damage caused by velcro battles, zipper attacks, or rough washing is not considered a manufacturing defect. Treat it right, and your Titan will be ready for battle every time."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

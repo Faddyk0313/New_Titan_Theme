@@ -1,0 +1,15 @@
+<div
+  class="rich-text__btns {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}"
+>
+  {%- if btn_text != blank -%}
+      <a
+        class="btn btn--{{ btn_style }} rich-text__btn"
+        {% if btn_url != blank %}
+          href="{{ btn_url }}"
+        {% endif %}
+        aria-label="{{- btn_text | strip_html | escape -}}"
+      >
+        {{- btn_text -}}
+      </a>
+  {%- endif -%}
+</div>

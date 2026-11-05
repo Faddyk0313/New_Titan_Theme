@@ -1,0 +1,13 @@
+<pagination-component data-target='{{ target }}' data-container-id='{{ container_id }}'>
+  {%- if paginate.next -%}
+    {%- liquid
+      assign next_url = paginate.next.url
+      if pagination_params != blank
+        assign next_url = next_url | append: '&' | append: pagination_params
+      endif
+    -%}
+    <pagination-infinite-scroll class='pagination-infinite-scroll' data-url='{{ next_url }}'>
+      <div class='loading-spinner hidden pagination-infinite-scroll__loading-spinner'></div>
+    </pagination-infinite-scroll>
+  {%- endif -%}
+</pagination-component>

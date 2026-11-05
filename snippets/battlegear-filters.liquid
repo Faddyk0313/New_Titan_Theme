@@ -1,0 +1,313 @@
+{%- liquid
+  comment
+    Filter sidebar for the Battlegear collection layout.
+    Renders every filter Shopify returns, so groups added later in Search &
+    Discovery (Technology, Protection, Age Group ...) appear without a code
+    change.
+
+    Options render as pills by default. A filter whose label matches one of
+    the section's checkbox_filters settings renders as a check + label row
+    instead. The Size filter is split into sub-groups by value prefix.
+
+    Expects: results, show_divider, enable_uppercase_title, show_result_count,
+             show_color_swatches, initial_visible_option_count, id_prefix,
+             size_filter_label, size_group_prefixes, checkbox_filter_labels
+  endcomment
+
+  assign id_prefix = id_prefix | default: 'BgFilter'
+  assign initial_visible_option_count = initial_visible_option_count | default: 50
+
+  assign size_filter_label_downcase = size_filter_label | downcase | strip
+  assign checkbox_labels = checkbox_filter_labels | downcase | split: ','
+  assign hidden_labels = hidden_filter_labels | downcase | split: ','
+-%}
+
+<form class='bg-filters__form' data-filters-form>
+  {%- for filter in results.filters -%}
+    {%- liquid
+      assign filter_label_downcase = filter.label | downcase | strip
+
+      comment
+        Hidden groups are rendered elsewhere (the Youth/Senior toggle), so the
+        sidebar skips them.
+      endcomment
+      assign is_hidden_group = false
+      for label in hidden_labels
+        assign label_striped = label | strip
+        if label_striped != blank and label_striped == filter_label_downcase
+          assign is_hidden_group = true
+          break
+        endif
+      endfor
+
+      assign is_checkbox_group = false
+      for label in checkbox_labels
+        assign label_striped = label | strip
+        if label_striped != blank and label_striped == filter_label_downcase
+          assign is_checkbox_group = true
+          break
+        endif
+      endfor
+
+      assign is_size_group = false
+      if size_filter_label_downcase != blank and filter_label_downcase == size_filter_label_downcase
+        assign is_size_group = true
+      endif
+    -%}
+
+    {%- unless is_hidden_group -%}
+    <div class='bg-filters__item{% if show_divider %} bg-filters__item--bordered{% endif %}'>
+      <accordeon-component class='accordeon bg-filters__accordeon' data-aria-expanded='true'>
+        <accordeon-button
+          class='accordeon__btn bg-filters__label{% if enable_uppercase_title %} bg-filters__label--uppercase{% endif %}'
+          tabindex='0'
+        >
+          {{ filter.label }}
+          {%- if filter.active_values.size > 0 -%}
+            <span class='bg-filters__active-count'>({{ filter.active_values.size }})</span>
+          {%- endif -%}
+          {%- render 'icon', icon_name: 'chevron', class: 'accordeon__icon bg-filters__chevron' -%}
+        </accordeon-button>
+
+        <div class='accordeon__content-wrap' data-accordeon-content-wrap>
+          <div class='accordeon__content' data-accordeon-content>
+            {%- if is_size_group -%}
+              {%- comment -%}
+                Split the size values into the sub-groups named by
+                size_group_prefixes ("YOUTH:YTH-, SENIOR:SR-"). Values matching
+                no prefix fall into a trailing unlabelled group.
+              {%- endcomment -%}
+              {%- assign size_groups = size_group_prefixes | split: ',' -%}
+              {%- assign matched_values = '' -%}
+
+              {%- for group in size_groups -%}
+                {%- liquid
+                  assign group_parts = group | split: ':'
+                  assign group_name = group_parts | first | strip
+                  assign group_prefix = group_parts | last | strip | downcase
+                -%}
+                {%- if group_prefix != blank -%}
+                  {%- assign group_has_values = false -%}
+                  {%- for value in filter.values -%}
+                    {%- assign value_downcase = value.label | downcase -%}
+                    {%- if value_downcase contains group_prefix -%}
+                      {%- assign group_has_values = true -%}
+                      {%- break -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+
+                  {%- if group_has_values -%}
+                    <div class='bg-filters__subgroup'>
+                      <div class='bg-filters__subgroup-label'>
+                        {%- render 'icon', icon_name: 'chevron', class: 'bg-filters__subgroup-caret' -%}
+                        {{ group_name }}
+                      </div>
+                      <div class='bg-filters__options bg-filters__options--pills'>
+                        {%- for value in filter.values -%}
+                          {%- liquid
+                            assign value_downcase = value.label | downcase
+                            assign in_group = false
+                            if value_downcase contains group_prefix
+                              assign in_group = true
+                              assign matched_values = matched_values | append: value.value | append: '|'
+                            endif
+                          -%}
+                          {%- if in_group -%}
+                            {%- render 'battlegear-filter-pill',
+                              value: value,
+                              filter: filter,
+                              id_prefix: id_prefix,
+                              index: forloop.index,
+                              group_name: group_name,
+                              show_result_count: show_result_count
+                            -%}
+                          {%- endif -%}
+                        {%- endfor -%}
+                      </div>
+                    </div>
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+
+              {%- comment -%} Values that matched no prefix. {%- endcomment -%}
+              {%- assign ungrouped_exists = false -%}
+              {%- for value in filter.values -%}
+                {%- assign needle = value.value | append: '|' -%}
+                {%- unless matched_values contains needle -%}
+                  {%- assign ungrouped_exists = true -%}
+                  {%- break -%}
+                {%- endunless -%}
+              {%- endfor -%}
+
+              {%- if ungrouped_exists -%}
+                <div class='bg-filters__options bg-filters__options--pills'>
+                  {%- for value in filter.values -%}
+                    {%- assign needle = value.value | append: '|' -%}
+                    {%- unless matched_values contains needle -%}
+                      {%- render 'battlegear-filter-pill',
+                        value: value,
+                        filter: filter,
+                        id_prefix: id_prefix,
+                        index: forloop.index,
+                        group_name: 'other',
+                        show_result_count: show_result_count
+                      -%}
+                    {%- endunless -%}
+                  {%- endfor -%}
+                </div>
+              {%- endif -%}
+
+            {%- elsif filter.type == 'price_range' -%}
+              {%- liquid
+                assign currency_symbol = cart.currency.symbol
+                assign max_price = filter.range_max | divided_by: 100.00 | ceil
+                assign max_value = filter.max_value.value | default: filter.range_max | divided_by: 100.00
+                assign min_value = filter.min_value.value | default: 0.00 | divided_by: 100.00
+              -%}
+              <price-range
+                data-currency-format='{{ shop.money_format | strip_html }}'
+                class='bg-filters__price-range filters__price-range'
+              >
+                <div class='price-range__slider-wrap'>
+                  <div class='price-range__slider'>
+                    <div class='price-range__slider-progress' data-price-range-progress></div>
+                  </div>
+                </div>
+
+                <div class='price-range__inputs' data-price-range-inputs-wrapper>
+                  <label for='{{ id_prefix }}-MinPriceRangeInput' class='visually-hidden">'>
+                    {{- 'shop.screen_reader.aria_label_for_min_range_input' | t -}}
+                  </label>
+                  <input
+                    tabindex='-1'
+                    id='{{ id_prefix }}-MinPriceRangeInput'
+                    class='price-range__input'
+                    data-price-min-range-input
+                    data-price-range-min-input
+                    name='{{ filter.min_value.param_name }}'
+                    max='{{ max_price }}'
+                    min='0'
+                    step='1'
+                    type='range'
+                    value='{{ min_value }}'
+                  >
+                  <label for='{{ id_prefix }}-MaxPriceRangeInput' class='visually-hidden'>
+                    {{- 'shop.screen_reader.aria_label_for_max_range_input' | t -}}
+                  </label>
+                  <input
+                    tabindex='-1'
+                    id='{{ id_prefix }}-MaxPriceRangeInput'
+                    class='price-range__input'
+                    data-price-max-range-input
+                    data-price-range-max-input
+                    name='{{ filter.max_value.param_name }}'
+                    max='{{ max_price }}'
+                    min='0'
+                    step='1'
+                    type='range'
+                    value='{{ max_value }}'
+                  >
+                </div>
+
+                <div class='price-range__numbers'>
+                  <div class='price-range__number-wrapper'>
+                    <span class='price-range__currency-symbol'>{{ currency_symbol }}</span>
+                    <label for='{{ id_prefix }}-MinPriceNumberInput' class='visually-hidden'>
+                      {{- 'shop.screen_reader.aria_label_for_min_number_input' | t -}}
+                    </label>
+                    <input
+                      id='{{ id_prefix }}-MinPriceNumberInput'
+                      class='input input--{{ settings.input_style }} price-range__number'
+                      data-price-min-range-number
+                      type='number'
+                      value='{{ min_value }}'
+                    >
+                  </div>
+
+                  <span>-</span>
+
+                  <div class='price-range__number-wrapper'>
+                    <span class='price-range__currency-symbol'>{{ currency_symbol }}</span>
+                    <label for='{{ id_prefix }}-MaxPriceNumberInput' class='visually-hidden'>
+                      {{- 'shop.screen_reader.aria_label_for_max_number_input' | t -}}
+                    </label>
+                    <input
+                      id='{{ id_prefix }}-MaxPriceNumberInput'
+                      class='input input--{{ settings.input_style }} price-range__number'
+                      data-price-max-range-number
+                      type='number'
+                      value='{{ max_value }}'
+                    >
+                  </div>
+                </div>
+              </price-range>
+
+            {%- elsif is_checkbox_group -%}
+              <div class='bg-filters__options bg-filters__options--checks'>
+                {%- for value in filter.values -%}
+                  <label
+                    class='bg-filters__check{% if value.count == 0 and value.active == false %} bg-filters__check--disabled{% endif %}'
+                    for='{{ id_prefix }}-{{ filter.label | handle }}-{{ forloop.index }}'
+                    data-list-item
+                    {% if value.count != 0 and value.active %}
+                      data-filters-checkbox
+                    {% endif %}
+                  >
+                    <input
+                      class='checkbox__input'
+                      id='{{ id_prefix }}-{{ filter.label | handle }}-{{ forloop.index }}'
+                      type='checkbox'
+                      name='{{ value.param_name }}'
+                      value='{{ value.value }}'
+                      {% if value.active %}
+                        checked
+                      {% endif %}
+                      {% if value.count == 0 and value.active == false %}
+                        disabled
+                      {% endif %}
+                    >
+                    <span class='bg-filters__check-box'>
+                      {%- render 'icon', icon_name: 'check', class: 'bg-filters__check-icon' -%}
+                    </span>
+                    <span class='bg-filters__check-label'>
+                      {{- value.label | escape -}}
+                      {%- if show_result_count -%}
+                        <span class='bg-filters__option-count'>({{ value.count }})</span>
+                      {%- endif -%}
+                    </span>
+                  </label>
+                {%- endfor -%}
+              </div>
+
+            {%- elsif show_color_swatches and filter.presentation != 'text' -%}
+              <div class='bg-filters__options bg-filters__options--swatches'>
+                {%- render 'shop-colors',
+                  filter: filter,
+                  is_primary_swatch: true,
+                  option_style: 'checkbox-outline',
+                  show_result_count: show_result_count,
+                  show_color_swatches: show_color_swatches
+                -%}
+              </div>
+
+            {%- else -%}
+              <div class='bg-filters__options bg-filters__options--pills'>
+                {%- for value in filter.values -%}
+                  {%- render 'battlegear-filter-pill',
+                    value: value,
+                    filter: filter,
+                    id_prefix: id_prefix,
+                    index: forloop.index,
+                    group_name: 'all',
+                    show_result_count: show_result_count
+                  -%}
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+      </accordeon-component>
+    </div>
+    {%- endunless -%}
+  {%- endfor -%}
+</form>

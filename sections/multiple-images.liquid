@@ -1,0 +1,440 @@
+{%- liquid
+  assign options = section.settings
+  assign color_scheme = options.color_scheme
+  assign alignment = options.alignment
+  assign container_size = options.container_size
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign title = options.title | default: ' '
+  assign heading_size = options.heading_size
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{section.id}}{
+        --gsc-section-spacing-top: {{ section_spacing_top }}px;
+        --gsc-section-spacing-bottom: {{ section_spacing_bottom }}px;
+    }
+
+    .image-tabs__image-container {
+      width: 100%;
+      margin-top: 2rem;
+      aspect-ratio: 16 / 4;
+      overflow: hidden;
+    }
+
+    .image-tabs__image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    tab-component[aria-hidden='false'] .image-tabs__image-container {
+      animation: slideUpFadeIn 0.5s ease-out;
+    }
+
+    @keyframes slideUpFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+{% capture section_header %}
+  {% if section.blocks.size > 1 %}
+    <div class='container__header collection__header collection__header--with-tabs {% if alignment == 'center' %} collection__header--center {% elsif alignment == 'right' %} collection__header--right {% endif %}'>
+      {%- if title != blank -%}
+        <h2 class='collection__title {{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: 1;'
+          {% endif %}
+        >{{ title }}</h2>
+      {%- endif -%}
+
+      <div class='collection__tab-list'>
+        {%- for block in section.blocks -%}
+          <div
+            data-tabs-name
+            class='tab-name collection__tab-name {% if forloop.index == 1 %}selected{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+            {% if enable_content_slide_in %}
+              style='--gsc-animation-order: {{forloop.index}}; font-size: {{ section.settings.tab_text_size }}px;'
+            {% else %}
+              style='font-size: {{ section.settings.tab_text_size }}px;'
+            {% endif %}
+            data-id='{{ forloop.index }}'
+            tabindex="0"
+          >
+            {{ block.settings.tab_label }}
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <carousel-component
+        class='carousel collection__tab-carousel {% if alignment == 'center' %}collection__tab-carousel--center{% endif %} {% if alignment == 'right' %}collection__tab-carousel--right{% endif %}'
+        data-section-id='{{ section.id }}'
+        data-breakpoints='
+          {
+            "(max-width: 768px)": { "dragFree": true },
+            "(min-width: 768px)": { "dragFree": false }
+          }
+        '
+        data-contain-scroll='keepSnaps'
+        data-draggable
+        data-align="start"
+        data-axis="x"
+      >
+        <div
+          class='carousel__viewport carousel__viewport--overflow collection__tab-carousel-viewport embla'
+          data-carousel-viewport
+        >
+          <div class='carousel__container' data-carousel-container>
+            {%- for block in section.blocks -%}
+              <div
+                data-tabs-name
+                class='carousel__slide tab-name collection__tab-name {% if forloop.index == 1 %}selected{% endif %}'
+                data-id='{{ forloop.index }}'
+                tabindex="0"
+              >
+                {{ block.settings.tab_label }}
+              </div>
+            {%- endfor -%}
+          </div>
+        </div>
+      </carousel-component>
+    </div>
+  {% elsif section.blocks.size == 1 %}
+    {%- if title != blank -%}
+      <div class='container__header collection__header {% if alignment == 'center' %} collection__header--center {% elsif alignment == 'right' %} collection__header--right {% endif %}'>
+        <h2 class='collection__title {{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: 1;'
+          {% endif %}>{{ title }}</h2>
+      </div>
+    {%- endif -%}
+  {% endif %}
+{% endcapture %}
+
+<div class='collection section section-{{ section.id }} color-{{ color_scheme }}'>
+  <div class='collection__container container container--{{ container_size }} section-spacing'>
+    {%- if section.blocks.size > 1 -%}
+      <tabs-component data-selected-tab-id='1'>
+        {{ section_header }}
+
+        <div class='tabs' data-tabs-container>
+          <template data-tabs-elements-template>
+            {%- for block in section.blocks offset: 1 -%}
+              <tab-component
+                class='tab'
+                aria-hidden='true'
+                data-id='{{ forloop.index | plus: 1 }}'
+                {{ block.shopify_attributes }}
+              >
+                <div class='image-tabs__image-container'>
+                  {%- if block.settings.image != blank -%}
+                    <img
+                      src="{{ block.settings.image | image_url: width: 2000 }}"
+                      srcset="{{ block.settings.image | image_url: width: 600 }} 600w,
+                              {{ block.settings.image | image_url: width: 1000 }} 1000w,
+                              {{ block.settings.image | image_url: width: 1500 }} 1500w,
+                              {{ block.settings.image | image_url: width: 2000 }} 2000w"
+                      sizes="100vw"
+                      alt="{{ block.settings.image.alt | escape }}"
+                      class='image-tabs__image'
+                      loading="lazy"
+                    >
+                  {%- else -%}
+                    {{ 'image' | placeholder_svg_tag: 'image-tabs__image' }}
+                  {%- endif -%}
+                </div>
+              </tab-component>
+            {%- endfor -%}
+          </template>
+
+          {%- for block in section.blocks limit: 1 -%}
+            <tab-component
+              class='tab'
+              aria-hidden='false'
+              data-id='1'
+              {{ block.shopify_attributes }}
+            >
+              <div class='image-tabs__image-container'>
+                {%- if block.settings.image != blank -%}
+                  <img
+                    src="{{ block.settings.image | image_url: width: 2000 }}"
+                    srcset="{{ block.settings.image | image_url: width: 600 }} 600w,
+                            {{ block.settings.image | image_url: width: 1000 }} 1000w,
+                            {{ block.settings.image | image_url: width: 1500 }} 1500w,
+                            {{ block.settings.image | image_url: width: 2000 }} 2000w"
+                    sizes="100vw"
+                    alt="{{ block.settings.image.alt | escape }}"
+                    class='image-tabs__image'
+                    loading="eager"
+                  >
+                {%- else -%}
+                  {{ 'image' | placeholder_svg_tag: 'image-tabs__image' }}
+                {%- endif -%}
+              </div>
+            </tab-component>
+          {%- endfor -%}
+        </div>
+      </tabs-component>
+    {%- elsif section.blocks.size == 1 -%}
+      {{ section_header }}
+
+      {%- for block in section.blocks -%}
+        <div class='image-tabs__image-container' {{ block.shopify_attributes }}>
+          {%- if block.settings.image != blank -%}
+            <img
+              src="{{ block.settings.image | image_url: width: 2000 }}"
+              srcset="{{ block.settings.image | image_url: width: 600 }} 600w,
+                      {{ block.settings.image | image_url: width: 1000 }} 1000w,
+                      {{ block.settings.image | image_url: width: 1500 }} 1500w,
+                      {{ block.settings.image | image_url: width: 2000 }} 2000w"
+              sizes="100vw"
+              alt="{{ block.settings.image.alt | escape }}"
+              class='image-tabs__image'
+              loading="eager"
+            >
+          {%- else -%}
+            {{ 'image' | placeholder_svg_tag: 'image-tabs__image' }}
+          {%- endif -%}
+        </div>
+      {%- endfor -%}
+    {% endif %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Image Tabs",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "primary",
+          "label": "Primary"
+        },
+        {
+          "value": "secondary",
+          "label": "Secondary"
+        },
+        {
+          "value": "custom-1",
+          "label": "Custom 1"
+        },
+        {
+          "value": "custom-2",
+          "label": "Custom 2"
+        },
+        {
+          "value": "custom-3",
+          "label": "Custom 3"
+        },
+        {
+          "value": "white",
+          "label": "White"
+        },
+        {
+          "value": "black",
+          "label": "Black"
+        },
+        {
+          "value": "custom-5",
+          "label": "Custom 5"
+        }
+      ],
+      "default": "default",
+      "label": "Color scheme"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "options": [
+        {
+          "value": "full-screen",
+          "label": "Screen width"
+        },
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "small",
+          "label": "Small"
+        }
+      ],
+      "default": "page-width",
+      "label": "Container size"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Image Tabs"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        {
+          "value": "display1",
+          "label": "Display 1"
+        },
+        {
+          "value": "display2",
+          "label": "Display 2"
+        },
+        {
+          "value": "display3",
+          "label": "Display 3"
+        },
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        },
+        {
+          "value": "caption1",
+          "label": "Caption 1"
+        },
+        {
+          "value": "caption2",
+          "label": "Caption 2"
+        },
+        {
+          "value": "caption3",
+          "label": "Caption 3"
+        }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Heading alignment",
+      "default": "center"
+    },
+    // TBG Custom Code
+    {
+      "type": "range",
+      "id": "tab_text_size",
+      "label": "Tab text size",
+      "min": 10,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "default": 13,
+      "info": "Controls the size of tab titles (in pixels)."
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 48,
+      "unit": "px",
+      "label": "Top spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 48,
+      "unit": "px",
+      "label": "Bottom spacing"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image_tab",
+      "name": "Image Tab",
+      "settings": [
+        {
+          "type": "text",
+          "id": "tab_label",
+          "label": "Tab label",
+          "default": "Tab"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image Tabs",
+      "blocks": [
+        {
+          "type": "image_tab",
+          "settings": {
+            "tab_label": "Tab 1"
+          }
+        },
+        {
+          "type": "image_tab",
+          "settings": {
+            "tab_label": "Tab 2"
+          }
+        },
+        {
+          "type": "image_tab",
+          "settings": {
+            "tab_label": "Tab 3"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,1092 @@
+{%- comment -%}TBG custom Code{%- endcomment -%}
+{%- liquid
+  assign options = section.settings
+
+  assign subheading = options.subheading
+  assign subheading_size = options.subheading_size
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+  assign body = options.body
+  assign body_size = options.body_size
+
+  assign container_size = options.container_size
+
+  comment 
+  TBG custom Code — extra side margins on text/tabs, page-width only 
+  endcomment
+  assign text_side_margin_value = '0px'
+  if container_size == 'page-width'
+    if options.text_side_margin_type == 'custom'
+      assign text_side_margin_value = options.text_side_margin | append: '%'
+    else
+      comment
+        Same container and same padding token the image banners put on their
+        content wrap, so the text edges match exactly at every width.
+      endcomment
+      assign text_side_margin_value = options.text_side_margin_basic_size | prepend: 'var(--gsc-content-padding-' | append: ')'
+    endif
+  endif
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+
+  assign accent_color = options.accent_color
+  assign tab_text_size = options.tab_text_size
+  assign tab_text_size_mobile = options.tab_text_size_mobile
+  assign tab_border_width = options.tab_border_width
+  assign tabs_gap = options.tabs_gap
+  assign content_gap = options.content_gap
+
+  assign desktop_image_ratio = options.desktop_image_ratio
+  assign mobile_image_ratio = options.mobile_image_ratio
+  assign overlay_opacity = options.overlay_opacity
+  assign card_title_size = options.card_title_size
+  assign card_text_size = options.card_text_size
+  assign card_max_width = options.card_max_width
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{%- liquid
+  assign show_background = options.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --nlf-accent: {{ accent_color }};
+      --nlf-tabs-gap: {{ tabs_gap }}px;
+      --nlf-content-gap: {{ content_gap }}px;
+      --nlf-text-side-margin: {{ text_side_margin_value }};
+      --nlf-header-gap: {{ options.header_gap }}px;
+      --nlf-subheading-gap: {{ options.subheading_gap }}px;
+      --nlf-tab-border-width: {{ tab_border_width }}px;
+      --nlf-tab-fz: {{ tab_text_size_mobile }}px;
+      --nlf-img-ratio: {{ mobile_image_ratio }}%;
+      --nlf-overlay-opacity: {{ overlay_opacity | divided_by: 100.00 }};
+      --nlf-card-max-width: 100%;
+      --nlf-heading-lh: {{ options.heading_line_height_mobile | divided_by: 100.00 }};
+      --nlf-card-title-lh: {{ options.card_title_line_height_mobile | divided_by: 100.00 }};
+      --nlf-card-text-lh: {{ options.card_text_line_height_mobile | divided_by: 100.00 }};
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} {
+        --nlf-tab-fz: {{ tab_text_size }}px;
+        --nlf-img-ratio: {{ desktop_image_ratio }}%;
+        --nlf-card-max-width: {{ card_max_width }}%;
+        --nlf-heading-lh: {{ options.heading_line_height | divided_by: 100.00 }};
+        --nlf-card-title-lh: {{ options.card_title_line_height | divided_by: 100.00 }};
+        --nlf-card-text-lh: {{ options.card_text_line_height | divided_by: 100.00 }};
+      }
+    }
+
+    .section-{{ section.id }} .nlf {
+      display: flex;
+      flex-direction: column;
+      gap: var(--nlf-content-gap);
+    }
+
+    .section-{{ section.id }} .nlf__header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--nlf-header-gap);
+    }
+
+    .section-{{ section.id }} .nlf__label {
+      color: var(--nlf-accent);
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .nlf__subheading {
+      color: var(--nlf-accent);
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    /* Dedicated gap between the subheading and the heading, on top of the
+       header's own row gap. */
+    .section-{{ section.id }} .nlf__subheading + .nlf__title {
+      margin-block-start: calc(var(--nlf-subheading-gap) - var(--nlf-header-gap));
+    }
+
+    .section-{{ section.id }} .nlf__title {
+      margin: 0;
+      text-transform: uppercase;
+      line-height: var(--nlf-heading-lh);
+    }
+
+    /* The heading is a richtext field, so flatten its wrapping paragraphs. */
+    .section-{{ section.id }} .nlf__title p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .nlf__body {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .nlf__body > *:first-child {
+      margin-block-start: 0;
+    }
+
+    .section-{{ section.id }} .nlf__body > *:last-child {
+      margin-block-end: 0;
+    }
+
+    /* Tab triggers */
+    .section-{{ section.id }} .nlf__tab-list {
+      display: none;
+    }
+
+    .section-{{ section.id }} .nlf__tab-carousel {
+      --gsc-space-between-cards: var(--nlf-tabs-gap);
+
+      display: flex;
+      align-items: stretch;
+    }
+
+    /* Let the pills keep their intrinsic width instead of the carousel default
+       of one full-width slide per view. */
+    .section-{{ section.id }} .nlf__tab-slide {
+      min-width: 0;
+      flex: 0 0 auto;
+      display: flex;
+    }
+
+    .section-{{ section.id }} .nlf__tab-name {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.4rem 2.4rem;
+      border: var(--nlf-tab-border-width) solid var(--nlf-accent);
+      color: var(--gsc-text-color-100);
+      background-color: transparent;
+      font-size: var(--nlf-tab-fz);
+      font-weight: var(--gsc-font-weight-bold);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background-color var(--gsc-animation-duration, 0.2s) ease,
+        color var(--gsc-animation-duration, 0.2s) ease;
+    }
+
+    .section-{{ section.id }} .nlf__tab-name.selected {
+      background-color: var(--nlf-accent);
+      color: {{ options.tab_active_text_color }};
+    }
+
+    /* Tab panels */
+    .section-{{ section.id }} .nlf__tabs {
+      position: relative;
+    }
+
+    .section-{{ section.id }} .nlf__tab {
+      display: block;
+    }
+
+    .section-{{ section.id }} .nlf__media {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-{{ section.id }} .nlf__media::before {
+      content: '';
+      display: block;
+      padding-block-end: var(--nlf-img-ratio);
+    }
+
+    .section-{{ section.id }} .nlf__image,
+    .section-{{ section.id }} .nlf__media .placeholder-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .section-{{ section.id }} .nlf__media::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, var(--nlf-overlay-opacity)) 0%,
+        rgba(0, 0, 0, 0) 60%
+      );
+    }
+
+    .section-{{ section.id }} .nlf__card {
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-end: 0;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      max-width: var(--nlf-card-max-width);
+      padding: var(--gsc-content-padding-m);
+      color: {{ options.card_text_color }};
+    }
+
+    .section-{{ section.id }} .nlf__card-head {
+      display: flex;
+      align-items: center;
+      gap: 1.6rem;
+    }
+
+    .section-{{ section.id }} .nlf__card-icon {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: {{ options.card_icon_size_mobile }}px;
+      height: {{ options.card_icon_size_mobile }}px;
+      color: var(--nlf-accent);
+    }
+
+    .section-{{ section.id }} .nlf__card-icon svg,
+    .section-{{ section.id }} .nlf__card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      color: currentColor;
+    }
+
+    .section-{{ section.id }} .nlf__card-title {
+      margin: 0;
+      text-transform: uppercase;
+      line-height: var(--nlf-card-title-lh);
+    }
+
+    .section-{{ section.id }} .nlf__card-title p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .nlf__card-text,
+    .section-{{ section.id }} .nlf__card-text p {
+      line-height: var(--nlf-card-text-lh);
+    }
+
+    .section-{{ section.id }} .nlf__card-text > *:first-child {
+      margin-block-start: 0;
+    }
+
+    .section-{{ section.id }} .nlf__card-text > *:last-child {
+      margin-block-end: 0;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} .nlf__header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        column-gap: var(--nlf-content-gap);
+        align-items: start;
+      }
+
+      .section-{{ section.id }} .nlf__header-main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nlf-header-gap);
+      }
+
+      .section-{{ section.id }} .nlf__body {
+        padding-block-start: {{ options.body_offset_top }}px;
+      }
+
+      .section-{{ section.id }} .nlf__tab-carousel {
+        display: none;
+      }
+
+      .section-{{ section.id }} .nlf__tab-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--nlf-tabs-gap);
+      }
+
+      {%- comment -%}TBG custom Code{%- endcomment -%}
+      .section-{{ section.id }} .nlf__header,
+      .section-{{ section.id }} .nlf__tab-list {
+        margin-inline: var(--nlf-text-side-margin);
+      }
+
+      .section-{{ section.id }} .nlf__tab-name {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+
+      .section-{{ section.id }} .nlf__card-icon {
+        width: {{ options.card_icon_size }}px;
+        height: {{ options.card_icon_size }}px;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <tabs-component class='nlf' data-selected-tab-id='1'>
+      {%- if subheading != blank or heading != blank or body != blank -%}
+        <div class='nlf__header'>
+          <div class='nlf__header-main'>
+            {%- if subheading != blank -%}
+              <p
+                class='nlf__subheading {{ subheading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                style='--gsc-animation-order: 2;'
+              >
+                {{ subheading }}
+              </p>
+            {%- endif -%}
+
+            {%- if heading != blank -%}
+              <div
+                class='nlf__title {{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                style='--gsc-animation-order: 3;'
+                role='heading'
+                aria-level='2'
+              >
+                {{ heading }}
+              </div>
+            {%- endif -%}
+          </div>
+
+          {%- if body != blank -%}
+            <div
+              class='nlf__body rte {{ body_size }} body-color body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 4;'
+            >
+              {{ body }}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        {%- comment -%}TBG custom Code — desktop tab triggers{%- endcomment -%}
+        <div class='nlf__tab-list'>
+          {%- for block in section.blocks -%}
+            <div
+              data-tabs-name
+              data-id='{{ forloop.index }}'
+              class='nlf__tab-name {% if forloop.first %}selected{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: {{ forloop.index }};'
+              tabindex='0'
+              role='button'
+            >
+              {{ block.settings.tab_label }}
+            </div>
+          {%- endfor -%}
+        </div>
+
+        {%- comment -%}TBG custom Code — mobile scrollable tab triggers{%- endcomment -%}
+        <carousel-component
+          id='nlf-tab-carousel-{{ section.id }}'
+          class='carousel nlf__tab-carousel'
+          data-section-id='{{ section.id }}'
+          data-contain-scroll='keepSnaps'
+          data-draggable
+          data-drag-free
+          data-align='start'
+          data-axis='x'
+        >
+          <div class='carousel__viewport carousel__viewport--overflow embla' data-carousel-viewport>
+            <div class='carousel__container' data-carousel-container>
+              {%- for block in section.blocks -%}
+                <div class='carousel__slide nlf__tab-slide'>
+                  <div
+                    data-tabs-name
+                    data-id='{{ forloop.index }}'
+                    class='nlf__tab-name {% if forloop.first %}selected{% endif %}'
+                    tabindex='0'
+                    role='button'
+                  >
+                    {{ block.settings.tab_label }}
+                  </div>
+                </div>
+              {%- endfor -%}
+            </div>
+          </div>
+        </carousel-component>
+
+        {%- comment -%}
+          TBG custom Code — bring the clicked tab to the start of the mobile row.
+          Uses the theme carousel's own `focusScroll`, which snaps to the slide's
+          scroll snap and naturally stops short for the trailing slides
+          (`containScroll: keepSnaps` + `align: start`).
+        {%- endcomment -%}
+        <script>
+          (() => {
+            const carousel = document.querySelector('#nlf-tab-carousel-{{ section.id }}');
+
+            if (!carousel) return;
+
+            carousel.addEventListener('click', (event) => {
+              const slide = event.target.closest('.nlf__tab-slide');
+
+              if (!slide) return;
+
+              customElements.whenDefined('carousel-component').then(() => {
+                if (typeof carousel.focusScroll === 'function') {
+                  carousel.focusScroll(slide);
+                }
+              });
+            });
+          })();
+        </script>
+
+        {%- comment -%}
+          TBG custom Code — the first panel stays in the DOM, the rest live inside the
+          template, matching how the theme's `tabs-component` collects its tabs.
+        {%- endcomment -%}
+        <div class='nlf__tabs' data-tabs-container>
+          <template data-tabs-elements-template>
+            {%- for block in section.blocks offset: 1 -%}
+              {%- assign tab_index = forloop.index | plus: 1 -%}
+              {%- render 'next-level-features-tab',
+                block: block,
+                tab_index: tab_index,
+                card_title_size: card_title_size,
+                card_text_size: card_text_size
+              -%}
+            {%- endfor -%}
+          </template>
+
+          {%- for block in section.blocks limit: 1 -%}
+            {%- render 'next-level-features-tab',
+              block: block,
+              tab_index: 1,
+              card_title_size: card_title_size,
+              card_text_size: card_text_size
+            -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </tabs-component>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Next-level features",
+  "tag": "section",
+  "class": "section",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "NEXT-LEVEL FEATURES"
+    },
+    {
+      "type": "select",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "options": [
+        { "value": "caption", "label": "Caption" },
+        { "value": "body6", "label": "Body 6" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body0", "label": "Body 0" },
+        { "value": "h6", "label": "H6" },
+        { "value": "h5", "label": "H5" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h3", "label": "H3" }
+      ],
+      "default": "h6"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading",
+      "info": "Use Shift + Enter to control where the heading wraps.",
+      "default": "<p>Not all neck guards<br>are created equal</p>"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h5", "label": "H5" },
+        { "value": "h6", "label": "H6" }
+      ],
+      "default": "h1"
+    },
+    {
+      "type": "range",
+      "id": "heading_line_height",
+      "min": 80,
+      "max": 180,
+      "step": 5,
+      "unit": "%",
+      "label": "Heading line height (desktop)",
+      "default": 95
+    },
+    {
+      "type": "range",
+      "id": "heading_line_height_mobile",
+      "min": 80,
+      "max": 180,
+      "step": 5,
+      "unit": "%",
+      "label": "Heading line height (mobile)",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "header_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between header lines",
+      "info": "Spacing between the label, subheading and heading.",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "subheading_gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between subheading and heading",
+      "default": 12
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Text",
+      "default": "<p>Titan BattleGear delivers the highest level of cut resistance in hockey where it counts – neck and wrists. Play with confidence knowing you're fully covered.</p>"
+    },
+    {
+      "type": "select",
+      "id": "body_size",
+      "label": "Text size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body2"
+    },
+    {
+      "type": "range",
+      "id": "body_offset_top",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "label": "Text top offset (desktop)",
+      "info": "Aligns the right-hand text with the heading.",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Tabs"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "info": "Used for the tab borders, active tab and the overlay icon.",
+      "default": "#d4ff32"
+    },
+    {
+      "type": "color",
+      "id": "tab_active_text_color",
+      "label": "Active tab text color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "tab_text_size",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Tab text size (desktop)",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "tab_text_size_mobile",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "label": "Tab text size (mobile)",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "tab_border_width",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "unit": "px",
+      "label": "Tab border width",
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "tabs_gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between tabs",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Media & overlay"
+    },
+    {
+      "type": "range",
+      "id": "desktop_image_ratio",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Image aspect ratio (desktop)",
+      "info": "Height relative to width.",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_ratio",
+      "min": 20,
+      "max": 150,
+      "step": 5,
+      "unit": "%",
+      "label": "Image aspect ratio (mobile)",
+      "default": 50
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay opacity",
+      "default": 55
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Overlay text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "card_icon_size",
+      "min": 24,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Overlay icon size (desktop)",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "card_icon_size_mobile",
+      "min": 24,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Overlay icon size (mobile)",
+      "default": 64
+    },
+    {
+      "type": "select",
+      "id": "card_title_size",
+      "label": "Overlay title size",
+      "options": [
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h5", "label": "H5" },
+        { "value": "h6", "label": "H6" }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "card_text_size",
+      "label": "Overlay text size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "range",
+      "id": "card_title_line_height",
+      "min": 80,
+      "max": 180,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay title line height (desktop)",
+      "default": 95
+    },
+    {
+      "type": "range",
+      "id": "card_title_line_height_mobile",
+      "min": 80,
+      "max": 180,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay title line height (mobile)",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "card_text_line_height",
+      "min": 90,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay text line height (desktop)",
+      "default": 115
+    },
+    {
+      "type": "range",
+      "id": "card_text_line_height_mobile",
+      "min": 90,
+      "max": 200,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay text line height (mobile)",
+      "default": 110
+    },
+    {
+      "type": "range",
+      "id": "card_max_width",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay max width (desktop)",
+      "default": 35
+    },
+    {
+      "type": "header",
+      "content": "General section settings"
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "label": "Gap between blocks",
+      "default": 32
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "select",
+      "id": "text_side_margin_type",
+      "label": "Text and tabs side margins",
+      "info": "Only applies on desktop when container size is Page width.",
+      "options": [
+        { "value": "basic", "label": "Basic" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "basic",
+      "visible_if": "{{ section.settings.container_size == 'page-width' }}"
+    },
+    {
+      "type": "select",
+      "id": "text_side_margin_basic_size",
+      "label": "Basic margin size",
+      "options": [
+        { "value": "m", "label": "M" },
+        { "value": "xl", "label": "L" },
+        { "value": "3xl", "label": "XL" }
+      ],
+      "default": "m",
+      "visible_if": "{{ section.settings.container_size == 'page-width' and section.settings.text_side_margin_type == 'basic' }}"
+    },
+    {
+      "type": "range",
+      "id": "text_side_margin",
+      "min": 0,
+      "max": 20,
+      "step": 0.5,
+      "unit": "%",
+      "label": "Custom side margins",
+      "default": 0,
+      "visible_if": "{{ section.settings.container_size == 'page-width' and section.settings.text_side_margin_type == 'custom' }}"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" }
+      ],
+      "default": "default",
+      "label": "Corner rounding"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        { "value": "default", "label": "Use global color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default",
+      "label": "Color scheme variant"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "1",
+      "label": "Color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": true,
+      "label": "Show section background"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "Add desktop side paddings"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "Add mobile side paddings"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        {
+          "type": "text",
+          "id": "tab_label",
+          "label": "Tab label",
+          "default": "Velcro free"
+        },
+        {
+          "type": "header",
+          "content": "Image"
+        },
+        {
+          "type": "image_picker",
+          "id": "desktop_image",
+          "label": "Desktop image"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "Mobile image",
+          "info": "Falls back to the desktop image."
+        },
+        {
+          "type": "text",
+          "id": "image_alt",
+          "label": "Image alt text"
+        },
+        {
+          "type": "header",
+          "content": "Overlay content"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "feature-cut-resistance", "label": "Cut resistance" },
+            { "value": "feature-no-velcro", "label": "No velcro" },
+            { "value": "feature-full-coverage", "label": "Full coverage" },
+            { "value": "feature-comfort", "label": "Unrestricted comfort" }
+          ],
+          "default": "feature-comfort"
+        },
+        {
+          "type": "image_picker",
+          "id": "icon_image",
+          "label": "Custom icon image",
+          "info": "Overrides the icon above."
+        },
+        {
+          "type": "richtext",
+          "id": "card_title",
+          "label": "Title",
+          "info": "Use Shift + Enter to control where the title wraps.",
+          "default": "<p>Unrestricted<br>comfort</p>"
+        },
+        {
+          "type": "richtext",
+          "id": "card_text",
+          "label": "Text",
+          "default": "<p>Thermo-regulated, moisture-wicking 4-way stretch fabric – Engineered with targeted back and underarm mesh for maximum breathability.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Next-level features",
+      "blocks": [
+        {
+          "type": "feature",
+          "settings": {
+            "tab_label": "Velcro free",
+            "icon": "feature-no-velcro",
+            "card_title": "<p>Velcro free</p>",
+            "card_text": "<p>No hook-and-loop closures to snag, scratch or wear out over time.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "tab_label": "Full coverage",
+            "icon": "feature-full-coverage",
+            "card_title": "<p>Full coverage</p>",
+            "card_text": "<p>Protection where it counts – neck and wrists – with no exposed gaps.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "tab_label": "Unrestricted comfort",
+            "icon": "feature-comfort",
+            "card_title": "<p>Unrestricted<br>comfort</p>",
+            "card_text": "<p>Thermo-regulated, moisture-wicking 4-way stretch fabric – Engineered with targeted back and underarm mesh for maximum breathability.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "tab_label": "Unmatched style",
+            "icon": "feature-cut-resistance",
+            "card_title": "<p>Unmatched style</p>",
+            "card_text": "<p>Clean, athletic lines that look as good as they protect.</p>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "tab_label": "Made in the USA",
+            "icon": "feature-cut-resistance",
+            "card_title": "<p>Made in the USA</p>",
+            "card_text": "<p>Designed, engineered and manufactured in the United States.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

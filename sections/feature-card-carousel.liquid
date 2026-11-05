@@ -1,0 +1,1111 @@
+{%- comment -%}TBG custom Code{%- endcomment -%}
+{%- liquid
+  assign options = section.settings
+
+  assign subheading = options.subheading
+  assign subheading_size = options.subheading_size
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+
+  assign card_title_size = options.card_title_size
+  assign panel_text_size = options.panel_text_size
+  assign metric_size = options.metric_size
+  assign metric_label_size = options.metric_label_size
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{%- liquid
+  assign show_background = options.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --fcc-accent: {{ options.accent_color }};
+      --fcc-card-bg: {{ options.card_background }};
+      --fcc-footer-bg: {{ options.footer_background }};
+      --fcc-text: {{ options.card_text_color }};
+      --fcc-gap: {{ options.cards_gap_mobile }}px;
+      --fcc-header-gap: {{ options.header_gap }}px;
+      --fcc-content-gap: {{ options.content_gap }}px;
+      --fcc-card-height: {{ options.card_height_mobile }}px;
+      --fcc-footer-height: {{ options.footer_height_mobile }}px;
+      --fcc-icon-size: {{ options.icon_size_mobile }}px;
+      --fcc-slide-width: {{ options.slide_width_mobile }}%;
+      --fcc-radius: {{ options.card_radius }}px;
+      --fcc-speed: {{ options.animation_speed }}ms;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} {
+        --fcc-gap: {{ options.cards_gap }}px;
+        --fcc-card-height: {{ options.card_height }}px;
+        --fcc-footer-height: {{ options.footer_height }}px;
+        --fcc-icon-size: {{ options.icon_size }}px;
+        --fcc-slide-width: {{ options.slide_width }}%;
+      }
+    }
+
+    .section-{{ section.id }} .fcc {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fcc-content-gap);
+    }
+
+    .section-{{ section.id }} .fcc__header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fcc-header-gap);
+    }
+
+    .section-{{ section.id }} .fcc__subheading {
+      color: var(--fcc-accent);
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .fcc__heading {
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .section-{{ section.id }} .fcc__heading p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .fcc__carousel {
+      position: relative;
+    }
+
+    .section-{{ section.id }} .fcc__container {
+      gap: var(--fcc-gap);
+    }
+
+    .section-{{ section.id }} .fcc__slide {
+      flex: 0 0 var(--fcc-slide-width);
+      min-width: 0;
+    }
+
+    /* --- Card ------------------------------------------------------------ */
+    .section-{{ section.id }} .fcc__card {
+      position: relative;
+      display: block;
+      height: var(--fcc-card-height);
+      overflow: hidden;
+      border-radius: var(--fcc-radius);
+      background-color: var(--fcc-card-bg);
+      color: var(--fcc-text);
+    }
+
+    /* The media fills the whole card and never moves — the panel grows over
+       the top of it. */
+    .section-{{ section.id }} .fcc__media {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .section-{{ section.id }} .fcc__image,
+    .section-{{ section.id }} .fcc__media .placeholder-svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* --- Panel ----------------------------------------------------------- */
+    /* Bottom-anchored overlay. Collapsed it is exactly as tall as its header
+       row (--fcc-head-height, measured at runtime); open it grows upward to
+       the full card height and hides the image behind it. */
+    .section-{{ section.id }} .fcc__panel {
+      position: absolute;
+      inset: auto 0 0 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      height: var(--fcc-head-height, var(--fcc-footer-height));
+      overflow: hidden;
+      background-color: var(--fcc-footer-bg);
+      transition: height var(--fcc-speed) cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: height;
+    }
+
+    .section-{{ section.id }} .fcc__card.is-open .fcc__panel {
+      height: 100%;
+    }
+
+    /* --- Panel header (always visible) ----------------------------------- */
+    .section-{{ section.id }} .fcc__panel-head {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: {{ options.icon_gap }}px;
+      min-height: var(--fcc-footer-height);
+      padding: {{ options.footer_padding }}px;
+    }
+
+    .section-{{ section.id }} .fcc__icon {
+      flex: 0 0 auto;
+      width: var(--fcc-icon-size);
+      height: var(--fcc-icon-size);
+      color: var(--fcc-accent);
+      display: flex;
+      align-items: center;
+    }
+
+    .section-{{ section.id }} .fcc__icon img,
+    .section-{{ section.id }} .fcc__icon svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .section-{{ section.id }} .fcc__title {
+      margin: 0;
+      min-width: 0;
+      text-transform: uppercase;
+      line-height: {{ options.card_title_line_height | divided_by: 100.00 }};
+    }
+
+    .section-{{ section.id }} .fcc__title p {
+      margin: 0;
+    }
+
+    /* Plus / minus toggle drawn with pseudo-elements so it can rotate. */
+    .section-{{ section.id }} .fcc__toggle {
+      flex: 0 0 auto;
+      margin-inline-start: auto;
+      width: {{ options.toggle_size }}px;
+      height: {{ options.toggle_size }}px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--fcc-accent);
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} .fcc__toggle-mark {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .section-{{ section.id }} .fcc__toggle-mark::before,
+    .section-{{ section.id }} .fcc__toggle-mark::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      top: 50%;
+      height: {{ options.toggle_thickness }}px;
+      background-color: currentColor;
+      transform: translateY(-50%);
+      transition: transform var(--fcc-speed) ease, opacity var(--fcc-speed) ease;
+    }
+
+    .section-{{ section.id }} .fcc__toggle-mark::after {
+      transform: translateY(-50%) rotate(90deg);
+    }
+
+    .section-{{ section.id }} .fcc__card.is-open .fcc__toggle-mark::after {
+      transform: translateY(-50%) rotate(0deg);
+      opacity: 0;
+    }
+
+    /* --- Panel body (revealed on open) ----------------------------------- */
+    .section-{{ section.id }} .fcc__panel-body {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: {{ options.panel_gap }}px;
+      padding: 0 {{ options.footer_padding }}px {{ options.footer_padding }}px;
+      overflow-y: auto;
+      /* Fades in only once the panel has grown far enough to show it. */
+      opacity: 0;
+      transition: opacity calc(var(--fcc-speed) * 0.6) ease;
+    }
+
+    .section-{{ section.id }} .fcc__card.is-open .fcc__panel-body {
+      opacity: 1;
+      transition-delay: calc(var(--fcc-speed) * 0.35);
+    }
+
+    .section-{{ section.id }} .fcc__panel-text {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .fcc__panel-text p {
+      margin: 0;
+    }
+
+    /* Metric sits at the very bottom of the open panel: oversized value on the
+       left, smaller label centered against it on the right. */
+    .section-{{ section.id }} .fcc__metric {
+      margin-block-start: auto;
+      display: flex;
+      align-items: center;
+      gap: {{ options.metric_gap }}px;
+      color: var(--fcc-accent);
+    }
+
+    /* TBG custom Code — the theme's heading base rule sets its own color, so the
+       accent has to be re-applied here to win over it. */
+    .section-{{ section.id }} .fcc__metric-value {
+      margin: 0;
+      flex: 0 0 auto;
+      line-height: 0.85;
+      color: var(--fcc-accent);
+      display: flex;
+      align-items: center;
+    }
+
+    {%- if options.metric_size_override -%}
+      /* TBG custom Code — the heading class still supplies the font family and
+         weight; only the size is overridden, so bigger never means lighter. */
+      .section-{{ section.id }} .fcc__metric-value,
+      .section-{{ section.id }} .fcc__metric-value p {
+        font-size: {{ options.metric_size_custom_mobile }}px;
+      }
+
+      @media {% render 'media-queries', screen: 'md' %} {
+        .section-{{ section.id }} .fcc__metric-value,
+        .section-{{ section.id }} .fcc__metric-value p {
+          font-size: {{ options.metric_size_custom }}px;
+        }
+      }
+    {%- endif -%}
+
+    .section-{{ section.id }} .fcc__metric-value p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .fcc__metric-label {
+      margin: 0;
+      min-width: 0;
+      color: var(--fcc-accent);
+      text-transform: uppercase;
+      line-height: {{ options.metric_label_line_height | divided_by: 100.00 }};
+    }
+
+    /* TBG custom Code — metric label is richtext, so reset its paragraph. */
+    .section-{{ section.id }} .fcc__metric-label p {
+      margin: 0;
+    }
+
+    /* --- Dots ------------------------------------------------------------ */
+    /* Shown only when the cards overflow — the `hidden` attribute is removed at
+       runtime once Embla reports more than one snap point. */
+    .section-{{ section.id }} .fcc__dots {
+      display: flex;
+      justify-content: center;
+      margin-inline: auto;
+      margin-block-start: {{ options.dots_spacing }}px;
+    }
+
+    .section-{{ section.id }} .fcc__dots.is-hidden,
+    .section-{{ section.id }} .fcc__dots .solid-dots-carousel__solid-dot.is-hidden {
+      display: none;
+    }
+
+    .section-{{ section.id }} .fcc__dots .solid-dots-carousel__container {
+      display: flex;
+      align-items: center;
+      gap: {{ options.dots_gap }}px;
+    }
+
+    .section-{{ section.id }} .fcc__dots .solid-dots-carousel__solid-dot {
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} .fcc__dots .solid-dots-carousel__solid-dot-circle {
+      width: {{ options.dots_size }}px;
+      height: {{ options.dots_size }}px;
+      border-radius: 50%;
+      background-color: {{ options.dots_color }};
+      transition: background-color 0.2s ease;
+    }
+
+    .section-{{ section.id }} .fcc__dots .solid-dots-carousel__solid-dot.is-primary .solid-dots-carousel__solid-dot-circle {
+      background-color: var(--fcc-accent);
+    }
+
+    /* --- Arrows ---------------------------------------------------------- */
+    .section-{{ section.id }} .fcc__btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 4;
+      width: {{ options.arrow_size }}px;
+      height: {{ options.arrow_size }}px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background-color: var(--fcc-footer-bg);
+      color: var(--fcc-text);
+      cursor: pointer;
+    }
+
+    /* Anchored inside the carousel box rather than hanging off it, so the
+       buttons never spill past the section's side padding on narrow screens. */
+    .section-{{ section.id }} .fcc__btn--prev {
+      inset-inline-start: 0;
+    }
+
+    .section-{{ section.id }} .fcc__btn--next {
+      inset-inline-end: 0;
+    }
+
+    .section-{{ section.id }} .fcc__chevron {
+      width: 40%;
+      height: 40%;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .section-{{ section.id }} .fcc__panel,
+      .section-{{ section.id }} .fcc__panel-body,
+      .section-{{ section.id }} .fcc__toggle-mark::before,
+      .section-{{ section.id }} .fcc__toggle-mark::after {
+        transition-duration: 1ms;
+        transition-delay: 0ms;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='fcc'>
+      {%- if subheading != blank or heading != blank -%}
+        <div class='fcc__header'>
+          {%- if subheading != blank -%}
+            <p
+              class='fcc__subheading {{ subheading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 1;'
+            >
+              {{ subheading }}
+            </p>
+          {%- endif -%}
+
+          {%- if heading != blank -%}
+            <div
+              class='fcc__heading {{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 2;'
+              role='heading'
+              aria-level='2'
+            >
+              {{ heading }}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        <carousel-component
+          id='fcc-carousel-{{ section.id }}'
+          class='carousel fcc__carousel'
+          data-section-id='{{ section.id }}'
+          data-contain-scroll='trimSnaps'
+          data-draggable
+          data-align='start'
+          data-axis='x'
+          data-slides-to-scroll='1'
+        >
+          {%- if options.show_navigation_arrows -%}
+            <carousel-button
+              class='carousel__btn fcc__btn fcc__btn--prev'
+              data-direction='prev'
+              tabindex='0'
+              aria-label='{{ 'accessibility.prev_slide' | t }}'
+            >
+              {%- render 'icon', icon_name: 'chevron', class: 'fcc__chevron x-flip', stroke_width: 1 -%}
+            </carousel-button>
+          {%- endif -%}
+
+          <div class='carousel__viewport carousel__viewport--overflow embla' data-carousel-viewport>
+            <div class='carousel__container fcc__container' data-carousel-container>
+              {%- for block in section.blocks -%}
+                <div
+                  class='carousel__slide fcc__slide {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ forloop.index }};'
+                  {% endif %}
+                  block-id='{{ block.id }}'
+                >
+                  {%- render 'feature-card-carousel-card',
+                    block: block,
+                    card_index: forloop.index,
+                    section_id: section.id,
+                    card_title_size: card_title_size,
+                    panel_text_size: panel_text_size,
+                    metric_size: metric_size,
+                    metric_label_size: metric_label_size
+                  -%}
+                </div>
+              {%- endfor -%}
+            </div>
+          </div>
+
+          {%- if options.show_navigation_arrows -%}
+            <carousel-button
+              class='carousel__btn fcc__btn fcc__btn--next'
+              data-direction='next'
+              tabindex='0'
+              aria-label='{{ 'accessibility.next_slide' | t }}'
+            >
+              {%- render 'icon', icon_name: 'chevron', class: 'fcc__chevron', stroke_width: 1 -%}
+            </carousel-button>
+          {%- endif -%}
+
+          {%- comment -%}
+            TBG custom Code — one dot per slide. The row is hidden by default and
+            only unhidden once Embla reports more than one snap point, so the dots
+            appear at exactly the width where cards stop fitting.
+          {%- endcomment -%}
+          {%- if options.show_pagination_dots and section.blocks.size > 1 -%}
+            <carousel-dots
+              class='solid-dots-carousel fcc__dots is-hidden'
+              data-fcc-dots
+              data-contain-scroll='keepSnaps'
+              data-align='center'
+              data-axis='x'
+            >
+              <div class='solid-dots-carousel__viewport embla' data-carousel-viewport>
+                <div class='solid-dots-carousel__container' data-carousel-container>
+                  {%- for block in section.blocks -%}
+                    <div
+                      class='solid-dots-carousel__solid-dot {% if forloop.first %}is-primary{% endif %}'
+                      tabindex='0'
+                      data-carousel-dot
+                      data-dot-index='{{ forloop.index0 }}'
+                    >
+                      <div class='solid-dots-carousel__solid-dot-circle'></div>
+                    </div>
+                  {%- endfor -%}
+                </div>
+              </div>
+            </carousel-dots>
+          {%- endif -%}
+        </carousel-component>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{%- comment -%}
+  TBG custom Code — open/close wiring. Delegated from the section root so it
+  survives theme-editor block re-renders. Each panel's collapsed height is
+  measured from its own header row, so a title that wraps to two lines still
+  sits flush with the bottom of the card.
+{%- endcomment -%}
+<script>
+  (() => {
+    const root = document.querySelector('.section-{{ section.id }}');
+
+    if (!root) return;
+
+    const allowMultiple = {{ options.allow_multiple_open | default: false | json }};
+
+    const measure = () => {
+      root.querySelectorAll('[data-fcc-panel]').forEach((panel) => {
+        const head = panel.querySelector('[data-fcc-head]');
+
+        if (!head) return;
+
+        panel.style.setProperty('--fcc-head-height', `${head.offsetHeight}px`);
+      });
+    };
+
+    const close = (card) => {
+      card.classList.remove('is-open');
+      const toggle = card.querySelector('[data-fcc-toggle]');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    root.addEventListener('click', (event) => {
+      const toggle = event.target.closest('[data-fcc-toggle]');
+
+      if (!toggle || !root.contains(toggle)) return;
+
+      const card = toggle.closest('[data-fcc-card]');
+
+      if (!card) return;
+
+      const willOpen = !card.classList.contains('is-open');
+
+      if (!allowMultiple) {
+        root.querySelectorAll('[data-fcc-card].is-open').forEach((open) => {
+          if (open !== card) close(open);
+        });
+      }
+
+      card.classList.toggle('is-open', willOpen);
+      toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    /* TBG custom Code — dot visibility reuses the exact signal the next arrow
+       already computes: `carousel-button` toggles `disabled` via
+       embla.canScrollNext(), so if that button can still scroll the cards
+       overflow. No separate width maths. */
+    const dots = root.querySelector('[data-fcc-dots]');
+    const carousel = root.querySelector('carousel-component');
+
+    if (dots && carousel) {
+      const syncDots = () => {
+        const embla = carousel.embla;
+
+        if (!embla) return;
+
+        /* `trimSnaps` gives one snap per real scroll position, so the snap count
+           is already the dot count: two cards off screen -> three snaps, one
+           card -> two. */
+        const snapCount = embla.scrollSnapList().length;
+        const overflows = embla.canScrollNext() || embla.canScrollPrev();
+
+        /* A class, not the `hidden` attribute — `carousel-dots` mounts its own
+           Embla and a display:none host measures zero width. */
+        dots.classList.toggle('is-hidden', !overflows);
+        dots.querySelectorAll('[data-carousel-dot]').forEach((dot, index) => {
+          dot.classList.toggle('is-hidden', index >= snapCount);
+        });
+      };
+
+      /* `embla` is assigned during the element's own mount, which has not
+         necessarily run by the time the custom element is defined. */
+      customElements.whenDefined('carousel-component').then(() => {
+        let attempts = 0;
+
+        const bind = () => {
+          if (!carousel.embla) {
+            if (attempts++ < 60) requestAnimationFrame(bind);
+            return;
+          }
+
+          syncDots();
+          carousel.embla.on('reInit', syncDots);
+          carousel.embla.on('resize', syncDots);
+          carousel.embla.on('select', syncDots);
+        };
+
+        bind();
+      });
+
+      document.fonts?.ready.then(syncDots);
+    }
+
+    measure();
+
+    /* Re-measure when the cards reflow (resize, font swap, editor edits). */
+    if ('ResizeObserver' in window) {
+      const observer = new ResizeObserver(measure);
+      root.querySelectorAll('[data-fcc-head]').forEach((head) => observer.observe(head));
+    } else {
+      window.addEventListener('resize', measure);
+    }
+
+    document.fonts?.ready.then(measure);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Feature card carousel",
+  "tag": "section",
+  "class": "feature-card-carousel-section",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    { "type": "text", "id": "subheading", "label": "Subheading", "default": "TITAN BATTLEGEAR" },
+    {
+      "type": "select",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" }
+      ],
+      "default": "body2"
+    },
+    { "type": "richtext", "id": "heading", "label": "Heading", "default": "<p>Next-level features</p>" },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "h0", "label": "H0" },
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "range",
+      "id": "header_gap",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Gap between header lines",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "min": 0, "max": 80, "step": 4, "unit": "px",
+      "label": "Gap between header and cards",
+      "default": 40
+    },
+
+    { "type": "header", "content": "Carousel" },
+    { "type": "checkbox", "id": "show_navigation_arrows", "label": "Show navigation arrows", "default": true },
+    {
+      "type": "checkbox",
+      "id": "allow_multiple_open",
+      "label": "Allow multiple cards open at once",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "slide_width",
+      "min": 15, "max": 100, "step": 1, "unit": "%",
+      "label": "Card width (desktop)",
+      "info": "Percentage of the carousel width per card.",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "slide_width_mobile",
+      "min": 40, "max": 100, "step": 1, "unit": "%",
+      "label": "Card width (mobile)",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "cards_gap",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Gap between cards (desktop)",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "cards_gap_mobile",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Gap between cards (mobile)",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "arrow_size",
+      "min": 28, "max": 72, "step": 2, "unit": "px",
+      "label": "Arrow size",
+      "default": 44
+    },
+    { "type": "checkbox", "id": "show_pagination_dots", "label": "Show pagination dots", "default": true },
+    {
+      "type": "range",
+      "id": "dots_size",
+      "min": 4, "max": 24, "step": 1, "unit": "px",
+      "label": "Dot size",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "dots_gap",
+      "min": 0, "max": 32, "step": 1, "unit": "px",
+      "label": "Gap between dots",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "dots_spacing",
+      "min": 0, "max": 80, "step": 2, "unit": "px",
+      "label": "Space above dots",
+      "default": 24
+    },
+    { "type": "color", "id": "dots_color", "label": "Dot color", "default": "#4a545c" },
+
+    { "type": "header", "content": "Card" },
+    {
+      "type": "range",
+      "id": "card_height",
+      "min": 240, "max": 900, "step": 10, "unit": "px",
+      "label": "Card height (desktop)",
+      "default": 440
+    },
+    {
+      "type": "range",
+      "id": "card_height_mobile",
+      "min": 200, "max": 800, "step": 10, "unit": "px",
+      "label": "Card height (mobile)",
+      "default": 380
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Card corner radius",
+      "default": 0
+    },
+    { "type": "color", "id": "card_background", "label": "Card background", "default": "#12181d" },
+    { "type": "color", "id": "footer_background", "label": "Panel background", "default": "#1c242b" },
+    { "type": "color", "id": "card_text_color", "label": "Card text color", "default": "#ffffff" },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "info": "Used for the icons, panel title and the +/- toggle.",
+      "default": "#d4ff32"
+    },
+    {
+      "type": "range",
+      "id": "animation_speed",
+      "min": 200, "max": 1200, "step": 50, "unit": "ms",
+      "label": "Open/close animation speed",
+      "default": 550
+    },
+
+    { "type": "header", "content": "Panel header (collapsed)" },
+    {
+      "type": "range",
+      "id": "footer_height",
+      "min": 60, "max": 220, "step": 5, "unit": "px",
+      "label": "Collapsed panel height (desktop)",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "footer_height_mobile",
+      "min": 30, "max": 150, "step": 5, "unit": "px",
+      "label": "Collapsed panel height (mobile)",
+      "default": 90
+    },
+    {
+      "type": "range",
+      "id": "footer_padding",
+      "min": 0, "max": 60, "step": 2, "unit": "px",
+      "label": "Panel padding",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 20, "max": 96, "step": 2, "unit": "px",
+      "label": "Icon size (desktop)",
+      "default": 44
+    },
+    {
+      "type": "range",
+      "id": "icon_size_mobile",
+      "min": 20, "max": 96, "step": 2, "unit": "px",
+      "label": "Icon size (mobile)",
+      "default": 38
+    },
+    {
+      "type": "range",
+      "id": "icon_gap",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Gap after icon",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "card_title_size",
+      "label": "Card title size",
+      "options": [
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h5", "label": "H5" },
+        { "value": "h6", "label": "H6" }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "range",
+      "id": "card_title_line_height",
+      "min": 80, "max": 160, "step": 5, "unit": "%",
+      "label": "Card title line height",
+      "default": 95
+    },
+    {
+      "type": "range",
+      "id": "toggle_size",
+      "min": 14, "max": 48, "step": 2, "unit": "px",
+      "label": "Toggle size",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "toggle_thickness",
+      "min": 1, "max": 8, "step": 1, "unit": "px",
+      "label": "Toggle line thickness",
+      "default": 3
+    },
+
+    { "type": "header", "content": "Expanded panel" },
+    {
+      "type": "select",
+      "id": "panel_text_size",
+      "label": "Panel text size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "select",
+      "id": "metric_size",
+      "label": "Metric value size",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" }
+      ],
+      "default": "h1"
+    },
+    {
+      "type": "checkbox",
+      "id": "metric_size_override",
+      "label": "Use custom metric value size",
+      "info": "Keeps the heading style above and only changes the font size.",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "metric_size_custom",
+      "min": 40, "max": 240, "step": 2, "unit": "px",
+      "label": "Metric value custom size (desktop)",
+      "default": 96,
+      "visible_if": "{{ section.settings.metric_size_override }}"
+    },
+    {
+      "type": "range",
+      "id": "metric_size_custom_mobile",
+      "min": 30, "max": 180, "step": 2, "unit": "px",
+      "label": "Metric value custom size (mobile)",
+      "default": 68,
+      "visible_if": "{{ section.settings.metric_size_override }}"
+    },
+    {
+      "type": "range",
+      "id": "metric_gap",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Gap between metric value and label",
+      "default": 14
+    },
+    {
+      "type": "select",
+      "id": "metric_label_size",
+      "label": "Metric label size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "range",
+      "id": "metric_label_line_height",
+      "min": 80, "max": 160, "step": 5, "unit": "%",
+      "label": "Metric label line height",
+      "default": 110
+    },
+    {
+      "type": "range",
+      "id": "panel_gap",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Gap between panel text and metric",
+      "default": 16
+    },
+
+    { "type": "header", "content": "Section" },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "label": "Round level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "none", "label": "None" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        { "value": "default", "label": "Use default color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default",
+      "label": "Color scheme variant"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "1",
+      "label": "Color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    { "type": "checkbox", "id": "show_background", "default": true, "label": "Show section background" },
+    { "type": "checkbox", "id": "add_desktop_side_paddings", "default": true, "label": "Add desktop side paddings" },
+    { "type": "checkbox", "id": "add_mobile_side_paddings", "default": true, "label": "Add mobile side paddings" },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Card",
+      "settings": [
+        { "type": "header", "content": "Image" },
+        { "type": "image_picker", "id": "image", "label": "Image" },
+        { "type": "text", "id": "image_alt", "label": "Image alt text" },
+
+        { "type": "header", "content": "Panel header" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "none", "label": "None" },
+            { "value": "feature-cut-resistance", "label": "Cut resistance" },
+            { "value": "feature-no-velcro", "label": "No velcro" },
+            { "value": "feature-full-coverage", "label": "Full coverage" },
+            { "value": "feature-comfort", "label": "Unrestricted comfort" }
+          ],
+          "default": "feature-full-coverage"
+        },
+        {
+          "type": "image_picker",
+          "id": "icon_image",
+          "label": "Custom icon image",
+          "info": "Overrides the icon above."
+        },
+        {
+          "type": "richtext",
+          "id": "card_title",
+          "label": "Title",
+          "default": "<p>Full coverage</p>"
+        },
+
+        { "type": "header", "content": "Expanded content" },
+        {
+          "type": "richtext",
+          "id": "panel_text",
+          "label": "Panel text",
+          "info": "Leave both this and the metric empty to make the card non-expandable.",
+          "default": "<p>TITANOTEX\u2122 cut-resistant Fabric \u2013 Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>"
+        },
+        {
+          "type": "richtext",
+          "id": "metric_label",
+          "label": "Metric label",
+          "default": "<p>HIGHEST</p>"
+        },
+        {
+          "type": "richtext",
+          "id": "metric_value",
+          "label": "Metric value",
+          "default": "<p>A9</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Feature card carousel",
+      "blocks": [
+        { "type": "card" },
+        { "type": "card" },
+        { "type": "card" },
+        { "type": "card" },
+        { "type": "card" }
+      ]
+    }
+  ]
+}
+{% endschema %}

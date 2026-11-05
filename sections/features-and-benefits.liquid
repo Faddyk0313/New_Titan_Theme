@@ -1,0 +1,952 @@
+{%- liquid
+  assign options = section.settings
+
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+  assign body = options.body
+  assign body_size = options.body_size
+
+  assign media_type = options.media_type
+  assign video_file = options.video_file
+  assign video_url = options.video_url
+  assign cover_image = options.cover_image
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign disable_lazy_loading = options.disable_lazy_loading
+
+  assign card_gap = options.card_gap
+  assign column_gap = options.column_gap
+  assign cards_column_width = options.cards_column_width
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+
+  assign card_padding = options.card_padding
+  assign card_title_size_mobile = options.card_title_size_mobile
+  assign card_title_size_desktop = options.card_title_size_desktop
+  assign card_text_size_mobile = options.card_text_size_mobile
+  assign card_text_size_desktop = options.card_text_size_desktop
+
+  case options.card_theme
+    when 'light'
+      assign card_background = '#F1F1F1'
+      assign card_text_color = '#1A1A1A'
+    when 'dark'
+      assign card_background = '#1A1A1A'
+      assign card_text_color = '#FFFFFF'
+    when 'custom'
+      assign card_background = options.card_background
+      assign card_text_color = options.card_text_color
+    else
+      assign card_background = 'rgb(var(--gsc-foreground-color))'
+      assign card_text_color = 'rgb(var(--gsc-background-color))'
+  endcase
+-%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{%- liquid
+  assign video_id = ''
+  assign embed_src = ''
+
+  if media_type == 'external' and video_url != blank
+    if video_url.type == 'youtube'
+      assign video_id = video_url.id
+      assign embed_src = 'https://www.youtube.com/embed/' | append: video_id | append: '?enablejsapi=1&autoplay=1&rel=0'
+    else
+      assign video_id = video_url.id
+      assign embed_src = 'https://player.vimeo.com/video/' | append: video_id | append: '?autoplay=1'
+    endif
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --fab-card-gap: {{ card_gap }}px;
+      --fab-column-gap: {{ column_gap }}px;
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+    }
+
+    .section-{{ section.id }} .features-benefits {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--fab-card-gap);
+    }
+
+    .section-{{ section.id }} .features-benefits__intro {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+      text-align: center;
+    }
+
+    .section-{{ section.id }} .features-benefits__cards {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      grid-auto-rows: 1fr;
+      row-gap: var(--fab-card-gap);
+    }
+
+    .section-{{ section.id }} .features-benefits__card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.6rem;
+      padding: {{ card_padding }}px;
+      background-color: {{ card_background }};
+      color: {{ card_text_color }};
+      border-radius: var(--gsc-base-radii, 0);
+    }
+
+    .section-{{ section.id }} .features-benefits__card-head {
+      display: flex;
+      align-items: center;
+      gap: 1.6rem;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-icon {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 4.8rem;
+      height: 4.8rem;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-icon svg,
+    .section-{{ section.id }} .features-benefits__card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      color: currentColor;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-title {
+      color: inherit;
+      margin: 0;
+      font-size: {{ card_title_size_mobile }}px;
+      line-height: 1.05;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-title p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-text {
+      color: inherit;
+      margin: 0;
+      font-size: {{ card_text_size_mobile }}px;
+    }
+
+    .section-{{ section.id }} .features-benefits__card-text p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .features-benefits__media {
+      display: flex;
+      flex-direction: column;
+      gap: var(--fab-card-gap);
+    }
+
+    .section-{{ section.id }} .features-benefits__video {
+      position: relative;
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      border-radius: var(--gsc-base-radii, 0);
+    }
+
+    .section-{{ section.id }} .features-benefits__video img,
+    .section-{{ section.id }} .features-benefits__video video,
+    .section-{{ section.id }} .features-benefits__video iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .section-{{ section.id }} .features-benefits__video-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background-color: rgb(var(--gsc-foreground-color));
+    }
+
+    .section-{{ section.id }} .features-benefits__video-frame iframe {
+      position: absolute;
+      inset: 0;
+      border: 0;
+    }
+
+    .section-{{ section.id }} .features-benefits__poster {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} .features-benefits__poster img,
+    .section-{{ section.id }} .features-benefits__poster .placeholder-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .section-{{ section.id }} .features-benefits__play {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 7.2rem;
+      height: 7.2rem;
+      border-radius: 50%;
+      background-color: rgba(120, 120, 120, 0.75);
+      color: #FFFFFF;
+      transition: background-color 0.2s ease;
+    }
+
+    .section-{{ section.id }} .features-benefits__poster:hover .features-benefits__play {
+      background-color: rgba(120, 120, 120, 0.9);
+    }
+
+    .section-{{ section.id }} .features-benefits__play svg {
+      width: 3.2rem;
+      height: 3.2rem;
+    }
+
+    .section-{{ section.id }} [data-native-video] .features-benefits__video-frame {
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} [data-native-video] .features-benefits__video-frame::after,
+    .section-{{ section.id }} .features-benefits__poster::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.12);
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+
+    .section-{{ section.id }} [data-native-video].is-playing .features-benefits__video-frame::after {
+      opacity: 0;
+    }
+
+    .section-{{ section.id }} .features-benefits__video-media {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .section-{{ section.id }} .features-benefits__play--overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+    }
+
+    .section-{{ section.id }} [data-native-video].is-playing .features-benefits__play--overlay {
+      opacity: 0;
+    }
+
+    .section-{{ section.id }} [data-native-video]:hover .features-benefits__play--overlay {
+      background-color: rgba(var(--gsc-white-color), 0.55);
+    }
+
+    .section-{{ section.id }} .features-benefits__buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.6rem;
+    }
+
+    .section-{{ section.id }} .features-benefits__buttons .btn {
+      width: 100%;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} .features-benefits {
+        grid-template-columns: minmax(0, {{ cards_column_width }}fr) minmax(0, 1fr);
+        column-gap: var(--fab-column-gap);
+        align-items: stretch;
+      }
+
+      .section-{{ section.id }} .features-benefits__cards {
+        height: 100%;
+        align-content: stretch;
+        overflow: hidden;
+      }
+
+      .section-{{ section.id }} .features-benefits__card {
+        min-height: 0;
+        gap: 1.2rem;
+        padding-block: min({{ card_padding }}px, 2.2%);
+      }
+
+      .section-{{ section.id }} .features-benefits__card-title {
+        font-size: {{ card_title_size_desktop }}px;
+        line-height: 1.05;
+      }
+
+      .section-{{ section.id }} .features-benefits__card-text {
+        overflow: hidden;
+        font-size: {{ card_text_size_desktop }}px;
+        line-height: 1.4;
+      }
+
+      .section-{{ section.id }} .features-benefits__media {
+        height: 100%;
+      }
+
+      .section-{{ section.id }} .features-benefits__intro {
+        text-align: left;
+      }
+
+      .section-{{ section.id }} .features-benefits__buttons {
+        justify-content: center;
+        grid-template-columns: repeat(2, minmax(0, 22rem));
+        justify-self: center;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='features-benefits'>
+      <div class='features-benefits__cards'>
+        {%- for block in section.blocks -%}
+          <div
+            class='features-benefits__card {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+            style='--gsc-animation-order: {{ forloop.index }};'
+            {{ block.shopify_attributes }}
+          >
+            {%- assign block_title_alt = block.settings.title | strip_html | escape -%}
+            <div class='features-benefits__card-head'>
+              {%- if block.settings.icon_image != blank -%}
+                <span class='features-benefits__card-icon'>
+                  {{
+                    block.settings.icon_image
+                    | image_url: width: 200
+                    | image_tag: loading: 'lazy', widths: '48, 96, 144, 200', alt: block_title_alt
+                  }}
+                </span>
+              {%- endif -%}
+
+              {%- if block.settings.title != blank -%}
+                <div class='features-benefits__card-title {{ block.settings.title_size }}' role='heading' aria-level='3'>
+                  {{ block.settings.title }}
+                </div>
+              {%- endif -%}
+            </div>
+
+            {%- if block.settings.text != blank -%}
+              <div class='features-benefits__card-text rte {{ body_size }} body-font-weight-from-global-settings'>
+                {{ block.settings.text }}
+              </div>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <div class='features-benefits__media'>
+        <div class='features-benefits__intro'>
+          {%- if heading != blank -%}
+            <h2
+              class='{{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 1;'
+            >
+              {{ heading }}
+            </h2>
+          {%- endif -%}
+
+          {%- if body != blank -%}
+            <div
+              class='rte {{ body_size }} body-color body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 2;'
+            >
+              {{ body }}
+            </div>
+          {%- endif -%}
+        </div>
+
+        {%- if media_type == 'file' and video_file != blank -%}
+          <div class='features-benefits__video' data-native-video>
+            <div class='features-benefits__video-frame'>
+              {{
+                video_file
+                | video_tag:
+                  class: 'features-benefits__video-media',
+                  image_size: '1600x',
+                  autoplay: false,
+                  loop: false,
+                  muted: false,
+                  controls: false,
+                  preload: 'metadata'
+              }}
+
+              <span class='features-benefits__play features-benefits__play--overlay' data-video-play-icon>
+                {% render 'icon', icon_name: 'play-without-round' %}
+              </span>
+            </div>
+          </div>
+        {%- elsif media_type == 'external' and embed_src != blank -%}
+          <video-element class='features-benefits__video'>
+            <div class='features-benefits__video-frame' data-video-container>
+              <template data-video-template>
+                <iframe
+                  src='{{ embed_src }}'
+                  allow='autoplay; encrypted-media; picture-in-picture'
+                  allowfullscreen
+                  frameborder='0'
+                  title='{{ heading | strip_html | escape }}'
+                ></iframe>
+              </template>
+
+              <button
+                class='features-benefits__poster'
+                type='button'
+                aria-label='{{- 'icons.screen_reader.play' | t -}}'
+                data-video-poster
+              >
+                {%- if cover_image != blank -%}
+                  <img {% render 'image-attributes', image: cover_image, class: 'features-benefits__poster-image', is_eager_loading: disable_lazy_loading %}>
+                {%- else -%}
+                  {{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-svg' }}
+                {%- endif -%}
+
+                <span class='features-benefits__play'>
+                  {% render 'icon', icon_name: 'play-without-round' %}
+                </span>
+              </button>
+            </div>
+          </video-element>
+        {%- else -%}
+          <div class='features-benefits__video'>
+            <div class='features-benefits__video-frame'>
+              {{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-svg' }}
+            </div>
+          </div>
+        {%- endif -%}
+
+        {%- if options.first_btn_text != blank or options.second_btn_text != blank -%}
+          <div class='features-benefits__buttons'>
+            {%- if options.first_btn_text != blank -%}
+              <a
+                class='btn btn--{{ options.first_btn_style }}'
+                {% if options.first_btn_url != blank %}
+                  href='{{ options.first_btn_url }}'
+                {% endif %}
+                aria-label='{{- options.first_btn_text | strip_html | escape -}}'
+              >
+                {{- options.first_btn_text -}}
+              </a>
+            {%- endif -%}
+
+            {%- if options.second_btn_text != blank -%}
+              <a
+                class='btn btn--{{ options.second_btn_style }}'
+                {% if options.second_btn_url != blank %}
+                  href='{{ options.second_btn_url }}'
+                {% endif %}
+                aria-label='{{- options.second_btn_text | strip_html | escape -}}'
+              >
+                {{- options.second_btn_text -}}
+              </a>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const root = document.querySelector('.section-{{ section.id }}');
+    if (!root) return;
+
+    const nativeWrapper = root.querySelector('[data-native-video]');
+
+    if (nativeWrapper) {
+      const video = nativeWrapper.querySelector('video');
+
+      if (video) {
+        video.controls = false;
+        video.setAttribute('playsinline', '');
+
+        nativeWrapper.addEventListener('click', () => {
+          if (video.paused) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        });
+
+        video.addEventListener('play', () => nativeWrapper.classList.add('is-playing'));
+        video.addEventListener('pause', () => nativeWrapper.classList.remove('is-playing'));
+        video.addEventListener('ended', () => nativeWrapper.classList.remove('is-playing'));
+      }
+    }
+
+    const poster = root.querySelector('[data-video-poster]');
+    const container = root.querySelector('[data-video-container]');
+    const template = root.querySelector('[data-video-template]');
+
+    if (!poster || !container || !template) return;
+
+    poster.addEventListener('click', () => {
+      container.appendChild(template.content.cloneNode(true));
+      poster.remove();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Features and benefits",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Features and benefits"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "display2", "label": "Display 2" },
+        { "value": "display3", "label": "Display 3" }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Description",
+      "default": "<p>Titan BattleGear delivers the highest level of cut resistance in hockey where it counts – neck and wrists. Play with confidence knowing you're fully covered.</p>"
+    },
+    {
+      "type": "select",
+      "id": "body_size",
+      "label": "Body size",
+      "options": [
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "header",
+      "content": "Video"
+    },
+    {
+      "type": "select",
+      "id": "media_type",
+      "label": "Video type",
+      "options": [
+        { "value": "file", "label": "Shopify hosted video" },
+        { "value": "external", "label": "YouTube or Vimeo" }
+      ],
+      "default": "external"
+    },
+    {
+      "type": "video",
+      "id": "video_file",
+      "label": "Video",
+      "visible_if": "{{ section.settings.media_type == 'file' }}"
+    },
+    {
+      "type": "video_url",
+      "id": "video_url",
+      "label": "Video URL",
+      "accept": ["youtube", "vimeo"],
+      "visible_if": "{{ section.settings.media_type == 'external' }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "cover_image",
+      "label": "Video cover image",
+      "visible_if": "{{ section.settings.media_type == 'external' }}"
+    },
+    {
+      "type": "header",
+      "content": "Buttons"
+    },
+    {
+      "type": "text",
+      "id": "first_btn_text",
+      "label": "First button label",
+      "default": "See reviews"
+    },
+    {
+      "type": "url",
+      "id": "first_btn_url",
+      "label": "First button link"
+    },
+    {
+      "type": "select",
+      "id": "first_btn_style",
+      "label": "First button style",
+      "options": [
+        { "value": "primary", "label": "Primary" },
+        { "value": "secondary", "label": "Secondary" },
+        { "value": "tertiary", "label": "Tertiary" }
+      ],
+      "default": "primary"
+    },
+    {
+      "type": "text",
+      "id": "second_btn_text",
+      "label": "Second button label",
+      "default": "Learn more"
+    },
+    {
+      "type": "url",
+      "id": "second_btn_url",
+      "label": "Second button link"
+    },
+    {
+      "type": "select",
+      "id": "second_btn_style",
+      "label": "Second button style",
+      "options": [
+        { "value": "primary", "label": "Primary" },
+        { "value": "secondary", "label": "Secondary" },
+        { "value": "tertiary", "label": "Tertiary" }
+      ],
+      "default": "primary"
+    },
+    {
+      "type": "header",
+      "content": "Cards appearance"
+    },
+    {
+      "type": "select",
+      "id": "card_theme",
+      "label": "Cards theme",
+      "options": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" },
+        { "value": "scheme", "label": "Inherit color scheme" },
+        { "value": "custom", "label": "Custom" }
+      ],
+      "default": "light"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Cards background",
+      "default": "#F1F1F1",
+      "visible_if": "{{ section.settings.card_theme == 'custom' }}"
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Cards text color",
+      "default": "#1A1A1A",
+      "visible_if": "{{ section.settings.card_theme == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_mobile",
+      "min": 12,
+      "max": 40,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Card title size (mobile)",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "card_title_size_desktop",
+      "min": 12,
+      "max": 40,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Card title size (desktop)",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "card_text_size_mobile",
+      "min": 10,
+      "max": 30,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Card text size (mobile)",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "card_text_size_desktop",
+      "min": 10,
+      "max": 30,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Card text size (desktop)",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 12,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Card padding",
+      "default": 24
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "cards_column_width",
+      "min": 0.4,
+      "max": 1.4,
+      "step": 0.1,
+      "label": "Cards column width (desktop)",
+      "default": 0.8
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between cards",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Gap between columns (desktop)",
+      "default": 56
+    },
+    {
+      "type": "header",
+      "content": "General section settings"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "large"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" }
+      ],
+      "default": "default",
+      "label": "Corner rounding"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        { "value": "default", "label": "Use global color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default",
+      "label": "Color scheme variant"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "1",
+      "label": "Color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "Show section background"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "Add desktop side paddings"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "Add mobile side paddings"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    },
+    {
+      "type": "header",
+      "content": "Optimization"
+    },
+    {
+      "type": "checkbox",
+      "id": "disable_lazy_loading",
+      "default": false,
+      "label": "Disable lazy loading"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        
+        {
+          "type": "image_picker",
+          "id": "icon_image",
+          "label": "Custom icon image",
+          "info": "Overrides the icon above."
+        },
+        {
+          "type": "richtext",
+          "id": "title",
+          "label": "Title",
+          "info": "Use Shift + Enter to control where the title wraps.",
+          "default": "<p>Maximum<br>cut resistance</p>"
+        },
+        {
+          "type": "select",
+          "id": "title_size",
+          "label": "Title size",
+          "options": [
+            { "value": "h3", "label": "H3" },
+            { "value": "h4", "label": "H4" },
+            { "value": "h5", "label": "H5" },
+            { "value": "h6", "label": "H6" }
+          ],
+          "default": "h4"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p><strong>TITANOTEX™ cut-resistant Fabric</strong> – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Features and benefits",
+      "blocks": [
+        { "type": "feature" },
+        { "type": "feature" },
+        { "type": "feature" },
+        { "type": "feature" }
+      ]
+    }
+  ]
+}
+{% endschema %}

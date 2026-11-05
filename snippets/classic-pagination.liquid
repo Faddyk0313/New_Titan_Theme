@@ -1,0 +1,59 @@
+
+ 
+{%- if paginate.parts.size > 0 -%}
+  <pagination-component class="classic-pagination {{ class }} {% if settings.enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}" data-overlay-id="{{ overlay_id }}" data-container-id="{{ container_id }}"
+    {% if settings.enable_content_slide_in %}
+      style='--gsc-animation-order: 1;'
+    {% endif %}
+  >
+    <ul class="classic-pagination__list">
+    {%- if paginate.previous -%}
+      {%- liquid
+        assign previous_url = paginate.previous.url
+        if pagination_params != blank
+          assign previous_url = previous_url | append: '&' | append: pagination_params
+        endif
+      -%}
+      <li>
+        <pagination-link data-url="{{ previous_url }}" tabindex="0" class="classic-pagination__item classic-pagination__link">
+          <
+        </pagination-link>
+      </li>
+    {%- endif -%}
+ 
+    {%- for part in paginate.parts -%}
+      <li>
+        {%- if part.is_link -%}
+          {%- liquid
+            assign part_url = part.url
+            if pagination_params != blank
+              assign part_url = part_url | append: '&' | append: pagination_params
+            endif
+          -%}
+          <pagination-link data-url="{{ part_url }}" tabindex="0" class="classic-pagination__item classic-pagination__link">{{ part.title }}</pagination-link>
+        {%- else -%}
+          {%- if part.title == paginate.current_page -%}
+            <span class="classic-pagination__item classic-pagination__link active">{{ part.title }}</span>
+          {%- else -%}
+            <span class="classic-pagination__item">{{ part.title }}</span>
+          {%- endif -%}
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+
+    {%- if paginate.next -%}
+      {%- liquid
+        assign next_url = paginate.next.url
+        if pagination_params != blank
+          assign next_url = next_url | append: '&' | append: pagination_params
+        endif
+      -%}
+      <li>
+        <pagination-link data-url="{{ next_url }}" tabindex="0" class="classic-pagination__item classic-pagination__link" >
+          >
+        </pagination-link>
+      </li>
+    {%- endif -%}
+    </ul>
+  </pagination-component>
+{%- endif -%}

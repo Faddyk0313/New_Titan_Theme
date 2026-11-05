@@ -1,0 +1,629 @@
+{%- liquid
+  assign options = section.settings
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign round_level = options.round_level
+  assign container_size = options.container_size
+  assign desktop_main_width = options.desktop_main_width
+  assign desktop_gap = options.desktop_gap
+  assign mobile_gap = options.mobile_gap
+  assign autoplay = options.autoplay
+  assign autoplay_interval = options.autoplay_interval | times: 1000
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+-%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --split-hero-main-width: {{ desktop_main_width }}%;
+      --split-hero-side-width: {{ 100 | minus: desktop_main_width }}%;
+      --split-hero-desktop-gap: {{ desktop_gap }}px;
+      --split-hero-mobile-gap: {{ mobile_gap }}px;
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+    }
+
+    .section-{{ section.id }} .split-hero {
+      display: flex;
+      gap: var(--split-hero-mobile-gap);
+      flex-direction: column;
+    }
+
+    .section-{{ section.id }} .split-hero__main {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .section-{{ section.id }} .split-hero__slides {
+      display: flex;
+      transition: transform 400ms ease;
+      will-change: transform;
+    }
+
+    .section-{{ section.id }} .split-hero__slide {
+      min-width: 100%;
+      position: relative;
+      background: transparent;
+    }
+
+    .section-{{ section.id }} .split-hero__slide picture,
+    .section-{{ section.id }} .split-hero__side-item picture,
+    .section-{{ section.id }} .split-hero__link {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .section-{{ section.id }} .split-hero__slide img,
+    .section-{{ section.id }} .split-hero__side-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .section-{{ section.id }} .split-hero__arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      background: transparent;
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .section-{{ section.id }} .split-hero__arrow svg {
+      width: 60px;
+      height: 60px;
+      stroke: currentColor;
+      stroke-width: 3;
+      fill: none;
+    }
+
+    .section-{{ section.id }} .split-hero__arrow--prev {
+      left: 0px;
+    }
+
+    .section-{{ section.id }} .split-hero__arrow--next {
+      right: 0px;
+    }
+
+    .section-{{ section.id }} .split-hero__side {
+      display: grid;
+      gap: var(--split-hero-mobile-gap);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section-{{ section.id }} .split-hero__side-item {
+      overflow: hidden;
+      background: transparent;
+      min-height: 0;
+    }
+
+    .section-{{ section.id }} .split-hero__placeholder {
+      width: 100%;
+      height: 100%;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} .split-hero {
+        display: grid;
+        gap: var(--split-hero-desktop-gap);
+        grid-template-columns: minmax(0, var(--split-hero-main-width)) minmax(0, var(--split-hero-side-width));
+        align-items: stretch;
+      }
+
+      .section-{{ section.id }} .split-hero__main {
+        height: 100%;
+      }
+
+      .section-{{ section.id }} .split-hero__side {
+        gap: var(--split-hero-desktop-gap);
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .section-{{ section.id }} .split-hero__side-item {
+        height: 100%;
+      }
+
+      .section-{{ section.id }} .split-hero__side-item picture,
+      .section-{{ section.id }} .split-hero__side-item .split-hero__link {
+        height: 100%;
+      }
+
+      .section-{{ section.id }} .split-hero__side-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background--no-paddings{% endif %}'>
+    <div class='split-hero' data-split-hero data-autoplay='{{ autoplay }}' data-interval='{{ autoplay_interval }}'>
+      <div class='split-hero__main'>
+        <div class='split-hero__slides' data-split-hero-slides>
+          {%- assign slide_count = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type == 'slide' -%}
+              {%- assign slide_count = slide_count | plus: 1 -%}
+              {%- liquid
+                assign slide_desktop_image = block.settings.desktop_image
+                assign slide_mobile_image = block.settings.mobile_image
+                assign slide_link = block.settings.link
+                assign slide_alt = block.settings.alt
+                assign slide_loading = 'lazy'
+                if forloop.first
+                  assign slide_loading = 'eager'
+                endif
+              -%}
+              <div class='split-hero__slide' {{ block.shopify_attributes }}>
+                {%- if slide_link != blank -%}
+                  <a class='split-hero__link' href='{{ slide_link }}' aria-label='{{ slide_alt | default: 'Slide image' | escape }}'>
+                {%- endif -%}
+
+                {%- if slide_desktop_image != blank or slide_mobile_image != blank -%}
+                  <picture>
+                    {%- if slide_desktop_image != blank -%}
+                      <source media='(min-width: 768px)' srcset='{{ slide_desktop_image | image_url: width: 3200 }}'>
+                    {%- endif -%}
+                    {%- assign slide_fallback_image = slide_mobile_image | default: slide_desktop_image -%}
+                    {{
+                      slide_fallback_image
+                      | image_url: width: 2200
+                      | image_tag:
+                        loading: slide_loading,
+                        widths: '480, 768, 1024, 1440, 1920, 2400, 3200',
+                        sizes: '(max-width: 767px) 100vw, 80vw',
+                        alt: slide_alt
+                    }}
+                  </picture>
+                {%- else -%}
+                  {{ 'lifestyle-1' | placeholder_svg_tag: 'split-hero__placeholder placeholder-svg' }}
+                {%- endif -%}
+
+                {%- if slide_link != blank -%}
+                  </a>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+
+        {%- if slide_count > 1 -%}
+          <button class='split-hero__arrow split-hero__arrow--prev' type='button' aria-label='Previous slide' data-split-hero-prev>
+            <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M15 5 8 12l7 7'></path></svg>
+          </button>
+          <button class='split-hero__arrow split-hero__arrow--next' type='button' aria-label='Next slide' data-split-hero-next>
+            <svg viewBox='0 0 24 24' aria-hidden='true'><path d='m9 5 7 7-7 7'></path></svg>
+          </button>
+        {%- endif -%}
+      </div>
+
+      <div class='split-hero__side'>
+        {%- assign side_index = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'side_image' and side_index < 2 -%}
+            {%- assign side_index = side_index | plus: 1 -%}
+            {%- liquid
+              assign side_desktop_image = block.settings.desktop_image
+              assign side_mobile_image = block.settings.mobile_image
+              assign side_link = block.settings.link
+              assign side_alt = block.settings.alt
+            -%}
+
+            <div class='split-hero__side-item' {{ block.shopify_attributes }}>
+              {%- if side_link != blank -%}
+                <a class='split-hero__link' href='{{ side_link }}' aria-label='{{ side_alt | default: 'Side image' | escape }}'>
+              {%- endif -%}
+
+              {%- if side_desktop_image != blank or side_mobile_image != blank -%}
+                <picture>
+                  {%- if side_desktop_image != blank -%}
+                    <source media='(min-width: 768px)' srcset='{{ side_desktop_image | image_url: width: 1600 }}'>
+                  {%- endif -%}
+                  {%- assign side_fallback_image = side_mobile_image | default: side_desktop_image -%}
+                  {{
+                    side_fallback_image
+                    | image_url: width: 1200
+                    | image_tag:
+                      loading: 'eager',
+                      widths: '320, 480, 640, 800, 960, 1200, 1400',
+                      sizes: '(max-width: 767px) 50vw, 20vw',
+                      alt: side_alt
+                  }}
+                </picture>
+              {%- else -%}
+                {{ 'lifestyle-2' | placeholder_svg_tag: 'split-hero__placeholder placeholder-svg' }}
+              {%- endif -%}
+
+              {%- if side_link != blank -%}
+                </a>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const section = document.querySelector('.section-{{ section.id }} [data-split-hero]')
+    if (!section) return
+
+    const track = section.querySelector('[data-split-hero-slides]')
+    const side = section.querySelector('.split-hero__side')
+    if (!track) return
+
+    const slides = track.children
+    const total = slides.length
+    const desktopMedia = window.matchMedia('(min-width: 768px)')
+
+    let current = 0
+
+    const syncDesktopSideHeight = () => {
+      if (!side) return
+      if (!desktopMedia.matches) {
+        side.style.height = ''
+        return
+      }
+      const activeSlide = slides[current]
+      if (!activeSlide) return
+      side.style.height = `${activeSlide.getBoundingClientRect().height}px`
+    }
+
+    const render = () => {
+      track.style.transform = `translateX(-${current * 100}%)`
+      requestAnimationFrame(syncDesktopSideHeight)
+    }
+
+    if (total <= 1) {
+      render()
+      window.addEventListener('resize', syncDesktopSideHeight)
+      if (desktopMedia.addEventListener) {
+        desktopMedia.addEventListener('change', syncDesktopSideHeight)
+      } else if (desktopMedia.addListener) {
+        desktopMedia.addListener(syncDesktopSideHeight)
+      }
+      return
+    }
+
+    const prevBtn = section.querySelector('[data-split-hero-prev]')
+    const nextBtn = section.querySelector('[data-split-hero-next]')
+    const intervalMs = Number(section.dataset.interval || 5000)
+    const shouldAutoplay = section.dataset.autoplay === 'true'
+
+    let timer = null
+
+    const next = () => {
+      current = (current + 1) % total
+      render()
+    }
+
+    const prev = () => {
+      current = (current - 1 + total) % total
+      render()
+    }
+
+    const stopAutoplay = () => {
+      if (!timer) return
+      clearInterval(timer)
+      timer = null
+    }
+
+    const startAutoplay = () => {
+      if (!shouldAutoplay || timer) return
+      timer = setInterval(next, intervalMs)
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        next()
+        stopAutoplay()
+        startAutoplay()
+      })
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        prev()
+        stopAutoplay()
+        startAutoplay()
+      })
+    }
+
+    section.addEventListener('mouseenter', stopAutoplay)
+    section.addEventListener('mouseleave', startAutoplay)
+
+    section.querySelectorAll('img').forEach((img) => {
+      if (img.complete) return
+      img.addEventListener('load', syncDesktopSideHeight, { once: true })
+    })
+
+    if ('ResizeObserver' in window) {
+      const resizeObserver = new ResizeObserver(() => syncDesktopSideHeight())
+      Array.from(slides).forEach((slide) => resizeObserver.observe(slide))
+    }
+
+    window.addEventListener('resize', syncDesktopSideHeight)
+    if (desktopMedia.addEventListener) {
+      desktopMedia.addEventListener('change', syncDesktopSideHeight)
+    } else if (desktopMedia.addListener) {
+      desktopMedia.addListener(syncDesktopSideHeight)
+    }
+
+    render()
+    startAutoplay()
+  })()
+</script>
+
+{% schema %}
+{
+  "name": "Split hero gallery",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_main_width",
+      "min": 60,
+      "max": 90,
+      "step": 1,
+      "unit": "%",
+      "label": "Desktop main slider width",
+      "default": 75
+    },
+    {
+      "type": "range",
+      "id": "desktop_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Desktop gap",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "mobile_gap",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "label": "Mobile gap",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "Slider"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Autoplay",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_interval",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "label": "Autoplay interval",
+      "default": 5
+    },
+    {
+      "type": "header",
+      "content": "General section settings"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "full-screen"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" }
+      ],
+      "default": "default",
+      "label": "Corner rounding"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        { "value": "default", "label": "Use global color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default",
+      "label": "Color scheme variant"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "1",
+      "label": "Color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "Show section background"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "Add desktop side paddings"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "Add mobile side paddings"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "none"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Main slide",
+      "limit": 10,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "desktop_image",
+          "label": "Desktop image"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "Mobile image"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        },
+        {
+          "type": "text",
+          "id": "alt",
+          "label": "Image alt text"
+        }
+      ]
+    },
+    {
+      "type": "side_image",
+      "name": "Side image",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "desktop_image",
+          "label": "Desktop image"
+        },
+        {
+          "type": "image_picker",
+          "id": "mobile_image",
+          "label": "Mobile image"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        },
+        {
+          "type": "text",
+          "id": "alt",
+          "label": "Image alt text"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Split hero gallery",
+      "blocks": [
+        { "type": "slide" },
+        { "type": "slide" },
+        { "type": "side_image" },
+        { "type": "side_image" }
+      ]
+    }
+  ]
+}
+{% endschema %}

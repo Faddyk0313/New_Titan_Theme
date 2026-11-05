@@ -1,0 +1,612 @@
+{% comment %}
+  Renders the Titan vs. competitors comparison table.
+
+  Accepts:
+  - cus_color_theme: {String} 'light' or 'dark'. Default: 'light'.
+  - unique_id: {String} unique suffix used to scope the inline styles. Required
+    when the table can appear more than once on a page (e.g. section.id).
+  - light_bg_color: {String} background color used when cus_color_theme is
+    'light'. Default: white.
+  - dark_bg_color: {String} background color used when cus_color_theme is
+    'dark'. Default: black.
+  - mobile_row_height: {Number} row height in px on mobile. Default: 62.
+  - desktop_row_height: {Number} row height in px on desktop. Default: 56.
+  - mobile_logo_scale: {Number} header logo size on mobile, as a % of the
+    header cell. Default: 100.
+  - desktop_logo_scale: {Number} header logo size on desktop, as a % of the
+    header cell. Default: 100.
+  - mobile_icon_size: {Number} check/cross icon size on mobile, as a % of the
+    cell font size. Default: 140.
+  - desktop_icon_size: {Number} check/cross icon size on desktop, as a % of the
+    cell font size. Default: 140.
+  - mobile_table_padding: {Number} padding in px around the table on mobile.
+    Default: 0.
+  - desktop_table_padding: {Number} padding in px around the table on desktop.
+    Default: 0.
+
+  Usage:
+  {% render 'titan-compare-table', cus_color_theme: section.settings.cus_color_theme, unique_id: section.id %}
+{% endcomment %}
+
+{% liquid
+  assign cus_color_theme = cus_color_theme | default: 'light'
+  assign unique_id = unique_id | default: 'default'
+  assign scope = 'compare-table--' | append: unique_id
+
+  assign light_bg_color = light_bg_color | default: 'white'
+  assign dark_bg_color = dark_bg_color | default: 'black'
+
+  assign mobile_font_size = mobile_font_size | default: 15
+  assign desktop_font_size = desktop_font_size | default: 18
+
+  assign mobile_row_height = mobile_row_height | default: 62
+  assign desktop_row_height = desktop_row_height | default: 56
+
+  assign mobile_logo_scale = mobile_logo_scale | default: 100
+  assign desktop_logo_scale = desktop_logo_scale | default: 100
+
+  # TBG custom Code
+  assign mobile_icon_size = mobile_icon_size | default: 140
+  assign desktop_icon_size = desktop_icon_size | default: 140
+
+  # TBG custom Code
+  assign mobile_table_padding = mobile_table_padding | default: 0
+  assign desktop_table_padding = desktop_table_padding | default: 0
+
+  assign check_icon_src = 'https://cdn.shopify.com/s/files/1/0635/2401/2210/files/compare_table_logo.png?v=1751108904'
+  assign cross_icon_src = 'https://cdn.shopify.com/s/files/1/0635/2401/2210/files/x_99c266e0-6173-45c4-a337-7e5666b6f8d0.svg?v=1748772157'
+%}
+
+{% capture css %}
+  {% style %}
+    .{{ scope }} {
+      max-width: 100%;
+      margin-inline: auto;
+      overflow: clip;
+    }
+
+    .{{ scope }}.comparison-table--light {
+      background-color: {{ light_bg_color }};
+      color: black;
+    }
+
+    .{{ scope }}.comparison-table--dark {
+      background-color: {{ dark_bg_color }};
+      color: white;
+    }
+
+    .{{ scope }}.comparison-table--light .compare-table__features .cus_row {
+      color: black;
+      font-weight: 800;
+    }
+
+    .{{ scope }}.comparison-table--dark .compare-table__features .cus_row:not(.cus_header) {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .{{ scope }} .compare-table__features .cus_row.cus_header {
+      font-size: calc(var(--compare-table-font-size) * 1.9);
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .{{ scope }} .compare-table__competitors {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      display: flex;
+    }
+
+    .{{ scope }} .compare-table__competitors .competitor {
+      flex: 0 0 var(--compare-table-col-width);
+      scroll-snap-align: start;
+    }
+
+    .{{ scope }},
+    .{{ scope }} .compare-table__competitors {
+      display: flex;
+      align-items: center;
+      width: fit-content;
+    }
+
+    /* Desktop: let columns shrink to fit the available width so the last
+       competitor is never clipped on wide screens. */
+    @media (min-width: 768px) {
+      .{{ scope }} {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .{{ scope }} .compare-table__titan,
+      .{{ scope }} .compare-table__competitors .competitor {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+
+      /* The feature column carries the longest labels, so give it more room. */
+      .{{ scope }} .compare-table__features {
+        flex: 1.3 1 0;
+        min-width: 0;
+      }
+
+      /* One flex unit per competitor, so every column ends up the same width. */
+      .{{ scope }} .compare-table__competitors {
+        flex: 4 1 0;
+        width: auto;
+        min-width: 0;
+        overflow-x: visible;
+      }
+    }
+
+    .{{ scope }} {
+      --compare-table-col-width: 33vw;
+      --compare-table-row-height: {{ mobile_row_height }}px;
+      --compare-table-logo-scale: {{ mobile_logo_scale }}%;
+      /* TBG custom Code: icon size as a % of the cell font size. */
+      --compare-table-icon-scale: {{ mobile_icon_size | divided_by: 100.00 }};
+      /* Base cell size: the feature column uses it exactly. Everything else
+         (header, captions, icons) is derived from this, so one setting scales
+         the whole table. */
+      --compare-table-font-size: {{ mobile_font_size }}px;
+    }
+
+    /* Data columns read 2px larger than the feature labels. */
+    .{{ scope }} .compare-table__titan,
+    .{{ scope }} .compare-table__competitors {
+      --compare-table-font-size: calc({{ mobile_font_size }}px + 2px);
+    }
+
+    .{{ scope }} .cus_row {
+      font-size: var(--compare-table-font-size);
+      font-weight: 600;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--compare-table-col-width);
+      min-width: var(--compare-table-col-width);
+      /* Fixed height: the three column stacks are independent, so rows must
+         match exactly or they desync. */
+      height: var(--compare-table-row-height);
+      min-height: var(--compare-table-row-height);
+      padding: 6px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      border-bottom: 1px solid #b7b7b7;
+    }
+
+    @media (min-width: 768px) {
+      /* TBG custom Code: between the tablet breakpoint and a normal desktop the
+         columns are at their narrowest, which is where two-line cells and the
+         "FEATURE" header start breaking mid-word. Rather than lowering the
+         schema size everywhere, the size scales with the viewport and is capped
+         at the schema value, so it only shrinks inside that squeeze zone and is
+         at full size from ~1400px up. */
+      .{{ scope }} {
+        --compare-table-col-width: 200px;
+        --compare-table-font-size: clamp(
+          {{ desktop_font_size | times: 0.72 | round: 2 }}px,
+          {{ desktop_font_size | divided_by: 14.00 | round: 3 }}vw,
+          {{ desktop_font_size }}px
+        );
+        --compare-table-row-height: {{ desktop_row_height }}px;
+        --compare-table-logo-scale: {{ desktop_logo_scale }}%;
+        /* TBG custom Code */
+        --compare-table-icon-scale: {{ desktop_icon_size | divided_by: 100.00 }};
+      }
+
+      .{{ scope }} .compare-table__titan,
+      .{{ scope }} .compare-table__competitors {
+        /* TBG custom Code: same fluid ramp, +2px, as the feature column. */
+        --compare-table-font-size: clamp(
+          {{ desktop_font_size | plus: 2 | times: 0.72 | round: 2 }}px,
+          {{ desktop_font_size | plus: 2 | divided_by: 14.00 | round: 3 }}vw,
+          {{ desktop_font_size | plus: 2 }}px
+        );
+      }
+
+      .{{ scope }} .cus_row {
+        /* TBG custom Code: `anywhere` (needed on mobile) is what allows the
+           ugly mid-word "FEATUR / E" split. On desktop the fluid size above
+           makes the text fit, so only break at real word boundaries. */
+        overflow-wrap: normal;
+        word-break: normal;
+        hyphens: auto;
+        width: 100%;
+        min-width: 0;
+        height: var(--compare-table-row-height);
+        min-height: var(--compare-table-row-height);
+        padding: 8px 10px;
+        font-weight: 500;
+      }
+    }
+
+    .{{ scope }}.comparison-table--light .cus_row .small-text {
+      font-size: calc(var(--compare-table-font-size) * 0.68);
+      color: #5a5a5a;
+      font-weight: 600;
+    }
+
+    .{{ scope }}.comparison-table--dark .cus_row .small-text {
+      font-size: calc(var(--compare-table-font-size) * 0.68);
+      color: #cdcdcd;
+      font-weight: 600;
+    }
+
+    .{{ scope }} .compare-table__titan .cus_row.cus_header {
+      padding-block: 0;
+    }
+
+    /* Cells that pair a value with a caption have the least vertical room.
+       Allow wrapping (so nothing spills sideways) but drop the line-height and
+       margins so two lines plus a caption still clear the row. */
+    .{{ scope }} .cus_row .flex-direction-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
+      max-width: 100%;
+      line-height: 1.05;
+    }
+
+    .{{ scope }} .cus_row .flex-direction-column p {
+      margin: 0;
+    }
+
+    .{{ scope }} .cus_row.last {
+      border-bottom: none;
+    }
+
+    /* TBG custom Code */
+    .{{ scope }} .cus_row.cus_icon .check_icon,
+    .{{ scope }} .cus_row.cus_icon img {
+      width: calc(var(--compare-table-font-size) * var(--compare-table-icon-scale, 1.4));
+      height: calc(var(--compare-table-font-size) * var(--compare-table-icon-scale, 1.4));
+      object-fit: contain;
+    }
+
+    .{{ scope }}.comparison-table--light .cus_row.cus_icon .check_icon {
+      fill: #00f000;
+    }
+
+    .{{ scope }}.comparison-table--dark .cus_row.cus_icon .check_icon {
+      fill: #e5fc00;
+    }
+
+    .{{ scope }}.comparison-table--light .cus_header img {
+      filter: invert(0);
+    }
+
+    .{{ scope }}.comparison-table--dark .cus_header img {
+      filter: invert(1);
+    }
+
+    .{{ scope }} .cus_header img {
+      max-width: var(--compare-table-logo-scale);
+      max-height: var(--compare-table-logo-scale);
+      object-fit: contain;
+    }
+
+    .{{ scope }} .compare-table__titan {
+      border-left: 1px solid #b7b7b7;
+      border-right: 1px solid #b7b7b7;
+    }
+
+    .{{ scope }} .competitor:not(.last) {
+      border-right: 1px solid #b7b7b7;
+    }
+
+    .{{ scope }}-wrapper.comparison-table--light {
+      background-color: {{ light_bg_color }};
+    }
+
+    .{{ scope }}-wrapper.comparison-table--dark {
+      background-color: {{ dark_bg_color }};
+    }
+
+    .{{ scope }}-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      max-width: 100%;
+      /* TBG custom Code: merchant-controlled padding around the whole table.
+         The extra bottom padding that gives the pagination dots room is added
+         on top of it, and drops away on desktop where the dots are hidden. */
+      padding: {{ mobile_table_padding }}px;
+      padding-bottom: calc({{ mobile_table_padding }}px + 1.5rem);
+    }
+
+    .{{ scope }} .compare-table__competitors {
+      scrollbar-width: none;
+    }
+
+    .{{ scope }} .compare-table__competitors::-webkit-scrollbar {
+      display: none;
+    }
+
+    .{{ scope }}-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .{{ scope }}-dots button {
+      width: 9px;
+      height: 9px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background-color: #6b6b6b;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .{{ scope }}-dots button[aria-current='true'] {
+      background-color: #e5fc00;
+    }
+
+    .{{ scope }}-wrapper.comparison-table--light .{{ scope }}-dots button[aria-current='true'] {
+      background-color: #00a000;
+    }
+
+    /* Desktop shows every competitor, so there is nothing left to page. */
+    @media (min-width: 768px) {
+      .{{ scope }}-dots {
+        display: none;
+      }
+      /* TBG custom Code */
+      .{{ scope }}-wrapper {
+        padding: {{ desktop_table_padding }}px;
+      }
+
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+{% capture check_icon %}
+  <svg
+    class="check_icon"
+    viewBox="0 0 13.84 12.18"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M2.35,8.88L.06,5.6c-.14-.19-.02-.49.18-.49h3.12l1.58,2.26L10.47,0h3.12c.21,0,.32.3.18.49l-7.01,9.49h0,0s-1.34,1.93-1.34,1.93c-.25.36-.71.36-.97,0l-1.34-1.92h0s0,0,0,0l-.77-1.1Z"></path>
+  </svg>
+{% endcapture %}
+
+{% capture cross_icon %}
+  <img
+    width="20"
+    height="20"
+    src="{{ cross_icon_src }}"
+    alt="No"
+    loading="lazy"
+  >
+{% endcapture %}
+
+<div class="{{ scope }}-wrapper comparison-table--{{ cus_color_theme }}">
+  <div class="compare-table {{ scope }} comparison-table--{{ cus_color_theme }}">
+  <div class="compare-table__features">
+    <div class="cus_row cus_header">FEATURE</div>
+    <div class="cus_row">
+      Cut-Resistance <br>
+      (Neck)
+    </div>
+    <div class="cus_row">
+      Cut-Resistance <br>
+      (Wrist)
+    </div>
+    <div class="cus_row">Collar Closure</div>
+    <div class="cus_row">HECC Certified</div>
+    <div class="cus_row">Made in USA</div>
+    <div class="cus_row">
+      Colors &amp; Custom <br>
+      Team Designs
+    </div>
+    <div class="cus_row">Price</div>
+    <div class="cus_row">
+      Price/Level of <br>
+      Cut Resistance
+    </div>
+    <div class="cus_row last">Warranty</div>
+  </div>
+
+  <div class="compare-table__titan">
+    <div class="cus_row cus_header">
+      <img
+        width="200"
+        height="70"
+        src="{{ check_icon_src }}"
+        alt="Titan Battlegear"
+        style="padding: 0px 5px"
+      >
+    </div>
+    <div class="cus_row">A9</div>
+    <div class="cus_row">A7</div>
+    <div class="cus_row">
+      <div class="flex-direction-column">
+        <p style="text-align: center">Velcro-Free<span>™</span></p>
+        <p class="small-text">Stretch ProCurve<span>™</span></p>
+      </div>
+    </div>
+    <div class="cus_row cus_icon">{{ check_icon }}</div>
+    <div class="cus_row cus_icon">{{ check_icon }}</div>
+    <div class="cus_row cus_icon">{{ check_icon }}</div>
+    <div class="cus_row">$169</div>
+    <div class="cus_row">$19</div>
+    <div class="cus_row last">1 Year</div>
+  </div>
+
+  <div class="compare-table__competitors">
+    <div class="competitor">
+      <div class="cus_row cus_header">
+        <img
+          width="200"
+          height="70"
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/BAUER.svg?v=1749870562"
+          alt="Bauer"
+          loading="lazy"
+        >
+      </div>
+      <div class="cus_row">A3</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>Velcro</p>
+        </div>
+      </div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">$80</div>
+      <div class="cus_row">$27</div>
+      <div class="cus_row last">30 days</div>
+    </div>
+
+    <div class="competitor">
+      <div class="cus_row cus_header">
+        <img
+          width="200"
+          height="70"
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/CCM.svg?v=1749870562"
+          alt="CCM"
+          loading="lazy"
+        >
+      </div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>A3</p>
+          <p class="small-text">A6 (Pro Line)</p>
+        </div>
+      </div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>Velcro</p>
+        </div>
+      </div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>$139</p>
+          <p class="small-text">$200 (Pro Line)</p>
+        </div>
+      </div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>$36</p>
+          <p class="small-text">$33 (Pro Line)</p>
+        </div>
+      </div>
+      <div class="cus_row last">30 days</div>
+    </div>
+
+    <div class="competitor">
+      <div class="cus_row cus_header">
+        <img
+          width="200"
+          height="70"
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/WARROAD.svg?v=1749870562"
+          alt="Warroad"
+          loading="lazy"
+        >
+      </div>
+      <div class="cus_row">A7</div>
+      <div class="cus_row">A3</div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>Velcro</p>
+        </div>
+      </div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">$200</div>
+      <div class="cus_row">$33</div>
+      <div class="cus_row last">30 days</div>
+    </div>
+
+    <div class="competitor last">
+      <div class="cus_row cus_header">
+        <img
+          width="200"
+          height="70"
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/SHOCK_DR.svg?v=1749870562"
+          alt="Shock Doctor"
+          loading="lazy"
+        >
+      </div>
+      <div class="cus_row">A2</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">
+        <div class="flex-direction-column">
+          <p>Velcro</p>
+        </div>
+      </div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row cus_icon">{{ cross_icon }}</div>
+      <div class="cus_row">$70</div>
+      <div class="cus_row">$35</div>
+      <div class="cus_row last">60 days</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="{{ scope }}-dots" role="tablist" aria-label="Competitor columns"></div>
+</div>
+
+<script>
+  (() => {
+    const wrapper = document.currentScript.previousElementSibling;
+    const strip = wrapper.querySelector('.compare-table__competitors');
+    const dots = wrapper.querySelector('.{{ scope }}-dots');
+    if (!strip || !dots) return;
+
+    let pages = 0;
+
+    const step = () => {
+      const first = strip.querySelector('.competitor');
+      return first ? first.getBoundingClientRect().width : strip.clientWidth;
+    };
+
+    const build = () => {
+      // One dot per single-column scroll position: the start plus every column
+      // that is hidden past the right edge.
+      const hidden = strip.scrollWidth - strip.clientWidth;
+      const count = hidden > 1 ? Math.round(hidden / step()) + 1 : 1;
+      if (count === pages) return;
+      pages = count;
+      dots.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', 'Go to column group ' + (i + 1));
+        dot.addEventListener('click', () => {
+          strip.scrollTo({ left: i * step(), behavior: 'smooth' });
+        });
+        dots.appendChild(dot);
+      }
+      sync();
+    };
+
+    const sync = () => {
+      const index = Math.min(pages - 1, Math.round(strip.scrollLeft / step()));
+      dots.querySelectorAll('button').forEach((dot, i) => {
+        dot.setAttribute('aria-current', i === index ? 'true' : 'false');
+      });
+    };
+
+    strip.addEventListener('scroll', sync, { passive: true });
+    new ResizeObserver(build).observe(strip);
+    build();
+  })();
+</script>

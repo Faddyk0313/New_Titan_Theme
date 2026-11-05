@@ -1,0 +1,82 @@
+{%- comment -%}
+  TBG custom Code
+  Renders a single "Next-level features" tab panel.
+
+  Accepts:
+  - block {Object} - section block holding the panel settings
+  - tab_index {Number} - 1-based tab id, matched against the tab trigger `data-id`
+  - card_title_size {String} - heading size class for the overlay title
+  - card_text_size {String} - body size class for the overlay text
+{%- endcomment -%}
+
+{%- liquid
+  assign loading = 'lazy'
+  if tab_index == 1
+    assign loading = 'eager'
+  endif
+-%}
+{%- assign block_title_alt = block.settings.card_title | strip_html | escape -%}
+<tab-component
+  class='nlf__tab'
+  aria-hidden='{% if tab_index == 1 %}false{% else %}true{% endif %}'
+  data-id='{{ tab_index }}'
+  {{ block.shopify_attributes }}
+>
+  <div class='nlf__media'>
+    {%- if block.settings.desktop_image != blank or block.settings.mobile_image != blank -%}
+      {%- assign image_fallback = block.settings.mobile_image | default: block.settings.desktop_image -%}
+      <picture>
+        {%- if block.settings.desktop_image != blank -%}
+          <source
+            media='(min-width: 768px)'
+            srcset='{{ block.settings.desktop_image | image_url: width: 3200 }}'
+          >
+        {%- endif -%}
+        {{
+          image_fallback
+          | image_url: width: 2200
+          | image_tag:
+            loading: loading,
+            widths: '480, 768, 1024, 1440, 1920, 2400, 3200',
+            sizes: '100vw',
+            class: 'nlf__image',
+            alt: block.settings.image_alt
+        }}
+      </picture>
+    {%- else -%}
+      {{ 'lifestyle-1' | placeholder_svg_tag: 'placeholder-svg' }}
+    {%- endif -%}
+
+    <div class='nlf__card'>
+      {%- if block.settings.icon_image != blank or block.settings.icon != 'none' or block.settings.card_title != blank -%}
+        <div class='nlf__card-head'>
+          {%- if block.settings.icon_image != blank -%}
+            <span class='nlf__card-icon'>
+              {{
+                block.settings.icon_image
+                | image_url: width: 240
+                | image_tag: loading: loading, widths: '48, 96, 144, 240', alt: block_title_alt
+              }}
+            </span>
+          {%- elsif block.settings.icon != 'none' -%}
+            <span class='nlf__card-icon'>
+              {% render 'icon', icon_name: block.settings.icon %}
+            </span>
+          {%- endif -%}
+
+          {%- if block.settings.card_title != blank -%}
+            <div class='nlf__card-title {{ card_title_size }}' role='heading' aria-level='3'>
+              {{ block.settings.card_title }}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if block.settings.card_text != blank -%}
+        <div class='nlf__card-text rte {{ card_text_size }} body-font-weight-from-global-settings'>
+          {{ block.settings.card_text }}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</tab-component>

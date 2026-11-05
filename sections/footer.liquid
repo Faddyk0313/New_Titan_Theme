@@ -1,0 +1,3910 @@
+{%- liquid
+  assign options = section.settings
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+  assign round_level = options.round_level
+  assign show_language_selector = options.show_language_selector
+  assign show_currency_selector = options.show_currency_selector
+  assign show_currency_flags = options.show_currency_flags
+  assign show_payment_icons = options.show_payment_icons
+  assign show_policy_links = options.show_policy_links
+  assign copyright_text = options.copyright_text
+  assign bottom_bar = options.bottom_bar
+  assign container_size = options.container_size
+  assign enable_follow_on_shop = options.enable_follow_on_shop
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign section_spacing_below_bottom_bar = options.section_spacing_below_bottom_bar
+  assign remove_default_top_spacing = options.remove_default_top_spacing
+  assign bottom_bar_links_gap_desktop = options.bottom_bar_links_gap_desktop
+  assign bottom_bar_links_gap_mobile = options.bottom_bar_links_gap_mobile
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+
+  # TBG custom Code
+  assign partner_image = options.partner_image
+  assign partner_image_width_desktop = options.partner_image_width_desktop
+  assign partner_image_width_mobile = options.partner_image_width_mobile
+  assign contact_info_link = options.contact_info_link
+  assign contact_info_label = options.contact_info_label
+-%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{%- capture css -%}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-columns: 1;
+      --gsc-space-between-cards: 4.8rem;
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      /* TBG custom Code: root spacing-bottom now only controls space BELOW the bottom bar */
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_below_bottom_bar }});
+      --titan-footer-content-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      /* TBG custom Code */
+      --titan-bottom-bar-links-gap: {{ bottom_bar_links_gap_mobile }}px;
+    }
+
+    {%- comment -%} TBG custom Code: gap between bottom bar policy links {%- endcomment -%}
+    .section-{{ section.id }} .footer__bottom-bar {
+      column-gap: var(--titan-bottom-bar-links-gap);
+      row-gap: 10px;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      {%- comment -%} TBG custom Code {%- endcomment -%}
+      .section-{{ section.id }} {
+        --titan-bottom-bar-links-gap: {{ bottom_bar_links_gap_desktop }}px;
+      }
+    }
+
+    {%- comment -%} TBG custom Code: space between footer content and the bottom bar {%- endcomment -%}
+    .section-{{ section.id }} .footer__container {
+      padding-bottom: var(--titan-footer-content-spacing-bottom, 0);
+    }
+
+    {%- if remove_default_top_spacing -%}
+      {%- comment -%} TBG custom Code: strip theme's built-in top padding so "Top" is authoritative {%- endcomment -%}
+      .section-{{ section.id }} .footer__outer-container {
+        padding-top: 0;
+      }
+
+      .section-{{ section.id }} .footer__card-grid {
+        padding-top: 0;
+      }
+    {%- endif -%}
+
+    {% for block in section.blocks %}
+        .block-{{ block.id }}{
+            --gsc-logo-width: {{ block.settings.logo_width | divided_by: 10 }}rem;
+            --gsc-image-width: {{ block.settings.image_width }}%;
+            --gsc-img-ratio: {{ block.settings.image_ratio | times: 100 }}%;
+            {%- if block.type == 'contact' -%}
+            --titan-contact-icon-size: {{ block.settings.icon_size | default: 30 }}px;
+            {%- endif -%}
+        }
+    {% endfor %}
+
+    /* TBG custom Code */
+    .section-{{ section.id }} {
+      --titan-footer-link-color: #6b6e74;
+      --titan-footer-bottom-link-color: #c8ff00;
+      --titan-footer-bottom-bg: #0d1117;
+      --titan-partner-width-mobile: {{ partner_image_width_mobile }}px;
+      --titan-partner-width-desktop: {{ partner_image_width_desktop }}px;
+    }
+
+    /* logo + partner image lockup */
+    .section-{{ section.id }} .footer__brand {
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      gap: 2.4rem;
+      width: 100%;
+    }
+
+    .section-{{ section.id }} .footer__partner-image {
+      display: block;
+      width: 100%;
+      max-width: var(--titan-partner-width-mobile);
+      height: auto;
+    }
+
+    .section-{{ section.id }} .footer__partner {
+      display: flex;
+      flex-flow: column;
+      align-items: flex-start;
+      gap: 0.8rem;
+    }
+
+    /* muted link colour + tighter rows */
+    .section-{{ section.id }} .footer__menu {
+      row-gap: 0.4rem;
+    }
+
+    .section-{{ section.id }} .footer__title {
+      margin: 0 0 1rem;
+    }
+
+    .section-{{ section.id }} .footer__menu-item,
+    .section-{{ section.id }} .footer__menu-item .underline-text__label,
+    .section-{{ section.id }} .footer__contact-text,
+    .section-{{ section.id }} .footer__contact-text * {
+      /* !important needed: theme's .body-color uses !important */
+      color: var(--titan-footer-link-color) !important;
+    }
+
+    /* Need a hand? block — whole column capped at 165px */
+    .section-{{ section.id }} .footer__contact,
+    .section-{{ section.id }} .footer__contact-text,
+    .section-{{ section.id }} .footer__contact-items {
+      max-width: 16.5rem;
+    }
+
+    .section-{{ section.id }} .footer__contact-text {
+      margin: 0 0 2rem;
+    }
+
+    .section-{{ section.id }} .footer__contact-items {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.4rem;
+      width: 100%
+    }
+
+    .section-{{ section.id }} .footer__contact-item {
+      /* allow shrinking so 5 items always fit the 165px cap */
+      flex: 0 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-flow: column;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--titan-footer-link-color);
+      transition: color 0.2s ease;
+    }
+
+    .section-{{ section.id }} .footer__contact-item:hover {
+      color: currentColor;
+      opacity: 0.75;
+    }
+
+    .section-{{ section.id }} .footer__contact-item-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: var(--titan-contact-icon-size, 30px);
+      aspect-ratio: 1;
+    }
+
+    .section-{{ section.id }} .footer__contact-item-icon svg,
+    .section-{{ section.id }} .footer__contact-item-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      /* CDN icons are dark; invert so they read on the dark footer */
+      filter: brightness(0) invert(1) opacity(0.55);
+    }
+
+    .section-{{ section.id }} .footer__contact-item-label {
+      white-space: nowrap;
+      /* caption3 pulls in the heading font/weight/uppercase — reset to body text,
+         then step the size down below the rest of the column copy */
+      font-family: var(--gsc-body-font-family);
+      font-weight: var(--gsc-body-font-weight);
+      font-style: normal;
+      font-size: 1.2rem;
+      line-height: 1.3;
+      text-transform: none;
+      letter-spacing: normal;
+      word-spacing: normal;
+      color: var(--titan-footer-link-color);
+    }
+
+    .section-{{ section.id }} .footer__container {
+      overflow: visible;
+    }
+
+    .section-{{ section.id }} .footer__utils {
+      position: relative;
+      row-gap: 2rem;
+    }
+
+    /* paint the band edge-to-edge regardless of container padding */
+    .section-{{ section.id }} .footer__utils::before,
+    .section-{{ section.id }} .footer__utils {
+      background-color: var(--titan-footer-bottom-bg) !important;
+      background: var(--titan-footer-bottom-bg) !important;
+    }
+    .section-{{ section.id }} .footer__utils::before {
+      content: '';
+      position: absolute;
+      z-index: -1;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 100vw;
+      margin-left: -50vw;
+      pointer-events: none;
+    }
+
+    /* everything in the bottom bar shares the accent colour */
+    .section-{{ section.id }} .footer__utils,
+    .section-{{ section.id }} .footer__utils .footer__bottom-bar-item,
+    .section-{{ section.id }} .footer__utils .footer__bottom-bar-item .underline-text__label,
+    .section-{{ section.id }} .footer__utils .footer__copyright,
+    .section-{{ section.id }} .footer__utils .footer__socials-item,
+    .section-{{ section.id }} .footer__utils .localization-dropdown-toggle,
+    .section-{{ section.id }} .footer__utils .localization-dropdown-toggle__chevron {
+      /* !important needed: theme's .body-color uses !important */
+      color: var(--titan-footer-bottom-link-color) !important;
+    }
+
+
+    .section-{{ section.id }} .footer__socials {
+      display: flex;
+      align-items: center;
+      gap: 1.8rem;
+    }
+
+    .section-{{ section.id }} .footer__socials-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: currentColor;
+      transition: opacity 0.2s ease;
+    }
+
+    .section-{{ section.id }} .footer__socials-item:hover {
+      opacity: 0.7;
+    }
+
+    .section-{{ section.id }} .footer__socials-item svg {
+      width: 1.8rem;
+      height: 1.8rem;
+    }
+
+    .section-{{ section.id }} .footer__extra {
+      align-items: center;
+    }
+
+    /* ---------- mobile layout (TBG custom Code) ---------- */
+    @media {% render 'media-queries', screen: 'only_mobile' %} {
+      /* logo + partner image side by side, centered — nowrap so the
+         partner block stays on the logo's line and both shrink instead */
+      .section-{{ section.id }} .footer__brand {
+        flex-flow: row nowrap;
+        justify-content: center;
+        align-items: center;
+        gap: 1.6rem;
+      }
+
+      /* don't set a width here — .logo-img uses var(--gsc-logo-width)
+         from the block's Size setting, and overriding it breaks that control */
+      .section-{{ section.id }} .footer__logo {
+        flex: 0 1 auto;
+        min-width: 0;
+        margin: 0;
+      }
+
+      .section-{{ section.id }} .footer__partner {
+        flex: 0 1 auto;
+        min-width: 0;
+        align-items: center;
+      }
+
+      .section-{{ section.id }} .footer__partner-heading {
+        text-align: center;
+      }
+
+      /* accordion rows: bigger label, subtle grey bottom rule only */
+      .section-{{ section.id }} .footer__accordion_btn {
+        border-top: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        padding-block: 1.8rem;
+      }
+
+      .section-{{ section.id }} .footer__accordion:first-of-type .footer__accordion_btn {
+        padding-top: 1.8rem;
+      }
+
+      .section-{{ section.id }} .footer__accordion_btn > p {
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+
+      /* breathing room between the tab's border and its links; padding goes on
+         the inner menu, not .accordeon-plus__content-wrap, which animates max-height */
+      .section-{{ section.id }} .footer__accordion .footer__menu {
+        padding-top: 1.6rem;
+        row-gap: 0.2rem;
+      }
+
+      /* tighter gap after the last link */
+      .section-{{ section.id }} .accordeon-plus[data-aria-expanded='true'] {
+        padding-bottom: 1.2rem;
+      }
+
+
+      /* chevron points right, rotates down when open */
+      .section-{{ section.id }} .footer__accordion-chevron {
+        width: 2rem;
+        height: 2rem;
+        margin-left: auto;
+        transition: transform 250ms ease;
+      }
+
+      .section-{{ section.id }} .accordeon-plus[data-aria-expanded='true'] .footer__accordion-chevron {
+        transform: rotate(90deg);
+      }
+
+      /* Need a hand? is a centered static section under the menus */
+      .section-{{ section.id }} .footer__block--mobile-static:has(.footer__contact-items) {
+        align-items: center;
+        text-align: center;
+        border-top: none;
+        padding-block: 3.2rem 0;
+        width: 100%;
+        max-width: none;
+      }
+
+      /* the theme hides .footer__title in static blocks and shows the
+         --mobile-static <p> instead; keep that, just tighten the margin */
+      .section-{{ section.id }} .footer__block--mobile-static:has(.footer__contact-items) .footer__title--mobile-static {
+        margin: 0 0 1.2rem;
+        /* match the accordion tab headings above it */
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+
+      /* cap the paragraph so it wraps onto two lines */
+      .section-{{ section.id }} .footer__contact-text {
+        max-width: 32rem;
+        margin: 0 auto 2.4rem;
+      }
+
+      .section-{{ section.id }} .footer__contact-items {
+        max-width: none;
+        justify-content: center;
+        gap: 1.6rem;
+      }
+
+      /* no room constraint on mobile — let the icon be its natural size
+         instead of stretching to fill the item (needed only on desktop) */
+      .section-{{ section.id }} .footer__contact-item-icon {
+        width: var(--titan-contact-icon-size, 30px);
+      }
+
+      /* Bottom bar order: socials + selector on one centered row,
+         then copyright, then the policy links.
+         .footer__extra is dissolved with display:contents so its children
+         become direct flex items of .footer__utils and can be ordered. */
+      .section-{{ section.id }} .footer__utils {
+        flex-flow: row wrap;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        row-gap: 1.6rem;
+        column-gap: 1.8rem;
+      }
+
+      .section-{{ section.id }} .footer__utils .footer__extra {
+        display: contents;
+      }
+
+      /* socials + selector share the first row */
+      .section-{{ section.id }} .footer__utils .footer__socials {
+        order: 1;
+        flex: 0 0 auto;
+        justify-content: center;
+      }
+
+      .section-{{ section.id }} .footer__utils .footer__settings {
+        order: 2;
+        flex: 0 0 auto;
+        justify-content: center;
+      }
+
+      /* each of these takes a full row of its own */
+      .section-{{ section.id }} .footer__utils .footer__copyright {
+        order: 3;
+        flex: 0 0 100%;
+        text-align: center;
+      }
+
+      .section-{{ section.id }} .footer__utils .footer__payment-icons {
+        order: 4;
+        flex: 0 0 100%;
+        justify-content: center;
+      }
+
+      .section-{{ section.id }} .footer__utils .footer__bottom-bar {
+        order: 5;
+        flex: 0 0 100%;
+        justify-content: center;
+        margin: 0;
+      }
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      /* 6 evenly spaced columns that wrap when cramped */
+      .section-{{ section.id }} .footer__card-grid {
+        display: flex;
+        flex-flow: row wrap;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 3.2rem;
+      }
+
+      /* each column is exactly as wide as its own content, so short
+         columns don't carry empty space; space-between spreads the slack */
+      .section-{{ section.id }} .footer__card-grid > .footer__block {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+
+      /* keep link and heading text on one line so columns size to their longest item */
+      .section-{{ section.id }} .footer__menu-item,
+      .section-{{ section.id }} .footer__card-grid .footer__title {
+        white-space: nowrap;
+      }
+
+      /* the Need a hand? column never exceeds 165px */
+      .section-{{ section.id }} .footer__card-grid > .footer__block:has(.footer__contact-items) {
+        flex: 0 0 16.5rem;
+        max-width: 16.5rem;
+      }
+
+      .section-{{ section.id }} .footer__brand {
+        flex-flow: column;
+        align-items: flex-start;
+        gap: 2.4rem;
+      }
+
+      .section-{{ section.id }} .footer__partner-image {
+        max-width: var(--titan-partner-width-desktop);
+      }
+
+      .section-{{ section.id }} .footer__logo {
+        margin: 0;
+      }
+
+      .section-{{ section.id }} .footer__utils {
+        align-items: center;
+        justify-content: space-between;
+        padding-block: 2rem;
+      }
+
+      .section-{{ section.id }} .footer__extra {
+        margin: 0;
+        margin-left: auto;
+      }
+
+    }
+  {% endstyle %}
+{%- endcapture -%}
+
+{%- render 'inline-css-minifier', css: css -%}
+
+<div class='flex flex-col gap-10 footer {% if round_level != 'default' %}round-level-{{round_level}}{% endif %} section-{{ section.id }} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='footer__outer-container container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='footer__container container container--{{ container_size }}'>
+      {%- if section.blocks.size > 0 -%}
+        <div class='card-grid footer__card-grid'>
+          {%- for block in section.blocks -%}
+            {% liquid
+              assign mobile_block_style = block.settings.mobile_block_style
+
+              # TBG custom Code — contact block is a static section on mobile, never an accordion
+              if block.type == 'contact'
+                assign mobile_block_style = 'static'
+              endif
+
+              assign mobile_title = block.settings.mobile_title
+              if mobile_title == blank
+                assign mobile_title = block.settings.title
+              endif
+            %}
+
+            {%- case block.type -%}
+              {%- when 'image' -%}
+                {%- assign media_type = block.settings.media_type -%}
+                {%- assign image = block.settings.image -%}
+                {%- assign video = block.settings.video -%}
+                {%- assign link_url = block.settings.link.url -%}
+
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div class='footer__image-wrap' data-accordeon-content>
+                        <a
+                          class='shape shape--nature'
+                          {% if link_url != blank %}
+                            href='{{ link_url }}'
+                          {% endif %}
+                          aria-label=''
+                        >
+                          {%- if media_type == 'video' and video != blank -%}
+                            {% render 'video-with-alt',
+                              video: video,
+                              class: 'image footer__image',
+                              autoplay: true,
+                              loop: true,
+                              muted: true,
+                              controls: false,
+                              loading: 'lazy',
+                              iterate_on_click: true
+                            %}
+                          {%- elsif media_type == 'image' and image != blank -%}
+                            <img
+                              {% render 'image-attributes',
+                                image: image,
+                                size: 'medium',
+                                class: 'image footer__image'
+                              %}
+                            >
+                          {%- else -%}
+                            {{ 'image' | placeholder_svg_tag: 'image footer__image placeholder-image' }}
+                          {%- endif -%}
+                        </a>
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  <div class='footer__image-wrap'>
+                    <a
+                      class='shape shape--nature'
+                      {% if link_url != blank %}
+                        href='{{ link_url }}'
+                      {% endif %}
+                      aria-label=''
+                    >
+                      {%- if media_type == 'video' and video != blank -%}
+                        {% render 'video-with-alt',
+                          video: video,
+                          class: 'image footer__image',
+                          autoplay: true,
+                          loop: true,
+                          muted: true,
+                          controls: false,
+                          loading: 'lazy',
+                          iterate_on_click: true
+                        %}
+                      {%- elsif media_type == 'image' and image != blank -%}
+                        <img
+                          {% render 'image-attributes', image: image, size: 'medium', class: 'image footer__image' %}
+                        >
+                      {%- else -%}
+                        {{ 'image' | placeholder_svg_tag: 'image footer__image placeholder-image' }}
+                      {%- endif -%}
+                    </a>
+                  </div>
+                </div>
+
+              {%- when 'text' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div
+                        class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'
+                        data-accordeon-content
+                      >
+                        {{ block.settings.text }}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if block.settings.text != blank -%}
+                    <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                      {{ block.settings.text }}
+                    </div>
+                  {%- endif -%}
+                </div>
+
+              {%- when 'logo_with_text' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div
+                        class='footer__block'
+                        data-accordeon-content
+                      >
+                        {%- comment -%} TBG custom Code {%- endcomment -%}
+                        <div class='footer__brand'>
+                          {%- if block.settings.logo_img != blank -%}
+                            {% render 'logo',
+                              class: 'footer__logo',
+                              image: block.settings.logo_img,
+                              logo_width: block.settings.logo_width,
+                              logo_text: shop.name
+                            %}
+                          {%- endif -%}
+
+                          {%- if partner_image != blank -%}
+                      <div class='footer__partner'>
+                        {%- if options.partner_heading != blank -%}
+                          <p class='footer__partner-heading {{ options.partner_heading_size }}'>
+                            {{ options.partner_heading }}
+                          </p>
+                        {%- endif -%}
+                        <img
+                          class='footer__partner-image'
+                          src='{{ partner_image | image_url: width: 800 }}'
+                          alt='{{ partner_image.alt | default: shop.name | escape }}'
+                          width='{{ partner_image.width }}'
+                          height='{{ partner_image.height }}'
+                          loading='lazy'
+                        >
+                      </div>
+                    {%- endif -%}
+                        </div>
+
+                        {%- if block.settings.text != blank -%}
+                          <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                            {{ block.settings.text }}
+                          </div>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- comment -%} TBG custom Code {%- endcomment -%}
+                  <div class='footer__brand'>
+                    {%- if block.settings.logo_img != blank -%}
+                      {% render 'logo',
+                        class: 'footer__logo',
+                        image: block.settings.logo_img,
+                        logo_width: block.settings.logo_width,
+                        logo_text: shop.name
+                      %}
+                    {%- endif -%}
+
+                    {%- if partner_image != blank -%}
+                      <div class='footer__partner'>
+                        {%- if options.partner_heading != blank -%}
+                          <p class='footer__partner-heading {{ options.partner_heading_size }}'>
+                            {{ options.partner_heading }}
+                          </p>
+                        {%- endif -%}
+                        <img
+                          class='footer__partner-image'
+                          src='{{ partner_image | image_url: width: 800 }}'
+                          alt='{{ partner_image.alt | default: shop.name | escape }}'
+                          width='{{ partner_image.width }}'
+                          height='{{ partner_image.height }}'
+                          loading='lazy'
+                        >
+                      </div>
+                    {%- endif -%}
+                  </div>
+
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if block.settings.text != blank -%}
+                    <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                      {{ block.settings.text }}
+                    </div>
+                  {%- endif -%}
+                </div>
+
+              {%- when 'subscribe' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div data-accordeon-content>
+                        {%- if block.settings.text != blank -%}
+                          <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                            {{ block.settings.text }}
+                          </div>
+                        {%- endif -%}
+
+                        {%- form 'customer', id: 'ContactFooterMobile', class: 'newsletter footer__newsletter' -%}
+                          <input
+                            name='contact[tags]'
+                            type='hidden'
+                            value='newsletter'
+                            id='ContactFooterMobile-ContactTagsInput-{{ form.id }}'
+                          >
+
+                          <div class='field'>
+                            <label class='visually-hidden' for='ContactFooterMobile-ContactEmailInput-{{ form.id }}'>
+                              {{- 'forms.newsletter.screen_reader.email_input_label' | t -}}
+                            </label>
+                            <input
+                              type='email'
+                              name='contact[email]'
+                              class='input input--large input--{{ block.settings.input_style }}'
+                              value='{{ form.email }}'
+                              aria-required='true'
+                              autocorrect='off'
+                              autocapitalize='off'
+                              autocomplete='email'
+                              placeholder='{{ 'forms.newsletter.store_front.email_input_placeholder' | t }}'
+                              required
+                              id='ContactFooterMobile-ContactEmailInput-{{ form.id }}'
+                            >
+                            <button
+                              class='btn btn--{{ block.settings.button_style }} btn--lg input-btn'
+                              name='commit'
+                              type='submit'
+                              aria-label='{{ 'forms.newsletter.screen_reader.subscribe_button_label' | t }}'
+                            >
+                              {% render 'icon', icon_name: 'arrow', class: 'newsletter__arrow' %}
+                            </button>
+                          </div>
+
+                          {% if block.settings.show_signup_checkbox %}
+                            <label
+                              class='checkbox checkbox--consent footer__checkbox body-font-weight-from-global-settings'
+                              for='signup_checkbox_mobile_{{block.id}}'
+                            >
+                              <input
+                                class='checkbox__input'
+                                id='signup_checkbox_mobile_{{block.id}}'
+                                type='checkbox'
+                                required
+                              >
+                              <span class='checkbox__span checkbox__span--{{ block.settings.input_style }}'></span>
+                              <span>{{ block.settings.signup_checkbox_text }}</span>
+                            </label>
+                          {% endif %}
+
+                          {%- if form.errors -%}
+                            {% assign error = form.errors.translated_fields.email
+                              | capitalize
+                              | append: ' '
+                              | append: form.errors.messages.email
+                            %}
+                            <script>
+                              window.notification = { text: '{{ error }}', variant: 'warning' }
+                            </script>
+                          {%- endif -%}
+
+                          {%- if form.posted_successfully? -%}
+                            {% assign success_message = 'forms.newsletter.store_front.success' | t %}
+                            <script>
+                              window.notification = { text: '{{ success_message }}', variant: 'success' }
+                            </script>
+                          {%- endif -%}
+                        {%- endform -%}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if block.settings.text != blank -%}
+                    <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                      {{ block.settings.text }}
+                    </div>
+                  {%- endif -%}
+
+                  {%- form 'customer', id: 'ContactFooter', class: 'newsletter footer__newsletter' -%}
+                    <input
+                      name='contact[tags]'
+                      type='hidden'
+                      value='newsletter'
+                      id='ContactFooter-ContactTagsInput-{{ form.id }}'
+                    >
+
+                    <div class='field'>
+                      <label class='visually-hidden' for='ContactFooter-ContactEmailInput-{{ form.id }}'>
+                        {{- 'forms.newsletter.screen_reader.email_input_label' | t -}}
+                      </label>
+                      <input
+                        type='email'
+                        name='contact[email]'
+                        class='input input--large input--{{ block.settings.input_style }}'
+                        value='{{ form.email }}'
+                        aria-required='true'
+                        autocorrect='off'
+                        autocapitalize='off'
+                        autocomplete='email'
+                        placeholder='{{ 'forms.newsletter.store_front.email_input_placeholder' | t }}'
+                        required
+                        id='ContactFooter-ContactEmailInput-{{ form.id }}'
+                      >
+                      <button
+                        class='btn btn--{{ block.settings.button_style }} btn--lg input-btn'
+                        name='commit'
+                        type='submit'
+                        aria-label='{{ 'forms.newsletter.screen_reader.subscribe_button_label' | t }}'
+                      >
+                        {% render 'icon', icon_name: 'arrow', class: 'newsletter__arrow' %}
+                      </button>
+                    </div>
+
+                    {% if block.settings.show_signup_checkbox %}
+                      <label
+                        class='checkbox checkbox--consent footer__checkbox body-font-weight-from-global-settings'
+                        for='signup_checkbox_{{block.id}}'
+                      >
+                        <input
+                          class='checkbox__input'
+                          id='signup_checkbox_{{block.id}}'
+                          type='checkbox'
+                          required
+                        >
+                        <span class='checkbox__span checkbox__span--{{ block.settings.input_style }}'></span>
+                        <span>{{ block.settings.signup_checkbox_text }}</span>
+                      </label>
+                    {% endif %}
+
+                    {%- if form.errors -%}
+                      {% assign error = form.errors.translated_fields.email
+                        | capitalize
+                        | append: ' '
+                        | append: form.errors.messages.email
+                      %}
+                      <script>
+                        window.notification = { text: '{{ error }}', variant: 'warning' }
+                      </script>
+                    {%- endif -%}
+
+                    {%- if form.posted_successfully? -%}
+                      {% assign success_message = 'forms.newsletter.store_front.success' | t %}
+                      <script>
+                        window.notification = { text: '{{ success_message }}', variant: 'success' }
+                      </script>
+                    {%- endif -%}
+                  {%- endform -%}
+                </div>
+
+              {%- when 'social_media' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div data-accordeon-content>
+                        <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                          {{ block.settings.text }}
+                        </div>
+
+                        {%- render 'social-list', class: 'footer__social-list' -%}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if block.settings.text != blank -%}
+                    <div class='rte footer__text {{ block.settings.body_size }} body-color body-font-weight-from-global-settings'>
+                      {{ block.settings.text }}
+                    </div>
+                  {%- endif -%}
+                  {%- render 'social-list', class: 'footer__social-list' -%}
+                </div>
+
+              {%- when 'menu' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div class='footer__menu {{ block.settings.body_size }}' data-accordeon-content>
+                        {%- for link in block.settings.menu.links -%}
+                          <a
+                            class='footer__menu-item underline-text body-color body-font-weight-from-global-settings'
+                            href='{{ link.url }}'
+                            aria-label='{{ link.title | strip_html | escape }}'
+                          >
+                            <span class='underline-text__label'>{{ link.title }}</span>
+                          </a>
+                        {%- endfor -%}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  <div class='footer__menu {{ block.settings.body_size }}'>
+                    {%- for link in block.settings.menu.links -%}
+                      <a
+                        class='footer__menu-item underline-text body-color body-font-weight-from-global-settings'
+                        href='{{ link.url }}'
+                        aria-label='{{ link.title | strip_html | escape }}'
+                      >
+                        <span class='underline-text__label'>{{ link.title }}</span>
+                      </a>
+                    {%- endfor -%}
+                  </div>
+                </div>
+
+              {%- comment -%} TBG custom Code {%- endcomment -%}
+              {%- when 'contact' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div class='footer__contact' data-accordeon-content>
+                        {%- if block.settings.text != blank -%}
+                          <div class='rte footer__contact-text {{ block.settings.body_size }} body-font-weight-from-global-settings'>
+                            {{ block.settings.text }}
+                          </div>
+                        {%- endif -%}
+
+                        <div class='footer__contact-items'>
+                          {%- for i in (1..5) -%}
+                            {%- liquid
+                              assign label_key = 'item_' | append: i | append: '_label'
+                              assign link_key = 'item_' | append: i | append: '_link'
+                              assign icon_url_key = 'item_' | append: i | append: '_icon_url'
+                              assign image_key = 'item_' | append: i | append: '_image'
+                              assign is_chat_key = 'item_' | append: i | append: '_is_chat'
+
+                              assign item_label = block.settings[label_key]
+                              assign item_link = block.settings[link_key]
+                              assign item_icon_url = block.settings[icon_url_key]
+                              assign item_image = block.settings[image_key]
+                              assign item_is_chat = block.settings[is_chat_key]
+
+                              assign icon_size = block.settings.icon_size | default: 30
+                            -%}
+
+                            {%- if item_label != blank or item_image != blank or item_icon_url != blank -%}
+                              <a
+                                class='footer__contact-item'
+                                href='{{ item_link | default: '#' }}'
+                                {% if item_is_chat %}
+                                  data-tbg-chat-trigger
+                                {% endif %}
+                                {% if item_label != blank %}
+                                  aria-label='{{ item_label | strip_html | escape }}'
+                                {% endif %}
+                              >
+                                <span class='footer__contact-item-icon'>
+                                  {%- if item_image != blank -%}
+                                    <img
+                                      src='{{ item_image | image_url: width: 120 }}'
+                                      alt='{{ item_label | strip_html | escape }}'
+                                      width='{{ icon_size }}'
+                                      height='{{ icon_size }}'
+                                      loading='lazy'
+                                      decoding='async'
+                                    >
+                                  {%- elsif item_icon_url != blank -%}
+                                    <img
+                                      src='{{ item_icon_url }}'
+                                      alt='{{ item_label | strip_html | escape }}'
+                                      width='{{ icon_size }}'
+                                      height='{{ icon_size }}'
+                                      loading='lazy'
+                                      decoding='async'
+                                    >
+                                  {%- endif -%}
+                                </span>
+
+                                {%- if item_label != blank -%}
+                                  <span class='footer__contact-item-label {{ block.settings.item_label_size }}'>
+                                    {{ item_label }}
+                                  </span>
+                                {%- endif -%}
+                              </a>
+                            {%- endif -%}
+                          {%- endfor -%}
+                        </div>
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if block.settings.title != blank -%}
+                    <div class='footer__title {{ block.settings.heading_size }}'>{{ block.settings.title }}</div>
+                  {%- endif -%}
+
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if block.settings.text != blank -%}
+                          <div class='rte footer__contact-text {{ block.settings.body_size }} body-font-weight-from-global-settings'>
+                            {{ block.settings.text }}
+                          </div>
+                        {%- endif -%}
+
+                        <div class='footer__contact-items'>
+                          {%- for i in (1..5) -%}
+                            {%- liquid
+                              assign label_key = 'item_' | append: i | append: '_label'
+                              assign link_key = 'item_' | append: i | append: '_link'
+                              assign icon_url_key = 'item_' | append: i | append: '_icon_url'
+                              assign image_key = 'item_' | append: i | append: '_image'
+                              assign is_chat_key = 'item_' | append: i | append: '_is_chat'
+
+                              assign item_label = block.settings[label_key]
+                              assign item_link = block.settings[link_key]
+                              assign item_icon_url = block.settings[icon_url_key]
+                              assign item_image = block.settings[image_key]
+                              assign item_is_chat = block.settings[is_chat_key]
+
+                              assign icon_size = block.settings.icon_size | default: 30
+                            -%}
+
+                            {%- if item_label != blank or item_image != blank or item_icon_url != blank -%}
+                              <a
+                                class='footer__contact-item'
+                                href='{{ item_link | default: '#' }}'
+                                {% if item_is_chat %}
+                                  data-tbg-chat-trigger
+                                {% endif %}
+                                {% if item_label != blank %}
+                                  aria-label='{{ item_label | strip_html | escape }}'
+                                {% endif %}
+                              >
+                                <span class='footer__contact-item-icon'>
+                                  {%- if item_image != blank -%}
+                                    <img
+                                      src='{{ item_image | image_url: width: 120 }}'
+                                      alt='{{ item_label | strip_html | escape }}'
+                                      width='{{ icon_size }}'
+                                      height='{{ icon_size }}'
+                                      loading='lazy'
+                                      decoding='async'
+                                    >
+                                  {%- elsif item_icon_url != blank -%}
+                                    <img
+                                      src='{{ item_icon_url }}'
+                                      alt='{{ item_label | strip_html | escape }}'
+                                      width='{{ icon_size }}'
+                                      height='{{ icon_size }}'
+                                      loading='lazy'
+                                      decoding='async'
+                                    >
+                                  {%- endif -%}
+                                </span>
+
+                                {%- if item_label != blank -%}
+                                  <span class='footer__contact-item-label {{ block.settings.item_label_size }}'>
+                                    {{ item_label }}
+                                  </span>
+                                {%- endif -%}
+                              </a>
+                            {%- endif -%}
+                          {%- endfor -%}
+                        </div>
+                </div>
+
+              {%- when 'custom_liquid' -%}
+                {% if mobile_block_style != 'static' %}
+                  <accordeon-component
+                    class='accordeon-plus footer__accordion block-{{ block.id }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{forloop.index}};'
+                    {% endif %}
+                    data-aria-expanded='{{ mobile_block_style }}'
+                    data-section-id='{{ section.id }}'
+                    data-block-id='{{ block.id }}'
+                    {{ block.shopify_attributes }}
+                  >
+                    <accordeon-button class='footer__accordion_btn' tabindex='0'>
+                      <p class='{{ block.settings.mobile_heading_size }}'>{{ mobile_title }}</p>
+                      {%- comment -%} TBG custom Code {%- endcomment -%}
+                      {%- render 'icon', icon_name: 'chevron', class: 'accordeon-plus__icon footer__accordion-chevron' -%}
+                    </accordeon-button>
+
+                    <div class='accordeon-plus__content-wrap' data-accordeon-content-wrap>
+                      <div
+                        class='rte product-content-tab__rte body-colors'
+                        data-accordeon-content
+                      >
+                        {{ block.settings.custom_liquid }}
+                      </div>
+                    </div>
+                  </accordeon-component>
+                {% endif %}
+
+                <div
+                  class='footer__block block-{{ block.id }} {% if mobile_block_style != 'static' %}footer__block--mobile-hidden{% else %}footer__block--mobile-static{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{forloop.index}};'
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {%- if mobile_block_style == 'static' and mobile_title != blank -%}
+                    <p class='footer__title--mobile-static {{ block.settings.mobile_heading_size }}'>
+                      {{ mobile_title }}
+                    </p>
+                  {%- endif -%}
+
+                  <div class='rte product-content-tab__rte body-color'>
+                    {{ block.settings.custom_liquid }}
+                  </div>
+                </div>
+            {%- endcase -%}
+          {%- endfor -%}
+        </div>
+      {% endif %}
+
+      {%- if show_policy_links and shop.policies.size > 0 -%}
+        <div
+          class='footer__policies {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: {{section.blocks.size | plus: 1}};'
+          {% endif %}
+        >
+          {%- for policy in shop.policies %}
+            <a
+              class='footer__policies-item underline-text body-color'
+              href='{{ policy.url }}'
+              aria-label='{{ policy.title | strip_html | escape }}'
+            >
+              <span class='underline-text__label'>{{ policy.title }}</span>
+            </a>
+          {%- endfor %}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+  <div
+    class='container-background footer__utils {% if enable_content_slide_in and request.design_mode == false %}scroll-trigger animate--slide-in{% endif %}'
+    {% if enable_content_slide_in and request.design_mode == false %}
+      style='--gsc-animation-order: {{section.blocks.size}};'
+      data-remove-animation-class
+    {% endif %}
+  >
+    {%- if show_currency_selector == true or show_language_selector == true -%}
+      <div class='footer__settings'>
+        {%- if show_language_selector == true -%}
+          <div class='localization-dropdown-wrapper'>
+            <dropdown-opener
+              class='localization-dropdown-toggle'
+              data-aria-expanded='false'
+              data-float-element-id='FooterLanguageSelector'
+              data-trigger='click'
+              tabindex='0'
+            >
+              {{ localization.language.endonym_name | capitalize }}
+              {% render 'icon',
+                icon_name: 'chevron',
+                class: 'localization-dropdown-toggle__chevron',
+                stroke_width: 1
+              %}
+            </dropdown-opener>
+            <float-element
+              class='localization-dropdown  footer__localization-dropdown'
+              aria-hidden='true'
+              id='FooterLanguageSelector'
+              data-placement='top-end'
+              data-main-axis-offset='12'
+              data-strategy='fixed'
+            >
+              <template data-float-element-template='FooterLanguageSelector'>
+                <div class='localization-dropdown__body'>
+                  <localization-selector class='footer__selector'>
+                    {%- form 'localization', id: 'FooterLanguageForm' -%}
+                      {%- for language in localization.available_languages -%}
+                        <button
+                          class='localization-dropdown__item link-parent-for-hover {% if localization.language == language %} selected{% endif %}'
+                          data-localization-item
+                          data-value='{{ language.iso_code }}'
+                          data-focus-trap-target
+                          aria-label='{{ language.endonym_name | strip_html | escape }}'
+                        >
+                          <span class='underline-animation'>{{ language.endonym_name | capitalize }}</span>
+                        </button>
+                      {%- endfor -%}
+                      <input
+                        type='hidden'
+                        name='locale_code'
+                        data-localization-input
+                        value='{{ localization.language.iso_code }}'
+                        id='FooterLanguageForm-LocaleCodeInput-{{ form.id }}'
+                      >
+                    {%- endform -%}
+                  </localization-selector>
+                </div>
+              </template>
+            </float-element>
+          </div>
+        {%- endif -%}
+        {%- if show_currency_selector == true -%}
+          <div class='localization-dropdown-wrapper'>
+            <dropdown-opener
+              class='localization-dropdown-toggle'
+              data-aria-expanded='false'
+              data-float-element-id='FooterCurrencySelector'
+              data-trigger='click'
+              tabindex='0'
+            >
+              {% if show_currency_flags %}
+                {{
+                  localization.country
+                  | image_url: width: 20
+                  | image_tag: class: 'localization-dropdown-toggle__flag'
+                }}
+              {% endif %}
+
+              {{ localization.country.currency.iso_code }}
+              {% render 'icon',
+                icon_name: 'chevron',
+                class: 'localization-dropdown-toggle__chevron',
+                stroke_width: 1
+              %}
+            </dropdown-opener>
+            <float-element
+              class='localization-dropdown footer__localization-dropdown'
+              aria-hidden='true'
+              id='FooterCurrencySelector'
+              data-placement='top-end'
+              data-main-axis-offset='12'
+              data-strategy='fixed'
+            >
+              <template data-float-element-template='FooterCurrencySelector'>
+                <div class='localization-dropdown__body'>
+                  <localization-selector class='footer__selector'>
+                    {%- if localization.available_countries.size > 10 %}
+                      <div class='localization-dropdown__search-field'>
+                        <label class='visually-hidden' for='FooterCurrencySelector-Search'>
+                          {{- 'general.localization_selector.store_front.search_title' | t -}}
+                        </label>
+
+                        <input
+                          class='input input--{{ settings.input_style }}'
+                          type='text'
+                          name='FooterCurrencySelector-Search'
+                          placeholder='{{- 'general.localization_selector.store_front.search_title' | t -}}'
+                          id='FooterCurrencySelector-Search'
+                          data-localization-search-field
+                        >
+
+                        <button
+                          type='button'
+                          class='unstyled-button localization-dropdown__search-field-reset-btn hidden'
+                          aria-label='{{ 'general.search_page.screen_reader.label_for_search_button' | t }}'
+                          data-search-field-reset-button
+                        >
+                          {% render 'icon',
+                            icon_name: 'close',
+                            class: 'localization-dropdown__search-field-reset-icon',
+                            stroke_width: 1.5
+                          %}
+                        </button>
+                      </div>
+                    {% endif %}
+
+                    {%- form 'localization', id: 'FooterCurrencyForm' -%}
+                      {%- for country in localization.available_countries -%}
+                        <button
+                          data-localization-item
+                          class='localization-dropdown__item link-parent-for-hover {% if localization.country == country %} selected{% endif %}'
+                          data-value='{{ country.iso_code }}'
+                          data-country='{{ country.name | strip_html | escape | downcase }}'
+                          data-focus-trap-target
+                          aria-label='{{ country.name | strip_html | escape }} {{ country.currency.iso_code | strip_html | escape }}'
+                        >
+                          {% if show_currency_flags %}
+                            {{ country | image_url: width: 22 | image_tag }}
+                          {% endif %}
+
+                          <span class='underline-animation'>
+                            {{- country.name }}, {{ country.currency.iso_code -}}
+                          </span>
+                        </button>
+                      {%- endfor -%}
+                      <input
+                        type='hidden'
+                        name='country_code'
+                        data-localization-input
+                        value='{{ localization.country.iso_code }}'
+                        id='FooterLanguageForm-CountryCodeInput-{{ form.id }}'
+                      >
+                    {%- endform -%}
+                  </localization-selector>
+                </div>
+              </template>
+            </float-element>
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if bottom_bar.links.size > 0 or contact_info_link != blank -%}
+      <div class='footer__bottom-bar'>
+        {%- for link in bottom_bar.links -%}
+          <a
+            class='footer__bottom-bar-item underline-text body-color'
+            href='{{ link.url }}'
+            aria-label='{{ link.title | strip_html | escape }}'
+          >
+            <span class='underline-text__label'>{{ link.title }}</span>
+          </a>
+        {%- endfor -%}
+
+        {%- comment -%} TBG custom Code {%- endcomment -%}
+        {%- if contact_info_link != blank -%}
+          <a
+            class='footer__bottom-bar-item underline-text body-color'
+            href='{{ contact_info_link }}'
+            aria-label='{{ contact_info_label | strip_html | escape }}'
+          >
+            <span class='underline-text__label'>{{ contact_info_label }}</span>
+          </a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {% if copyright_text != blank or show_payment_icons %}
+      <div class='footer__extra'>
+        {%- comment -%}
+          TBG custom Code — static social links, edit the hrefs below directly.
+        {%- endcomment -%}
+        <div class='footer__socials'>
+          <a
+            class='footer__socials-item'
+            href='https://www.facebook.com/'
+            target='_blank'
+            rel='noopener'
+            aria-label='Facebook'
+          >
+            {%- render 'icon', icon_name: 'facebook' -%}
+          </a>
+          <a
+            class='footer__socials-item'
+            href='https://x.com/'
+            target='_blank'
+            rel='noopener'
+            aria-label='X'
+          >
+            {%- render 'icon', icon_name: 'twitter' -%}
+          </a>
+          <a
+            class='footer__socials-item'
+            href='https://www.instagram.com/'
+            target='_blank'
+            rel='noopener'
+            aria-label='Instagram'
+          >
+            {%- render 'icon', icon_name: 'instagram' -%}
+          </a>
+          <a
+            class='footer__socials-item'
+            href='https://www.linkedin.com/'
+            target='_blank'
+            rel='noopener'
+            aria-label='LinkedIn'
+          >
+            {%- render 'icon', icon_name: 'linkedin' -%}
+          </a>
+        </div>
+
+        {%- if copyright_text != blank -%}
+          <div class='footer__copyright body-color'>
+            {{ copyright_text }}
+          </div>
+        {%- endif -%}
+
+        {%- if show_payment_icons -%}
+          <div class='footer__payment-icons'>
+            {%- for type in shop.enabled_payment_types -%}
+              {{ type | payment_type_svg_tag }}
+            {%- endfor -%}
+            {%- if shop.features.follow_on_shop? and enable_follow_on_shop -%}
+              <div>
+                {% # theme-check-disable %}
+                {{ shop | login_button: action: 'follow' }}
+                {% # theme-check-enable %}
+              </div>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{%- comment -%} TBG custom Code — Gorgias chat trigger for footer contact buttons {%- endcomment -%}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var triggers = document.querySelectorAll('[data-tbg-chat-trigger]');
+
+    if (!triggers.length) return;
+
+    var FALLBACK_URL = 'https://contact.gorgias.help/forms/59qu80a2';
+
+    triggers.forEach(function (trigger) {
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+
+        var gorgiasReady = window.GorgiasChat
+          ? window.GorgiasChat.init()
+          : new Promise(function (resolve) {
+              window.addEventListener(
+                'gorgias-widget-loaded',
+                function () {
+                  resolve();
+                },
+                { once: true }
+              );
+            });
+
+        gorgiasReady
+          .then(function () {
+            if (window.GorgiasChat && typeof window.GorgiasChat.open === 'function') {
+              window.GorgiasChat.open();
+              return;
+            }
+
+            window.location.href = FALLBACK_URL;
+          })
+          .catch(function () {
+            window.location.href = FALLBACK_URL;
+          });
+      });
+    });
+  });
+</script>
+{%- comment -%} End TBG custom Code {%- endcomment -%}
+
+{% render 'save-section-data-in-global-scope', section: section %}
+
+{% schema %}
+{
+  "name": "t:sections.footer.name",
+  "max_blocks": 12,
+  "tag": "footer",
+  "enabled_on": {
+    "groups": [
+      "footer"
+    ]
+  },
+  "class": "shopify-section-footer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "TBG custom Code — Official partner image"
+    },
+    {
+      "type": "text",
+      "id": "partner_heading",
+      "label": "Heading",
+      "default": "Official partner of"
+    },
+    {
+      "type": "select",
+      "id": "partner_heading_size",
+      "label": "Heading size",
+      "options": [
+        {
+          "value": "body2",
+          "label": "Body 2"
+        },
+        {
+          "value": "body3",
+          "label": "Body 3"
+        },
+        {
+          "value": "body4",
+          "label": "Body 4"
+        },
+        {
+          "value": "body5",
+          "label": "Body 5"
+        },
+        {
+          "value": "caption1",
+          "label": "Caption 1"
+        },
+        {
+          "value": "caption2",
+          "label": "Caption 2"
+        },
+        {
+          "value": "caption3",
+          "label": "Caption 3"
+        }
+      ],
+      "default": "body4"
+    },
+    {
+      "type": "image_picker",
+      "id": "partner_image",
+      "label": "Image",
+      "info": "Shown below the logo on desktop, beside it on mobile."
+    },
+    {
+      "type": "range",
+      "id": "partner_image_width_desktop",
+      "label": "Image width (desktop)",
+      "min": 60,
+      "max": 400,
+      "step": 5,
+      "unit": "px",
+      "default": 180
+    },
+    {
+      "type": "range",
+      "id": "partner_image_width_mobile",
+      "label": "Image width (mobile)",
+      "min": 60,
+      "max": 320,
+      "step": 5,
+      "unit": "px",
+      "default": 140
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.bottom_bar_settings_header"
+    },
+    {
+      "type": "range",
+      "id": "bottom_bar_links_gap_desktop",
+      "label": "Bottom bar links gap (desktop)",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "bottom_bar_links_gap_mobile",
+      "label": "Bottom bar links gap (mobile)",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "text",
+      "id": "contact_info_label",
+      "label": "Contact information label",
+      "default": "Contact information",
+      "info": "TBG custom Code"
+    },
+    {
+      "type": "url",
+      "id": "contact_info_link",
+      "label": "Contact information link"
+    },
+    {
+      "type": "link_list",
+      "id": "bottom_bar",
+      "label": "t:sections.footer.bottom_bar_label",
+      "info": "t:sections.footer.bottom_bar_info",
+      "default": "footer"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_icons",
+      "default": false,
+      "label": "t:sections.footer.show_payment_icons_label"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.footer.show_payment_icons_info"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "copyright_text",
+      "label": "t:sections.footer.copyright_text_label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.follow_on_shop_settings_header.content",
+      "info": "t:sections.footer.follow_on_shop_settings_header.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_follow_on_shop",
+      "default": true,
+      "label": "t:sections.footer.enable_follow_on_shop.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.show_language_selector.label"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.general_section_settings.show_language_selector.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_language_selector",
+      "default": true,
+      "label": "t:sections.footer.show_language_selector"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.show_currency_selector.label"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.general_section_settings.show_currency_selector.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_currency_selector",
+      "default": true,
+      "label": "t:sections.footer.show_currency_selector"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_currency_flags",
+      "default": true,
+      "label": "t:sections.general_section_settings.show_currency_selector.show_flags"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.policies_settings_header"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:sections.footer.policies_settings_parapragh"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_policy_links",
+      "default": true,
+      "label": "t:sections.footer.show_policies_label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.appearance.header_title"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "options": [
+        {
+          "value": "full-screen",
+          "label": "t:sections.general_section_settings.container_size.screen_width_option"
+        },
+        {
+          "value": "page-width",
+          "label": "t:sections.general_section_settings.container_size.page_width_option"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.general_section_settings.container_size.large_width_option"
+        },
+        {
+          "value": "medium",
+          "label": "t:sections.general_section_settings.container_size.medium_width_option"
+        }
+      ],
+      "default": "full-screen",
+      "label": "t:sections.general_section_settings.container_size.label"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:settings_schema.appearance.round_level.options.default"
+        },
+        {
+          "value": "0",
+          "label": "t:settings_schema.appearance.round_level.options.option_0"
+        },
+        {
+          "value": "1",
+          "label": "t:settings_schema.appearance.round_level.options.option_1"
+        },
+        {
+          "value": "2",
+          "label": "t:settings_schema.appearance.round_level.options.option_2"
+        },
+        {
+          "value": "3",
+          "label": "t:settings_schema.appearance.round_level.options.option_3"
+        },
+        {
+          "value": "4",
+          "label": "t:settings_schema.appearance.round_level.options.option_4"
+        },
+        {
+          "value": "5",
+          "label": "t:settings_schema.appearance.round_level.options.option_5"
+        },
+        {
+          "value": "6",
+          "label": "t:settings_schema.appearance.round_level.options.option_6"
+        },
+        {
+          "value": "7",
+          "label": "t:settings_schema.appearance.round_level.options.option_7"
+        },
+        {
+          "value": "8",
+          "label": "t:settings_schema.appearance.round_level.options.option_8"
+        }
+      ],
+      "default": "default",
+      "label": "t:settings_schema.appearance.round_level.label"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.default"
+        },
+        {
+          "value": "own",
+          "label": "t:sections.general_section_settings.color_scheme_variant.options.own"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.color_scheme_variant.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "2",
+      "label": "t:sections.general_section_settings.color_scheme_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "t:sections.general_section_settings.enable_background_around_container_label",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' and settings.default_color_scheme != section.settings.color_scheme }}"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.general_section_settings.paddings.header_title"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": false,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.desktop_label"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": false,
+      "label": "t:sections.general_section_settings.paddings.add_side_paddings.mobile_label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "none",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_top.label"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "none",
+      "label": "t:sections.general_section_settings.paddings.section_spacing_bottom.label",
+      "info": "Space between footer content and the bottom bar."
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_below_bottom_bar",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+        },
+        {
+          "value": "xxxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+        },
+        {
+          "value": "xxxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+        },
+        {
+          "value": "xl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+        },
+        {
+          "value": "xxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+        },
+        {
+          "value": "xxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+        },
+        {
+          "value": "xxxxl",
+          "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+        }
+      ],
+      "default": "none",
+      "label": "Below bottom bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "remove_default_top_spacing",
+      "default": false,
+      "label": "Remove default top spacing",
+      "info": "Turn on so \"Top\" fully controls the space above the footer content."
+    },
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "t:sections.footer.image_block_name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "media_type",
+          "label": "t:sections.general_section_settings.media_type.label",
+          "options": [
+            {
+              "value": "image",
+              "label": "t:sections.general_section_settings.media_type.options.image"
+            },
+            {
+              "value": "video",
+              "label": "t:sections.general_section_settings.media_type.options.video"
+            }
+          ],
+          "default": "image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.general_section_settings.media_type.options.image",
+          "visible_if": "{{ block.settings.media_type == 'image' }}"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:sections.general_section_settings.media_type.options.video",
+          "visible_if": "{{ block.settings.media_type == 'video' }}"
+        },
+        {
+          "type": "range",
+          "id": "image_ratio",
+          "min": 0.1,
+          "max": 3,
+          "step": 0.1,
+          "default": 1,
+          "unit": "t:sections.footer.image_block_image_ratio_unit",
+          "label": "t:sections.footer.image_block_image_ratio_label"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "min": 10,
+          "max": 100,
+          "step": 1,
+          "default": 100,
+          "unit": "t:sections.footer.image_block_image_width_unit",
+          "label": "t:sections.footer.image_block_image_width_label"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "t:sections.footer.image_block_link_label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Image"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "t:sections.footer.text_block_name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.text_block_title_label",
+          "default": "Text"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_heading_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.text_block_text_label",
+          "default": "<p>Fill in the text to share information about your brand objectives and sources of inspiration. Welcome customers to share them and learn more.</p>"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "t:sections.general_section_settings.label_for_body_size_setting",
+          "info": "t:sections.general_section_settings.info_for_body_size_setting",
+          "options": [
+            {
+              "value": "body0",
+              "label": "t:sections.general_section_settings.body_size_0_option"
+            },
+            {
+              "value": "body1",
+              "label": "t:sections.general_section_settings.body_size_1_option"
+            },
+            {
+              "value": "body2",
+              "label": "t:sections.general_section_settings.body_size_2_option"
+            },
+            {
+              "value": "body3",
+              "label": "t:sections.general_section_settings.body_size_3_option"
+            },
+            {
+              "value": "body4",
+              "label": "t:sections.general_section_settings.body_size_4_option"
+            },
+            {
+              "value": "body5",
+              "label": "t:sections.general_section_settings.body_size_5_option"
+            },
+            {
+              "value": "body6",
+              "label": "t:sections.general_section_settings.body_size_6_option"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Text"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "logo_with_text",
+      "name": "t:sections.footer.logo_with_text_block_name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "logo_img",
+          "label": "t:sections.footer.logo_with_text_block_logo_img_label"
+        },
+        {
+          "type": "range",
+          "id": "logo_width",
+          "min": 20,
+          "max": 400,
+          "step": 10,
+          "default": 140,
+          "unit": "t:sections.footer.logo_with_text_block_logo_width_unit",
+          "label": "t:sections.footer.logo_with_text_block_logo_width_label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.content_header"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.logo_with_text_block_title_label",
+          "default": "Logo with text"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_heading_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.logo_with_text_block_text_label",
+          "default": "<p>Pair logo with text to tell more about your brand, history, and achievements.</p>"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "t:sections.general_section_settings.label_for_body_size_setting",
+          "options": [
+            {
+              "value": "body0",
+              "label": "t:sections.general_section_settings.body_size_0_option"
+            },
+            {
+              "value": "body1",
+              "label": "t:sections.general_section_settings.body_size_1_option"
+            },
+            {
+              "value": "body2",
+              "label": "t:sections.general_section_settings.body_size_2_option"
+            },
+            {
+              "value": "body3",
+              "label": "t:sections.general_section_settings.body_size_3_option"
+            },
+            {
+              "value": "body4",
+              "label": "t:sections.general_section_settings.body_size_4_option"
+            },
+            {
+              "value": "body5",
+              "label": "t:sections.general_section_settings.body_size_5_option"
+            },
+            {
+              "value": "body6",
+              "label": "t:sections.general_section_settings.body_size_6_option"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Logo with text"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "subscribe",
+      "name": "t:sections.footer.subscribe_block_name",
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer.subscribe_block_customer_settings_paragraph"
+        },
+        {
+          "type": "select",
+          "id": "input_style",
+          "options": [
+            {
+              "value": "solid",
+              "label": "t:sections.footer.subscribe_block_input_style_option_1_label"
+            },
+            {
+              "value": "outline",
+              "label": "t:sections.footer.subscribe_block_input_style_option_2_label"
+            }
+          ],
+          "default": "solid",
+          "label": "t:sections.footer.subscribe_block_input_style_label"
+        },
+        {
+          "type": "select",
+          "id": "button_style",
+          "options": [
+            {
+              "value": "primary",
+              "label": "t:sections.general_section_settings.buttons.style.options.primary"
+            },
+            {
+              "value": "secondary",
+              "label": "t:sections.general_section_settings.buttons.style.options.secondary"
+            },
+            {
+              "value": "tertiary",
+              "label": "t:sections.general_section_settings.buttons.style.options.tertiary"
+            }
+          ],
+          "default": "primary",
+          "label": "t:sections.general_section_settings.buttons.style.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_signup_checkbox",
+          "default": false,
+          "label": "t:sections.general_section_settings.signup_checkbox.show_checkbox"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "signup_checkbox_text",
+          "default": "I agree to the consent rules",
+          "label": "t:sections.general_section_settings.signup_checkbox.text",
+          "visible_if": "{{ block.settings.show_signup_checkbox == true }}"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.content_header"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.subscribe_block_title_label",
+          "default": "Subscribe"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_heading_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.subscribe_block_text_label",
+          "default": "<p>Invite customers to join your mailing list.</p>"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "t:sections.general_section_settings.label_for_body_size_setting",
+          "info": "t:sections.general_section_settings.info_for_body_size_setting",
+          "options": [
+            {
+              "value": "body0",
+              "label": "t:sections.general_section_settings.body_size_0_option"
+            },
+            {
+              "value": "body1",
+              "label": "t:sections.general_section_settings.body_size_1_option"
+            },
+            {
+              "value": "body2",
+              "label": "t:sections.general_section_settings.body_size_2_option"
+            },
+            {
+              "value": "body3",
+              "label": "t:sections.general_section_settings.body_size_3_option"
+            },
+            {
+              "value": "body4",
+              "label": "t:sections.general_section_settings.body_size_4_option"
+            },
+            {
+              "value": "body5",
+              "label": "t:sections.general_section_settings.body_size_5_option"
+            },
+            {
+              "value": "body6",
+              "label": "t:sections.general_section_settings.body_size_6_option"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Subscribe"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "social_media",
+      "name": "t:sections.footer.social_media_block_name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.social_media_block_title_label",
+          "default": "Social media"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_heading_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:sections.footer.social_media_block_text_label",
+          "default": "<p>Add links to your accounts in Theme settings > Social media so that they appear as icons below.</p>"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "t:sections.general_section_settings.label_for_body_size_setting",
+          "info": "t:sections.general_section_settings.info_for_body_size_setting",
+          "options": [
+            {
+              "value": "body0",
+              "label": "t:sections.general_section_settings.body_size_0_option"
+            },
+            {
+              "value": "body1",
+              "label": "t:sections.general_section_settings.body_size_1_option"
+            },
+            {
+              "value": "body2",
+              "label": "t:sections.general_section_settings.body_size_2_option"
+            },
+            {
+              "value": "body3",
+              "label": "t:sections.general_section_settings.body_size_3_option"
+            },
+            {
+              "value": "body4",
+              "label": "t:sections.general_section_settings.body_size_4_option"
+            },
+            {
+              "value": "body5",
+              "label": "t:sections.general_section_settings.body_size_5_option"
+            },
+            {
+              "value": "body6",
+              "label": "t:sections.general_section_settings.body_size_6_option"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Social media"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "contact",
+      "name": "Need a hand,TBG custom",
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>We're available by phone and chat daily from 8a-6p ET</p>"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "Text size",
+          "options": [
+            {
+              "value": "body0",
+              "label": "Body 0"
+            },
+            {
+              "value": "body1",
+              "label": "Body 1"
+            },
+            {
+              "value": "body2",
+              "label": "Body 2"
+            },
+            {
+              "value": "body3",
+              "label": "Body 3"
+            },
+            {
+              "value": "body4",
+              "label": "Body 4"
+            },
+            {
+              "value": "body5",
+              "label": "Body 5"
+            },
+            {
+              "value": "body6",
+              "label": "Body 6"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "select",
+          "id": "item_label_size",
+          "label": "Item label size",
+          "options": [
+            {
+              "value": "body0",
+              "label": "Body 0"
+            },
+            {
+              "value": "body1",
+              "label": "Body 1"
+            },
+            {
+              "value": "body2",
+              "label": "Body 2"
+            },
+            {
+              "value": "body3",
+              "label": "Body 3"
+            },
+            {
+              "value": "body4",
+              "label": "Body 4"
+            },
+            {
+              "value": "caption1",
+              "label": "Caption 1"
+            },
+            {
+              "value": "caption2",
+              "label": "Caption 2"
+            },
+            {
+              "value": "caption3",
+              "label": "Caption 3"
+            }
+          ],
+          "default": "caption3"
+        },
+        {
+          "type": "range",
+          "id": "icon_size",
+          "label": "Icon size",
+          "min": 14,
+          "max": 48,
+          "step": 1,
+          "unit": "px",
+          "default": 30
+        },
+        {
+          "type": "header",
+          "content": "Item 1"
+        },
+        {
+          "type": "text",
+          "id": "item_1_label",
+          "label": "Label",
+          "default": "Text"
+        },
+        {
+          "type": "text",
+          "id": "item_1_link",
+          "label": "Link",
+          "info": "Accepts sms:, tel:, mailto: and normal URLs.",
+          "default": "sms:9547376777"
+        },
+        {
+          "type": "text",
+          "id": "item_1_icon_url",
+          "label": "Icon SVG/PNG URL",
+          "default": "https://cdn.shopify.com/s/files/1/0635/2401/2210/files/chat-line-svgrepo-com_1.svg?v=1743940604"
+        },
+        {
+          "type": "image_picker",
+          "id": "item_1_image",
+          "label": "Icon image (overrides URL)"
+        },
+        {
+          "type": "checkbox",
+          "id": "item_1_is_chat",
+          "label": "Open Gorgias chat instead of following the link",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Item 2"
+        },
+        {
+          "type": "text",
+          "id": "item_2_label",
+          "label": "Label",
+          "default": "Chat"
+        },
+        {
+          "type": "text",
+          "id": "item_2_link",
+          "label": "Link",
+          "info": "Accepts sms:, tel:, mailto: and normal URLs.",
+          "default": "#"
+        },
+        {
+          "type": "text",
+          "id": "item_2_icon_url",
+          "label": "Icon SVG/PNG URL",
+          "default": "https://cdn.shopify.com/s/files/1/0635/2401/2210/files/chat-dots-svgrepo-com_1.svg?v=1743940604"
+        },
+        {
+          "type": "image_picker",
+          "id": "item_2_image",
+          "label": "Icon image (overrides URL)"
+        },
+        {
+          "type": "checkbox",
+          "id": "item_2_is_chat",
+          "label": "Open Gorgias chat instead of following the link",
+          "default": true
+        },
+        {
+          "type": "header",
+          "content": "Item 3"
+        },
+        {
+          "type": "text",
+          "id": "item_3_label",
+          "label": "Label",
+          "default": "Email"
+        },
+        {
+          "type": "text",
+          "id": "item_3_link",
+          "label": "Link",
+          "info": "Accepts sms:, tel:, mailto: and normal URLs.",
+          "default": "mailto:info@titanbattlegear.com"
+        },
+        {
+          "type": "text",
+          "id": "item_3_icon_url",
+          "label": "Icon SVG/PNG URL",
+          "default": "https://cdn.shopify.com/s/files/1/0635/2401/2210/files/email-8-svgrepo-com_1.svg?v=1743940604"
+        },
+        {
+          "type": "image_picker",
+          "id": "item_3_image",
+          "label": "Icon image (overrides URL)"
+        },
+        {
+          "type": "checkbox",
+          "id": "item_3_is_chat",
+          "label": "Open Gorgias chat instead of following the link",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Item 4"
+        },
+        {
+          "type": "text",
+          "id": "item_4_label",
+          "label": "Label",
+          "default": "Call"
+        },
+        {
+          "type": "text",
+          "id": "item_4_link",
+          "label": "Link",
+          "info": "Accepts sms:, tel:, mailto: and normal URLs.",
+          "default": "tel:9547376777"
+        },
+        {
+          "type": "text",
+          "id": "item_4_icon_url",
+          "label": "Icon SVG/PNG URL",
+          "default": "https://cdn.shopify.com/s/files/1/0635/2401/2210/files/phone-svgrepo-com.svg?v=1743940605"
+        },
+        {
+          "type": "image_picker",
+          "id": "item_4_image",
+          "label": "Icon image (overrides URL)"
+        },
+        {
+          "type": "checkbox",
+          "id": "item_4_is_chat",
+          "label": "Open Gorgias chat instead of following the link",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "Item 5"
+        },
+        {
+          "type": "text",
+          "id": "item_5_label",
+          "label": "Label",
+          "default": "Returns"
+        },
+        {
+          "type": "text",
+          "id": "item_5_link",
+          "label": "Link",
+          "info": "Accepts sms:, tel:, mailto: and normal URLs.",
+          "default": "https://www.titanbattlegear.com/apps/redo/returns-portal/login"
+        },
+        {
+          "type": "text",
+          "id": "item_5_icon_url",
+          "label": "Icon SVG/PNG URL",
+          "default": "https://cdn.shopify.com/s/files/1/0635/2401/2210/files/return-svgrepo-com.svg?v=1765884391"
+        },
+        {
+          "type": "image_picker",
+          "id": "item_5_image",
+          "label": "Icon image (overrides URL)"
+        },
+        {
+          "type": "checkbox",
+          "id": "item_5_is_chat",
+          "label": "Open Gorgias chat instead of following the link",
+          "default": false
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.menu_block_title_header"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.menu_block_title_label",
+          "default": "Need a hand?"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "Display 1"
+            },
+            {
+              "value": "display2",
+              "label": "Display 2"
+            },
+            {
+              "value": "display3",
+              "label": "Display 3"
+            },
+            {
+              "value": "h1",
+              "label": "Heading 1"
+            },
+            {
+              "value": "h2",
+              "label": "Heading 2"
+            },
+            {
+              "value": "h3",
+              "label": "Heading 3"
+            },
+            {
+              "value": "h4",
+              "label": "Heading 4"
+            },
+            {
+              "value": "h5",
+              "label": "Heading 5"
+            },
+            {
+              "value": "h6",
+              "label": "Heading 6"
+            },
+            {
+              "value": "caption1",
+              "label": "Caption 1"
+            },
+            {
+              "value": "caption2",
+              "label": "Caption 2"
+            },
+            {
+              "value": "caption3",
+              "label": "Caption 3"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Need a hand?"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "Display 1"
+            },
+            {
+              "value": "display2",
+              "label": "Display 2"
+            },
+            {
+              "value": "display3",
+              "label": "Display 3"
+            },
+            {
+              "value": "h1",
+              "label": "Heading 1"
+            },
+            {
+              "value": "h2",
+              "label": "Heading 2"
+            },
+            {
+              "value": "h3",
+              "label": "Heading 3"
+            },
+            {
+              "value": "h4",
+              "label": "Heading 4"
+            },
+            {
+              "value": "h5",
+              "label": "Heading 5"
+            },
+            {
+              "value": "h6",
+              "label": "Heading 6"
+            },
+            {
+              "value": "caption1",
+              "label": "Caption 1"
+            },
+            {
+              "value": "caption2",
+              "label": "Caption 2"
+            },
+            {
+              "value": "caption3",
+              "label": "Caption 3"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "t:sections.footer.menu_block_name",
+      "settings": [
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "t:sections.footer.menu_block_menu_label",
+          "info": "t:sections.footer.menu_block_menu_info",
+          "default": "main-menu"
+        },
+        {
+          "type": "select",
+          "id": "body_size",
+          "label": "t:sections.general_section_settings.label_for_menu_size_setting",
+          "options": [
+            {
+              "value": "body0",
+              "label": "t:sections.general_section_settings.body_size_0_option"
+            },
+            {
+              "value": "body1",
+              "label": "t:sections.general_section_settings.body_size_1_option"
+            },
+            {
+              "value": "body2",
+              "label": "t:sections.general_section_settings.body_size_2_option"
+            },
+            {
+              "value": "body3",
+              "label": "t:sections.general_section_settings.body_size_3_option"
+            },
+            {
+              "value": "body4",
+              "label": "t:sections.general_section_settings.body_size_4_option"
+            },
+            {
+              "value": "body5",
+              "label": "t:sections.general_section_settings.body_size_5_option"
+            },
+            {
+              "value": "body6",
+              "label": "t:sections.general_section_settings.body_size_6_option"
+            }
+          ],
+          "default": "body4"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.menu_block_title_header"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.footer.menu_block_title_label",
+          "default": "Menu"
+        },
+        {
+          "type": "select",
+          "id": "heading_size",
+          "label": "t:sections.general_section_settings.label_for_size_setting",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Menu"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    },
+    {
+      "type": "custom_liquid",
+      "name": "t:sections.product_details.custom_liquid_block_name",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "custom_liquid",
+          "label": "t:sections.general_section_settings.liquid.label",
+          "info": "t:sections.general_section_settings.liquid.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.footer.mobile_layout.label"
+        },
+        {
+          "type": "select",
+          "id": "mobile_block_style",
+          "options": [
+            {
+              "value": "static",
+              "label": "t:sections.product.label_for_static_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "true",
+              "label": "t:sections.product.label_for_collapsible_row_open_option_in_block_style_setting_in_description_block"
+            },
+            {
+              "value": "false",
+              "label": "t:sections.product.label_for_collapsible_row_closed_option_in_block_style_setting_in_description_block"
+            }
+          ],
+          "default": "false",
+          "label": "t:sections.product.label_for_block_style_setting_in_description_block"
+        },
+        {
+          "type": "text",
+          "id": "mobile_title",
+          "label": "t:sections.footer.mobile_layout.heading_label",
+          "default": "Custom liquid"
+        },
+        {
+          "type": "select",
+          "id": "mobile_heading_size",
+          "label": "t:sections.footer.mobile_layout.heading_size",
+          "options": [
+            {
+              "value": "display1",
+              "label": "t:sections.general_section_settings.display_size_1_option"
+            },
+            {
+              "value": "display2",
+              "label": "t:sections.general_section_settings.display_size_2_option"
+            },
+            {
+              "value": "display3",
+              "label": "t:sections.general_section_settings.display_size_3_option"
+            },
+            {
+              "value": "h1",
+              "label": "t:sections.general_section_settings.heading_size_1_option"
+            },
+            {
+              "value": "h2",
+              "label": "t:sections.general_section_settings.heading_size_2_option"
+            },
+            {
+              "value": "h3",
+              "label": "t:sections.general_section_settings.heading_size_3_option"
+            },
+            {
+              "value": "h4",
+              "label": "t:sections.general_section_settings.heading_size_4_option"
+            },
+            {
+              "value": "h5",
+              "label": "t:sections.general_section_settings.heading_size_5_option"
+            },
+            {
+              "value": "h6",
+              "label": "t:sections.general_section_settings.heading_size_6_option"
+            },
+            {
+              "value": "caption1",
+              "label": "t:sections.general_section_settings.caption_size_1_option"
+            },
+            {
+              "value": "caption2",
+              "label": "t:sections.general_section_settings.caption_size_2_option"
+            },
+            {
+              "value": "caption3",
+              "label": "t:sections.general_section_settings.caption_size_3_option"
+            }
+          ],
+          "default": "caption2"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.footer.name",
+      "blocks": [
+        {
+          "type": "logo_with_text"
+        },
+        {
+          "type": "menu"
+        },
+        {
+          "type": "social_media"
+        },
+        {
+          "type": "subscribe"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

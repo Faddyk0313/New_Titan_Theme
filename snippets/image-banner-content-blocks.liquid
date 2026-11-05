@@ -1,0 +1,608 @@
+{%- liquid
+  assign continue_observe_animation = continue_observe_animation | default: false
+  assign enable_content_slide_in = settings.enable_content_slide_in
+  assign has_content = false
+
+  for block in blocks
+    case block.type
+      when 'subheading'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'heading'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'heading_part'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'text'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'button'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'link'
+        if block.settings.text != blank
+          assign has_content = true
+          break
+        endif
+      when 'image'
+        if block.settings.image != blank
+          assign has_content = true
+          break
+        endif
+      when 'empty_space'
+        if block.settings.height_mobile > 0 or block.settings.height_desktop > 0
+          assign has_content = true
+          break
+        endif
+    endcase
+  endfor
+-%}
+
+{%- if has_content -%}
+  <div class='image-banner__content-wrap'>
+    <div class='image-banner__content image-banner__content--desktop image-banner__content--with-{{ desktop_content_background }}-background'>
+      {%- assign animation_order = 0 -%}
+      {%- assign heading_group_open = false -%}
+      {%- assign heading_group_markup = '' -%}
+      {%- assign action_group_open = false -%}
+      {%- assign action_group_markup = '' -%}
+      {%- assign action_group_all_links = true -%}
+      {%- assign action_group_first_is_link = false -%}
+      {%- assign action_group_second_is_link = false -%}
+      {%- assign action_group_count = 0 -%}
+
+      {%- for block in blocks -%}
+        {%- if block.type == 'heading_part' -%}
+          {%- if action_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+              {{ action_group_markup }}
+            </div>
+            {%- assign action_group_open = false -%}
+            {%- assign action_group_markup = '' -%}
+            {%- assign action_group_all_links = true -%}
+            {%- assign action_group_first_is_link = false -%}
+            {%- assign action_group_second_is_link = false -%}
+            {%- assign action_group_count = 0 -%}
+          {%- endif -%}
+
+          {%- if block.settings.text != blank -%}
+            {%- assign heading_group_open = true -%}
+            {% capture heading_group_markup %}
+              {{ heading_group_markup }}
+              <span
+                class='image-banner__heading-part image-banner__heading-part--{{ block.settings.font_style }}{% if block.settings.start_new_line %} image-banner__heading-part--new-line{% endif %}'
+                style='--gsc-image-banner-heading-part-mobile-size: {{ block.settings.heading_size_mobile }}px; --gsc-image-banner-heading-part-desktop-size: {{ block.settings.heading_size_desktop }}px;'
+                {{ block.shopify_attributes }}
+              >
+                {{ block.settings.text }}
+              </span>
+            {% endcapture %}
+          {%- endif -%}
+        {%- elsif block.type == 'button' or block.type == 'link' -%}
+          {%- if heading_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <h2
+              class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {% if enable_content_slide_in %}
+                style='--gsc-animation-order: {{ animation_order }};'
+                {% if continue_observe_animation %}
+                  data-keep-observe-animation
+                {% endif %}
+                {% if remove_animation_class %}
+                  data-remove-animation-class
+                {% endif %}
+              {% endif %}
+            >
+              {{ heading_group_markup }}
+            </h2>
+            {%- assign heading_group_open = false -%}
+            {%- assign heading_group_markup = '' -%}
+          {%- endif -%}
+
+          {%- if block.settings.text != blank -%}
+            {%- assign action_group_open = true -%}
+            {%- assign action_group_count = action_group_count | plus: 1 -%}
+            {%- if block.type != 'link' -%}
+              {%- assign action_group_all_links = false -%}
+            {%- endif -%}
+            {%- if action_group_count == 1 and block.type == 'link' -%}
+              {%- assign action_group_first_is_link = true -%}
+            {%- endif -%}
+            {%- if action_group_count == 2 and block.type == 'link' -%}
+              {%- assign action_group_second_is_link = true -%}
+            {%- endif -%}
+
+            {% capture action_group_markup %}
+              {{ action_group_markup }}
+              {%- if block.type == 'link' -%}
+                <a
+                  class='link image-banner__btn-link {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order | plus: 1 }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {% if block.settings.url != blank %}
+                    href='{{ block.settings.url }}'
+                  {% endif %}
+                  aria-label='{% if block.settings.text != blank %}{{ block.settings.text | strip_html | escape }}{% else %}#{% endif %}'
+                  {{ block.shopify_attributes }}
+                >
+                  <span class='link-parent-for-hover'>
+                    <span class='link__text'>{{ block.settings.text }}</span>
+                  </span>
+                  {%- render 'icon', icon_name: 'link-chevron', class: 'link__chevron' -%}
+                </a>
+              {%- else -%}
+                <a
+                  class='btn btn--{{ block.settings.style }} image-banner__btn {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order | plus: 1 }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {% if block.settings.url != blank %}
+                    href='{{ block.settings.url }}'
+                  {% endif %}
+                  aria-label='{% if block.settings.text != blank %}{{ block.settings.text | strip_html | escape }}{% else %}#{% endif %}'
+                  {{ block.shopify_attributes }}
+                >
+                  {{- block.settings.text -}}
+                </a>
+              {%- endif -%}
+            {% endcapture %}
+          {%- endif -%}
+        {%- else -%}
+          {%- if heading_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <h2
+              class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {% if enable_content_slide_in %}
+                style='--gsc-animation-order: {{ animation_order }};'
+                {% if continue_observe_animation %}
+                  data-keep-observe-animation
+                {% endif %}
+                {% if remove_animation_class %}
+                  data-remove-animation-class
+                {% endif %}
+              {% endif %}
+            >
+              {{ heading_group_markup }}
+            </h2>
+            {%- assign heading_group_open = false -%}
+            {%- assign heading_group_markup = '' -%}
+          {%- endif -%}
+
+          {%- if action_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+              {{ action_group_markup }}
+            </div>
+            {%- assign action_group_open = false -%}
+            {%- assign action_group_markup = '' -%}
+            {%- assign action_group_all_links = true -%}
+            {%- assign action_group_first_is_link = false -%}
+            {%- assign action_group_second_is_link = false -%}
+            {%- assign action_group_count = 0 -%}
+          {%- endif -%}
+
+          {%- case block.type -%}
+            {%- when 'subheading' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='caption image-banner__caption {% if desktop_content_background == 'solid' %}desktop-body-color{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </div>
+              {%- endif -%}
+            {%- when 'heading' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <h2
+                  class='image-banner__title {{ block.settings.heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </h2>
+              {%- endif -%}
+            {%- when 'text' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='rte {{ block.settings.body_size }} {% if desktop_content_background == 'solid' %}desktop-body-color{% endif %} image-banner__text body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </div>
+              {%- endif -%}
+            {%- when 'image' -%}
+              {%- if block.settings.image != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='image-banner__block-image-wrap {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  style='--gsc-image-banner-block-image-mobile-width: {{ block.settings.width_mobile }}px; --gsc-image-banner-block-image-desktop-width: {{ block.settings.width_desktop }}px;{% if enable_content_slide_in %} --gsc-animation-order: {{ animation_order }};{% endif %}'
+                  {% if enable_content_slide_in %}
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{
+                    block.settings.image
+                    | image_url: width: 2000
+                    | image_tag:
+                      class: 'image-banner__block-image',
+                      loading: 'lazy'
+                  }}
+                </div>
+              {%- endif -%}
+            {%- when 'empty_space' -%}
+              {%- if block.settings.height_mobile > 0 or block.settings.height_desktop > 0 -%}
+                <div
+                  class='image-banner__empty-space'
+                  style='--gsc-image-banner-empty-space-mobile: {{ block.settings.height_mobile }}px; --gsc-image-banner-empty-space-desktop: {{ block.settings.height_desktop }}px;'
+                  {{ block.shopify_attributes }}
+                ></div>
+              {%- endif -%}
+          {%- endcase -%}
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if heading_group_open -%}
+        {%- assign animation_order = animation_order | plus: 1 -%}
+        <h2
+          class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: {{ animation_order }};'
+            {% if continue_observe_animation %}
+              data-keep-observe-animation
+            {% endif %}
+            {% if remove_animation_class %}
+              data-remove-animation-class
+            {% endif %}
+          {% endif %}
+        >
+          {{ heading_group_markup }}
+        </h2>
+      {%- endif -%}
+
+      {%- if action_group_open -%}
+        {%- assign animation_order = animation_order | plus: 1 -%}
+        <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+          {{ action_group_markup }}
+        </div>
+      {%- endif -%}
+    </div>
+
+    <div class='image-banner__content image-banner__content--mobile image-banner__content--with-{{ mobile_content_background }}-background'>
+      {%- assign animation_order = 0 -%}
+      {%- assign heading_group_open = false -%}
+      {%- assign heading_group_markup = '' -%}
+      {%- assign action_group_open = false -%}
+      {%- assign action_group_markup = '' -%}
+      {%- assign action_group_all_links = true -%}
+      {%- assign action_group_first_is_link = false -%}
+      {%- assign action_group_second_is_link = false -%}
+      {%- assign action_group_count = 0 -%}
+
+      {%- for block in blocks -%}
+        {%- if block.type == 'heading_part' -%}
+          {%- if action_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+              {{ action_group_markup }}
+            </div>
+            {%- assign action_group_open = false -%}
+            {%- assign action_group_markup = '' -%}
+            {%- assign action_group_all_links = true -%}
+            {%- assign action_group_first_is_link = false -%}
+            {%- assign action_group_second_is_link = false -%}
+            {%- assign action_group_count = 0 -%}
+          {%- endif -%}
+
+          {%- if block.settings.text != blank -%}
+            {%- assign heading_group_open = true -%}
+            {% capture heading_group_markup %}
+              {{ heading_group_markup }}
+              <span
+                class='image-banner__heading-part image-banner__heading-part--{{ block.settings.font_style }}{% if block.settings.start_new_line %} image-banner__heading-part--new-line{% endif %}'
+                style='--gsc-image-banner-heading-part-mobile-size: {{ block.settings.heading_size_mobile }}px; --gsc-image-banner-heading-part-desktop-size: {{ block.settings.heading_size_desktop }}px;'
+                {{ block.shopify_attributes }}
+              >
+                {{ block.settings.text }}
+              </span>
+            {% endcapture %}
+          {%- endif -%}
+        {%- elsif block.type == 'button' or block.type == 'link' -%}
+          {%- if heading_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <h2
+              class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {% if enable_content_slide_in %}
+                style='--gsc-animation-order: {{ animation_order }};'
+                {% if continue_observe_animation %}
+                  data-keep-observe-animation
+                {% endif %}
+                {% if remove_animation_class %}
+                  data-remove-animation-class
+                {% endif %}
+              {% endif %}
+            >
+              {{ heading_group_markup }}
+            </h2>
+            {%- assign heading_group_open = false -%}
+            {%- assign heading_group_markup = '' -%}
+          {%- endif -%}
+
+          {%- if block.settings.text != blank -%}
+            {%- assign action_group_open = true -%}
+            {%- assign action_group_count = action_group_count | plus: 1 -%}
+            {%- if block.type != 'link' -%}
+              {%- assign action_group_all_links = false -%}
+            {%- endif -%}
+            {%- if action_group_count == 1 and block.type == 'link' -%}
+              {%- assign action_group_first_is_link = true -%}
+            {%- endif -%}
+            {%- if action_group_count == 2 and block.type == 'link' -%}
+              {%- assign action_group_second_is_link = true -%}
+            {%- endif -%}
+
+            {% capture action_group_markup %}
+              {{ action_group_markup }}
+              {%- if block.type == 'link' -%}
+                <a
+                  class='link image-banner__btn-link {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order | plus: 1 }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {% if block.settings.url != blank %}
+                    href='{{ block.settings.url }}'
+                  {% endif %}
+                  aria-label='{{ block.settings.text | strip_html | escape }}'
+                  tabindex='-1'
+                  {{ block.shopify_attributes }}
+                >
+                  <span class='link-parent-for-hover'>
+                    <span class='link__text'>{{ block.settings.text }}</span>
+                  </span>
+                  {%- render 'icon', icon_name: 'link-chevron', class: 'link__chevron' -%}
+                </a>
+              {%- else -%}
+                <a
+                  class='btn btn--{{ block.settings.style }} image-banner__btn {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order | plus: 1 }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {% if block.settings.url != blank %}
+                    href='{{ block.settings.url }}'
+                  {% endif %}
+                  aria-label='{{- block.settings.text | strip_html | escape -}}'
+                  tabindex='-1'
+                  {{ block.shopify_attributes }}
+                >
+                  {{- block.settings.text -}}
+                </a>
+              {%- endif -%}
+            {% endcapture %}
+          {%- endif -%}
+        {%- else -%}
+          {%- if heading_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <h2
+              class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {% if enable_content_slide_in %}
+                style='--gsc-animation-order: {{ animation_order }};'
+                {% if continue_observe_animation %}
+                  data-keep-observe-animation
+                {% endif %}
+                {% if remove_animation_class %}
+                  data-remove-animation-class
+                {% endif %}
+              {% endif %}
+            >
+              {{ heading_group_markup }}
+            </h2>
+            {%- assign heading_group_open = false -%}
+            {%- assign heading_group_markup = '' -%}
+          {%- endif -%}
+
+          {%- if action_group_open -%}
+            {%- assign animation_order = animation_order | plus: 1 -%}
+            <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+              {{ action_group_markup }}
+            </div>
+            {%- assign action_group_open = false -%}
+            {%- assign action_group_markup = '' -%}
+            {%- assign action_group_all_links = true -%}
+            {%- assign action_group_first_is_link = false -%}
+            {%- assign action_group_second_is_link = false -%}
+            {%- assign action_group_count = 0 -%}
+          {%- endif -%}
+
+          {%- case block.type -%}
+            {%- when 'subheading' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='caption image-banner__caption {% if mobile_content_background == 'solid' %}mobile-body-color{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </div>
+              {%- endif -%}
+            {%- when 'heading' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <h2
+                  class='image-banner__title {{ block.settings.heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </h2>
+              {%- endif -%}
+            {%- when 'text' -%}
+              {%- if block.settings.text != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='rte {{ block.settings.body_size }} image-banner__text body-font-weight-from-global-settings {% if mobile_content_background == 'solid' %}mobile-body-color{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  {% if enable_content_slide_in %}
+                    style='--gsc-animation-order: {{ animation_order }};'
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{ block.settings.text }}
+                </div>
+              {%- endif -%}
+            {%- when 'image' -%}
+              {%- if block.settings.image != blank -%}
+                {%- assign animation_order = animation_order | plus: 1 -%}
+                <div
+                  class='image-banner__block-image-wrap {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                  style='--gsc-image-banner-block-image-mobile-width: {{ block.settings.width_mobile }}px; --gsc-image-banner-block-image-desktop-width: {{ block.settings.width_desktop }}px;{% if enable_content_slide_in %} --gsc-animation-order: {{ animation_order }};{% endif %}'
+                  {% if enable_content_slide_in %}
+                    {% if continue_observe_animation %}
+                      data-keep-observe-animation
+                    {% endif %}
+                    {% if remove_animation_class %}
+                      data-remove-animation-class
+                    {% endif %}
+                  {% endif %}
+                  {{ block.shopify_attributes }}
+                >
+                  {{
+                    block.settings.image
+                    | image_url: width: 2000
+                    | image_tag:
+                      class: 'image-banner__block-image',
+                      loading: 'lazy'
+                  }}
+                </div>
+              {%- endif -%}
+            {%- when 'empty_space' -%}
+              {%- if block.settings.height_mobile > 0 or block.settings.height_desktop > 0 -%}
+                <div
+                  class='image-banner__empty-space'
+                  style='--gsc-image-banner-empty-space-mobile: {{ block.settings.height_mobile }}px; --gsc-image-banner-empty-space-desktop: {{ block.settings.height_desktop }}px;'
+                  {{ block.shopify_attributes }}
+                ></div>
+              {%- endif -%}
+          {%- endcase -%}
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if heading_group_open -%}
+        {%- assign animation_order = animation_order | plus: 1 -%}
+        <h2
+          class='image-banner__title {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+          {% if enable_content_slide_in %}
+            style='--gsc-animation-order: {{ animation_order }};'
+            {% if continue_observe_animation %}
+              data-keep-observe-animation
+            {% endif %}
+            {% if remove_animation_class %}
+              data-remove-animation-class
+            {% endif %}
+          {% endif %}
+        >
+          {{ heading_group_markup }}
+        </h2>
+      {%- endif -%}
+
+      {%- if action_group_open -%}
+        {%- assign animation_order = animation_order | plus: 1 -%}
+        <div class='image-banner__btns{% if action_group_first_is_link %} image-banner__btns--with-first-button-link{% endif %}{% if action_group_second_is_link %} image-banner__btns--with-second-button-link{% endif %}{% if action_group_all_links %} image-banner__btns--with-only-links{% endif %}'>
+          {{ action_group_markup }}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+{%- endif -%}

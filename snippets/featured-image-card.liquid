@@ -1,0 +1,120 @@
+{%- liquid
+  if mobile_image == blank
+    assign mobile_image = image
+  endif
+
+  assign on_image_variant_list = 'on-image-top,on-image-center,on-image-bottom,on-image-bottom-vertical' | split: ','
+
+  assign on_image_mode_enabled = false
+  if on_image_variant_list contains text_style
+    assign on_image_mode_enabled = true
+  endif
+
+  assign enable_background = false
+  if text_style == 'under-image-with-background'
+    assign enable_background = true
+  endif
+
+  if gradient_style == blank
+    if text_style contains 'on-image-top'
+      assign gradient_style = 'top'
+    elsif text_style contains 'on-image-center' or text_style == 'on-image-bottom-vertical'
+      assign gradient_style = 'center'
+    elsif text_style contains 'on-image-bottom'
+      assign gradient_style = 'bottom'
+    endif
+  endif
+
+  assign image_class = 'collection-card__image zoom shape__target-image'
+  if animate_image
+    assign image_class = image_class | append: ' scroll-trigger animate--zoom-out'
+  endif
+
+  assign has_content = false
+  if icon != blank or heading != blank or description != blank
+    assign has_content = true
+  endif
+-%}
+
+<div class='collection-card link-parent-for-hover zoom-parent-for-hover {% if color_scheme != blank %}color-{{ color_scheme }}{% endif %} {% if enable_background %} collection-card--with-background {% endif %}'>
+  <div
+    class='collection-card__media shape shape--{{ img_ratio }} {% if img_ratio contains 'fit' %} shape--fit {% endif %}'
+    {% if img_ratio == 'nature' and image != blank %}
+      style='padding-bottom: {{ 1 | divided_by: image.aspect_ratio | times: 100 }}%;'
+    {% endif %}
+  >
+    {%- if image != blank or mobile_image != blank -%}
+      {% assign desktop_image = image | default: mobile_image %}
+      {% assign mobile_image_class = image_class | append: ' desktop-hide' %}
+      {% assign desktop_image_class = image_class | append: ' mobile-hide' %}
+
+      {%- if mobile_image != blank -%}
+        <img
+          {% render 'image-attributes', image: mobile_image, size: 'medium', class: mobile_image_class %}
+        >
+      {%- endif -%}
+
+      {%- if desktop_image != blank -%}
+        <img
+          {% render 'image-attributes', image: desktop_image, size: 'medium', class: desktop_image_class %}
+        >
+      {%- endif -%}
+    {%- else -%}
+      {{ 'image' | placeholder_svg_tag: 'placeholder-image collection-card__image zoom shape__target-image' }}
+    {%- endif -%}
+
+    {%- if enable_overlay -%}
+      <div
+        class='overlay collection-card__overlay {% if gradient_style == 'top' %} collection-card__overlay--top-gradient {% endif %} {% if gradient_style == 'center' %} collection-card__overlay--center-gradient {% endif %} {% if gradient_style == 'bottom' %} collection-card__overlay--bottom-gradient {% endif %}'
+      ></div>
+    {%- endif -%}
+  </div>
+
+  {% if has_content %}
+    <div
+      class='
+        collection-card__content featured-image-card__content
+        {% if on_image_mode_enabled %} collection-card__content--on-image{% else %} collection-card__content--under-image {% endif %}
+        {% if content_align == 'center' %} collection-card__content--center-alignment {% endif %}
+        {% if content_align == 'right' %} collection-card__content--right-alignment {% endif %}
+        {% if text_style == 'on-image-top' %} collection-card__content--on-image-top {% endif %}
+        {% if text_style == 'on-image-center' %} collection-card__content--on-image-center {% endif %}
+        {% if text_style == 'on-image-bottom' %} collection-card__content--on-image-bottom {% endif %}
+        {% if text_style == 'on-image-bottom-vertical' %} collection-card__content--on-image-bottom-vertical {% endif %}
+      '
+      {% if icon_size != blank %}
+        style='--gsc-featured-image-icon-size: {{ icon_size }}px;'
+      {% endif %}
+    >
+      {% if link_url != blank %}
+        <a
+          class='collection-card__link'
+          href='{{ link_url }}'
+          aria-label='{% if heading != blank %}{{ heading | strip_html | escape }}{% elsif image.alt != blank %}{{ image.alt | escape }}{% else %}Image slide{% endif %}'
+        ></a>
+      {% endif %}
+
+      {% if icon != blank %}
+        <div class='featured-image-card__icon-wrap'>
+          <img
+            {% render 'image-attributes', image: icon, size: 'small', class: 'featured-image-card__icon' %}
+          >
+        </div>
+      {% endif %}
+
+      {% if heading != blank %}
+        <div class='featured-image-card__heading {{ heading_size }} rte'>{{ heading }}</div>
+      {% endif %}
+
+      {% if description != blank %}
+        <div class='featured-image-card__description rte body3 body-font-weight-from-global-settings'>{{ description }}</div>
+      {% endif %}
+    </div>
+  {% elsif link_url != blank %}
+    <a
+      class='collection-card__link'
+      href='{{ link_url }}'
+      aria-label='{{ image.alt | default: 'Image slide' | escape }}'
+    ></a>
+  {% endif %}
+</div>

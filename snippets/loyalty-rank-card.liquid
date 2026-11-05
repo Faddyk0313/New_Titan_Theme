@@ -1,0 +1,120 @@
+{%- comment -%}
+  TBG custom Code
+  Renders a single "Titan alliance ranks" rank card.
+
+  A badge image sits on top, the body below holds the rank name, its tagline,
+  the benefit rows and the footer bar (points threshold or a link).
+
+  Accepts:
+  - block {Object} - section block holding the rank settings
+  - card_index {Number} - 1-based index, used to decide image loading priority
+  - rank_title_size {String} - heading size class for the rank name
+  - rank_tagline_size {String} - body size class for the tagline
+  - benefit_text_size {String} - body size class for the benefit rows
+  - footer_text_size {String} - body size class for the footer bar
+  - current_rank {String} - lowercased name of the customer's current rank
+{%- endcomment -%}
+
+{%- liquid
+  assign loading = 'lazy'
+  if card_index <= 2
+    assign loading = 'eager'
+  endif
+
+  assign rank_name = block.settings.rank_title | strip_html | strip | downcase
+  assign is_current = false
+  if current_rank != blank and rank_name != blank and current_rank == rank_name
+    assign is_current = true
+  endif
+
+  assign badge_alt = block.settings.rank_title | strip_html | escape
+-%}
+
+<div class='lrk__card{% if is_current %} lrk__card--current{% endif %}' {{ block.shopify_attributes }}>
+  {%- comment -%}TBG custom Code — badge media{%- endcomment -%}
+  {%- if block.settings.show_badge -%}
+    <div class='lrk__badge'>
+      {%- if block.settings.badge_image != blank -%}
+        {{
+          block.settings.badge_image
+          | image_url: width: 1000
+          | image_tag:
+            loading: loading,
+            widths: '240, 360, 480, 720, 1000',
+            sizes: '(min-width: 990px) 25vw, 80vw',
+            class: 'lrk__badge-image',
+            alt: badge_alt
+        }}
+      {%- else -%}
+        {{ 'image' | placeholder_svg_tag: 'placeholder-svg lrk__badge-image' }}
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+
+  <div class='lrk__body'>
+    <div class='lrk__head'>
+      {%- if block.settings.rank_title != blank -%}
+        <div class='lrk__title {{ rank_title_size }}'>
+          {{ block.settings.rank_title }}
+        </div>
+      {%- endif -%}
+
+      {%- if block.settings.rank_tagline != blank -%}
+        <div class='lrk__tagline {{ rank_tagline_size }} body-font-weight-from-global-settings'>
+          {{ block.settings.rank_tagline }}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%}
+      TBG custom Code — benefit rows. Each row is one line of the block's
+      "Benefits" richtext, so merchants add and remove rows by editing a single
+      list instead of filling numbered fields.
+    {%- endcomment -%}
+    {%- comment -%}
+      Merchants may type the benefits as a bullet list or as separate
+      paragraphs, so both closing tags are normalised to one delimiter before
+      splitting. <br> counts too, for lines broken with shift+enter.
+    {%- endcomment -%}
+    {%- assign benefit_rows = block.settings.benefits
+      | replace: '</li>', '|~|'
+      | replace: '</p>', '|~|'
+      | replace: '<br>', '|~|'
+      | replace: '<br/>', '|~|'
+      | replace: '<br />', '|~|'
+      | split: '|~|'
+    -%}
+
+    {%- if block.settings.benefits != blank -%}
+      <ul class='lrk__benefits' role='list'>
+        {%- for row in benefit_rows -%}
+          {%- assign benefit = row | strip_html | strip -%}
+
+          {%- if benefit != blank -%}
+            <li class='lrk__benefit'>
+              <span class='lrk__benefit-icon' aria-hidden='true'>
+                {%- render 'icon', icon_name: 'check' -%}
+              </span>
+              <span class='lrk__benefit-text {{ benefit_text_size }} body-font-weight-from-global-settings'>
+                {{- benefit -}}
+              </span>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+
+    {%- if block.settings.footer_text != blank -%}
+      {%- comment -%}TBG custom Code — footer bar; a link when one is set, plain bar otherwise{%- endcomment -%}
+      {%- if block.settings.footer_link != blank -%}
+        <a class='lrk__footer lrk__footer--link {{ footer_text_size }}' href='{{ block.settings.footer_link }}'>
+          {{- block.settings.footer_text | strip_html -}}
+        </a>
+      {%- else -%}
+        <div class='lrk__footer {{ footer_text_size }}'>
+          {{- block.settings.footer_text | strip_html -}}
+        </div>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</div>

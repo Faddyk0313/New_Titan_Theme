@@ -1,0 +1,560 @@
+{%- liquid
+  assign options = section.settings
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+
+  assign image = options.image
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{%- liquid
+  assign show_background = options.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --gsc-img-ratio: {{ options.mobile_image_ratio | times: 100 }}%;
+      --gsc-space-between-blocks: var(--gsc-gap-{{ options.space_between_blocks }});
+      --gsc-overlay-opacity: {{ options.overlay_opacity | divided_by: 100.00 }};
+      {% if add_mobile_side_paddings %}
+        --gsc-compare-table-inset: calc(min(var(--gsc-aside-padding-size, 0px), 2rem) * 2);
+      {% else %}
+        --gsc-compare-table-inset: 0px;
+      {% endif %}
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} {
+        --gsc-img-ratio: {{ options.desktop_image_ratio | times: 100 }}%;
+        --gsc-image-width: {{ options.desktop_image_width }}%;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+{% capture section_css %}
+  {% style %}
+    .compare-table-with-image__container {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--gsc-space-between-blocks);
+    }
+
+    .compare-table-with-image__media {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .compare-table-with-image__media::before {
+      content: '';
+      display: block;
+      padding-block-end: var(--gsc-img-ratio);
+    }
+
+    .compare-table-with-image__media-inner {
+      position: absolute;
+      inset: 0;
+    }
+
+    .compare-table-with-image__content {
+      position: absolute;
+      inset-inline: 0;
+      inset-block-end: 0;
+      z-index: 1;
+      padding: var(--gsc-content-padding-m);
+    }
+
+    .compare-table-with-image__heading {
+      margin: 0;
+      color: {{ options.heading_color }};
+      text-transform: uppercase;
+    }
+
+    .compare-table-with-image__table {
+      overflow-x: auto;
+      min-width: 0;
+    }
+
+    /* Mobile: fit `mobile_columns` columns across the screen, minus the side
+       paddings the section itself adds, plus a 15% peek of the next column so
+       it reads as scrollable. */
+    .compare-table-with-image__table .compare-table {
+      --compare-table-col-width: calc(
+        (100vw - var(--gsc-compare-table-inset)) /
+          {{ options.mobile_columns | plus: 0.15 }}
+      );
+      margin-inline: 0;
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      /* Desktop columns flex to fill the section; no fixed width needed. */
+      .compare-table-with-image__table .compare-table {
+        margin-inline: 0;
+      }
+
+      .compare-table-with-image__container {
+        flex-direction: row;
+      }
+
+      .compare-table-with-image__media {
+        flex: 0 0 var(--gsc-image-width);
+        align-self: stretch;
+      }
+
+      /* TBG custom Code: the table's height is fixed (rows x row height), so on
+         desktop the image drops its aspect-ratio spacer and simply matches that
+         height, no matter how wide the viewport gets. */
+      .compare-table-with-image__media::before {
+        content: none;
+      }
+
+      .compare-table-with-image__media-inner {
+        position: absolute;
+        inset: 0;
+      }
+
+      .compare-table-with-image__table {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: stretch;
+        min-width: 0;
+      }
+
+      .compare-table-with-image__table > * {
+        width: 100%;
+      }
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: section_css %}
+
+<div class='compare-table-with-image section section-{{ section.id }} color-{{ color_scheme }} spacing-block {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='compare-table-with-image__container'>
+      <div class='compare-table-with-image__media {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'>
+        {%- render 'media-with-art-direction',
+          with_overlay: options.enable_overlay,
+          with_placeholder: true,
+          class: 'compare-table-with-image__media-inner',
+          desktop_media_type: 'image',
+          mobile_media_type: 'image',
+          desktop_img: image,
+          mobile_img: options.mobile_image
+        -%}
+
+        {%- if heading != blank -%}
+          <div class='compare-table-with-image__content'>
+            <h2 class='compare-table-with-image__heading {{ heading_size }}'>{{ heading }}</h2>
+          </div>
+        {%- endif -%}
+      </div>
+
+      <div class='compare-table-with-image__table'>
+        {%- comment -%}TBG custom Code: mobile/desktop icon size passed through.{%- endcomment -%}
+        {% render 'titan-compare-table',
+          cus_color_theme: options.cus_color_theme,
+          unique_id: section.id,
+          mobile_font_size: options.mobile_font_size,
+          desktop_font_size: options.desktop_font_size,
+          light_bg_color: options.table_light_bg_color,
+          dark_bg_color: options.table_dark_bg_color,
+          mobile_row_height: options.mobile_row_height,
+          desktop_row_height: options.desktop_row_height,
+          mobile_logo_scale: options.mobile_logo_scale,
+          desktop_logo_scale: options.desktop_logo_scale,
+          mobile_icon_size: options.mobile_icon_size,
+          desktop_icon_size: options.desktop_icon_size,
+          mobile_table_padding: options.mobile_table_padding,
+          desktop_table_padding: options.desktop_table_padding
+        %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Compare table with image",
+  "tag": "section",
+  "class": "compare-table-with-image-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "Mobile image",
+      "info": "Falls back to the desktop image when empty."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "default": "Compare Titan to other hockey brands",
+      "label": "Heading"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "display3", "label": "Display 3" },
+        { "value": "h1", "label": "Heading 1" },
+        { "value": "h2", "label": "Heading 2" },
+        { "value": "h3", "label": "Heading 3" },
+        { "value": "h4", "label": "Heading 4" }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_overlay",
+      "label": "Darken image",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Overlay opacity",
+      "default": 30,
+      "visible_if": "{{ section.settings.enable_overlay }}"
+    },
+    {
+      "type": "range",
+      "id": "desktop_image_width",
+      "min": 20,
+      "max": 60,
+      "step": 1,
+      "unit": "%",
+      "label": "Desktop image width",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "desktop_image_ratio",
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.1,
+      "unit": ":1",
+      "label": "Desktop image ratio",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_ratio",
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.1,
+      "unit": ":1",
+      "label": "Mobile image ratio",
+      "default": 1
+    },
+    {
+      "type": "header",
+      "content": "Table"
+    },
+    {
+      "type": "range",
+      "id": "mobile_columns",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "label": "Columns visible on mobile",
+      "info": "Includes the feature column. Remaining brands scroll horizontally.",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "mobile_font_size",
+      "min": 8,
+      "max": 24,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Table font size (mobile)",
+      "info": "Scales every cell, including headings, captions and icons.",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "desktop_font_size",
+      "min": 10,
+      "max": 32,
+      "step": 0.5,
+      "unit": "px",
+      "label": "Table font size (desktop)",
+      "info": "Scales every cell, including headings, captions and icons.",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "mobile_row_height",
+      "min": 30,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Row height (mobile)",
+      "default": 62
+    },
+    {
+      "type": "range",
+      "id": "desktop_row_height",
+      "min": 30,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "label": "Row height (desktop)",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "mobile_logo_scale",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Brand logo size (mobile)",
+      "info": "Percentage of the header cell.",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "desktop_logo_scale",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Brand logo size (desktop)",
+      "info": "Percentage of the header cell.",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "TBG custom Code — icon size"
+    },
+    {
+      "type": "range",
+      "id": "mobile_icon_size",
+      "min": 60,
+      "max": 300,
+      "step": 10,
+      "unit": "%",
+      "label": "Check / X icon size (mobile)",
+      "info": "Percentage of the table font size.",
+      "default": 140
+    },
+    {
+      "type": "range",
+      "id": "desktop_icon_size",
+      "min": 60,
+      "max": 300,
+      "step": 10,
+      "unit": "%",
+      "label": "Check / X icon size (desktop)",
+      "info": "Percentage of the table font size.",
+      "default": 140
+    },
+    {
+      "type": "range",
+      "id": "mobile_table_padding",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Table padding (mobile)",
+      "info": "Space around the whole table.",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "desktop_table_padding",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Table padding (desktop)",
+      "info": "Space around the whole table.",
+      "default": 0
+    },
+    {
+      "type": "select",
+      "id": "cus_color_theme",
+      "label": "Table color theme",
+      "default": "dark",
+      "options": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" }
+      ]
+    },
+    {
+      "type": "color",
+      "id": "table_light_bg_color",
+      "label": "Table background (light theme)",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "table_dark_bg_color",
+      "label": "Table background (dark theme)",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "label": "Color scheme",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "own", "label": "Custom" }
+      ]
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "scheme-1",
+      "label": "Custom color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": true,
+      "label": "Show background"
+    },
+    {
+      "type": "header",
+      "content": "Paddings"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "default": "page-width",
+      "options": [
+        { "value": "full-screen", "label": "Full width" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "large", "label": "Large" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "small", "label": "Small" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "space_between_blocks",
+      "label": "Space between image and table",
+      "default": "s",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "Add desktop side paddings"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": false,
+      "label": "Add mobile side paddings"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "default": "l",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "default": "l",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "label": "Corner rounding",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "none", "label": "None" },
+        { "value": "sm", "label": "Small" },
+        { "value": "md", "label": "Medium" },
+        { "value": "lg", "label": "Large" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Compare table with image"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,44 @@
+{%- comment -%}
+  One pill-style filter option.
+  Expects: value, filter, id_prefix, index, group_name, show_result_count
+{%- endcomment -%}
+
+{%- assign input_id = id_prefix
+  | append: '-'
+  | append: filter.label
+  | handle
+  | append: '-'
+  | append: group_name
+  | handle
+  | append: '-'
+  | append: index
+-%}
+
+<label
+  class='bg-filters__pill{% if value.active %} bg-filters__pill--selected{% endif %}{% if value.count == 0 and value.active == false %} bg-filters__pill--disabled{% endif %}'
+  for='{{ input_id }}'
+  data-list-item
+  {% if value.count != 0 and value.active %}
+    data-filters-checkbox
+  {% endif %}
+>
+  <input
+    class='checkbox__input'
+    id='{{ input_id }}'
+    type='checkbox'
+    name='{{ value.param_name }}'
+    value='{{ value.value }}'
+    {% if value.active %}
+      checked
+    {% endif %}
+    {% if value.count == 0 and value.active == false %}
+      disabled
+    {% endif %}
+  >
+  <span class='bg-filters__pill-label'>
+    {{- value.label | escape -}}
+    {%- if show_result_count -%}
+      <span class='bg-filters__option-count'>({{ value.count }})</span>
+    {%- endif -%}
+  </span>
+</label>

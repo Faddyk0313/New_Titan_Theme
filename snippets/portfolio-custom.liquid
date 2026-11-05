@@ -1,0 +1,187 @@
+{%- liquid
+  unless limit
+    assign limit = section.blocks.size
+  endunless
+  unless offset
+    assign offset = 0
+  endunless
+
+  case section.settings.image_ratio
+    when 'square'
+      assign image_ratio_desktop = '100%'
+    when 'portrait'
+      assign image_ratio_desktop = '125%'
+    when 'landscape'
+      assign image_ratio_desktop = '75%'
+    when 'wide'
+      assign image_ratio_desktop = '56.25%'
+    else
+      assign image_ratio_desktop = ''
+  endcase
+
+  case section.settings.image_ratio_mobile
+    when 'square'
+      assign image_ratio_mobile = '100%'
+    when 'portrait'
+      assign image_ratio_mobile = '125%'
+    when 'landscape'
+      assign image_ratio_mobile = '75%'
+    when 'wide'
+      assign image_ratio_mobile = '56.25%'
+    else
+      assign image_ratio_mobile = ''
+  endcase
+-%}
+
+{%- for block in section.blocks limit: limit offset: offset -%}
+  {%- liquid
+    assign heading_plain = block.settings.heading | strip_html | strip
+    assign icon_size = block.settings.icon_size | default: 44
+    assign image = block.settings.image
+    assign mobile_image = block.settings.image_mobile
+
+    if heading_plain == blank
+      assign heading_plain = 'Profile'
+    endif
+
+    assign block_image_ratio_desktop = image_ratio_desktop
+    assign block_image_ratio_mobile = image_ratio_mobile
+
+    if section.settings.image_ratio == 'adapt'
+      if image != blank
+        assign block_image_ratio_desktop = 1 | divided_by: image.aspect_ratio | times: 100.0 | append: '%'
+      else
+        assign block_image_ratio_desktop = '125%'
+      endif
+    endif
+
+    if section.settings.image_ratio_mobile == 'adapt'
+      if mobile_image != blank
+        assign block_image_ratio_mobile = 1 | divided_by: mobile_image.aspect_ratio | times: 100.0 | append: '%'
+      elsif image != blank
+        assign block_image_ratio_mobile = 1 | divided_by: image.aspect_ratio | times: 100.0 | append: '%'
+      else
+        assign block_image_ratio_mobile = '125%'
+      endif
+    endif
+  -%}
+
+  <div class='slider-grid__slide {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}' {% if enable_content_slide_in %}style='--gsc-animation-order: {{ forloop.index }};'{% endif %} slider-grid-slide data-portfolio-slide>
+    <div
+      class='profile card relative card-grid__item block-{{ block.id }}'
+      id='shopify-block-{{ block.id }}'
+      data-slide-index='{{ forloop.index0 }}'
+      style='--portfolio-media-ratio-desktop: {{ block_image_ratio_desktop }}; --portfolio-media-ratio-mobile: {{ block_image_ratio_mobile }}; --portfolio-icon-size: {{ icon_size }}px; --portfolio-text-color: {{ block.settings.color_text }}; --portfolio-modal-background: {{ block.settings.color_background }};'
+      {{ block.shopify_attributes }}
+    >
+      <picture class='media media--{{ section.settings.image_ratio }} mobile:media--{{ section.settings.image_ratio_mobile }} block relative overflow-hidden'>
+        {%- if image != blank -%}
+          {%- if mobile_image != blank -%}
+            <source
+              media='(max-width: 767px)'
+              srcset='{{ mobile_image | image_url: width: 400 }} 400w, {{ mobile_image | image_url: width: 600 }} 600w, {{ mobile_image | image_url: width: 800 }} 800w, {{ mobile_image | image_url: width: 1000 }} 1000w'
+              width='{{ mobile_image.width }}'
+              height='{{ mobile_image.height }}'
+            >
+          {%- endif -%}
+
+          {{
+            image
+            | image_url: width: image.width
+            | image_tag:
+              loading: 'lazy',
+              sizes: '(max-width: 767px) 100vw, 50vw',
+              widths: '300,400,500,600,700,800,900,1000,1200,1400,1600',
+              class: 'portfolio-custom-card-image'
+          }}
+        {%- elsif mobile_image != blank -%}
+          {{
+            mobile_image
+            | image_url: width: mobile_image.width
+            | image_tag:
+              loading: 'lazy',
+              sizes: '(max-width: 767px) 100vw, 50vw',
+              widths: '300,400,500,600,700,800,900,1000,1200,1400,1600',
+              class: 'portfolio-custom-card-image'
+          }}
+        {%- else -%}
+          {%- capture placeholder -%}{% cycle 'collection-1', 'collection-2', 'collection-3', 'collection-4', 'collection-5', 'collection-6' %}{%- endcapture -%}
+          {{ placeholder | placeholder_svg_tag: 'placeholder placeholder--transparent' }}
+        {%- endif -%}
+      </picture>
+
+      <div class='profile__content absolute left-0 bottom-0 w-full flex flex-col items-center justify-between'>
+        {%- if block.settings.icon != blank -%}
+          {{
+            block.settings.icon
+            | image_url: width: icon_size
+            | image_tag:
+              loading: 'lazy',
+              class: 'portfolio-custom-icon',
+              widths: '24,32,40,48,56,64,72,80,96,120',
+              alt: heading_plain
+          }}
+        {%- endif -%}
+
+        <div id='ProfileHeading-{{ block.id }}' class='lg:text-4xl text-4xl leading-none portfolio-custom-heading rte'>
+          {{ block.settings.heading }}
+        </div>
+
+        {%- if block.settings.description != blank -%}
+          <div class='portfolio-custom-description rte' style='margin-top: 8px;'>{{ block.settings.description }}</div>
+        {%- endif -%}
+
+        {%- unless section.settings.disable_modal_opening -%}
+          <modal-button
+            data-action='open'
+            data-modal='#Profile-{{ section.id }}-{{ block.id }}'
+          >
+            <button
+              type='button'
+              class='profile__button portfolio-custom-plus flex items-center justify-center rounded-full shrink-0'
+              aria-labelledby='ProfileHeading-{{ block.id }}'
+              aria-controls='Profile-{{ section.id }}-{{ block.id }}'
+              aria-expanded='false'
+            >
+              {% render 'icon', icon_name: 'plus', class: 'portfolio-custom-plus-icon' %}
+            </button>
+          </modal-button>
+        {%- endunless -%}
+      </div>
+
+      {%- unless section.settings.disable_modal_opening -%}
+        <modal-component
+          class='profile-modal'
+          id='Profile-{{ section.id }}-{{ block.id }}'
+          data-with-overlay
+          data-with-close-on-outside
+          data-overlay-important
+        >
+          <template data-modal-template='Profile-{{ section.id }}-{{ block.id }}'>
+            <div class='profile-modal__body'>
+              <div class='drawer__inner'>
+                <div class='drawer__header'>
+                  <span class='drawer__title title-md'>{{ heading_plain | escape }}</span>
+                  <modal-button
+                    data-action='close'
+                    class='profile-modal__close-wrapper'
+                    aria-label='{{ 'Close' | escape }}'
+                    type='button'
+                    data-modal='#Profile-{{ section.id }}-{{ block.id }}'
+                  >
+                    <span class='close-button-with-scale-hover profile-modal__close'></span>
+                  </modal-button>
+                </div>
+                <div class='drawer__content'>
+                  <div class='drawer__scrollable'>
+                    <div class='rte text-base md:text-lg'>{{ block.settings.text }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </modal-component>
+      {%- endunless -%}
+    </div>
+  </div>
+{%- endfor -%}

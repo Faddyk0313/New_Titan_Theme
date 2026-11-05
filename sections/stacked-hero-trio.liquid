@@ -1,0 +1,395 @@
+{%- liquid
+  assign options = section.settings
+
+  assign top_desktop_image = options.top_desktop_image
+  assign top_mobile_image = options.top_mobile_image
+  assign top_link = options.top_link
+  assign top_alt = options.top_alt
+
+  assign bottom_left_desktop_image = options.bottom_left_desktop_image
+  assign bottom_left_mobile_image = options.bottom_left_mobile_image
+  assign bottom_left_link = options.bottom_left_link
+  assign bottom_left_alt = options.bottom_left_alt
+
+  assign bottom_right_desktop_image = options.bottom_right_desktop_image
+  assign bottom_right_mobile_image = options.bottom_right_mobile_image
+  assign bottom_right_link = options.bottom_right_link
+  assign bottom_right_alt = options.bottom_right_alt
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign row_gap = options.row_gap
+  assign col_gap = options.col_gap
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign top_href = '#'
+  if top_link != blank
+    assign top_href = top_link
+  endif
+
+  assign bottom_left_href = '#'
+  if bottom_left_link != blank
+    assign bottom_left_href = bottom_left_link
+  endif
+
+  assign bottom_right_href = '#'
+  if bottom_right_link != blank
+    assign bottom_right_href = bottom_right_link
+  endif
+-%}
+
+{%- liquid
+  assign show_background = section.settings.show_background
+  assign color_container_background = false
+
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --trio-row-gap: {{ row_gap }}px;
+      --trio-col-gap: {{ col_gap }}px;
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+    }
+
+    .section-{{ section.id }} .trio-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      row-gap: var(--trio-row-gap);
+      background: transparent;
+    }
+
+    .section-{{ section.id }} .trio-layout__top,
+    .section-{{ section.id }} .trio-layout__bottom-item {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    .section-{{ section.id }} .trio-layout__bottom {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--trio-col-gap);
+    }
+
+    .section-{{ section.id }} .trio-layout picture,
+    .section-{{ section.id }} .trio-layout img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .section-{{ section.id }} .trio-layout__placeholder {
+      width: 100%;
+      height: auto;
+      min-height: 220px;
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background--no-paddings{% endif %}'>
+    <div class='trio-layout'>
+      <a class='trio-layout__top' href='{{ top_href }}' aria-label='{{ top_alt | default: 'Top hero image' | escape }}'>
+        {%- if top_desktop_image != blank or top_mobile_image != blank -%}
+          <picture>
+            {%- if top_desktop_image != blank -%}
+              <source media='(min-width: 768px)' srcset='{{ top_desktop_image | image_url: width: 3200 }}'>
+            {%- endif -%}
+            {%- assign top_fallback = top_mobile_image | default: top_desktop_image -%}
+            {{
+              top_fallback
+              | image_url: width: 2200
+              | image_tag:
+                loading: 'lazy',
+                widths: '480, 768, 1024, 1440, 1920, 2400, 3200',
+                sizes: '100vw',
+                alt: top_alt
+            }}
+          </picture>
+        {%- else -%}
+          {{ 'lifestyle-1' | placeholder_svg_tag: 'trio-layout__placeholder placeholder-svg' }}
+        {%- endif -%}
+      </a>
+
+      <div class='trio-layout__bottom'>
+        <a class='trio-layout__bottom-item' href='{{ bottom_left_href }}' aria-label='{{ bottom_left_alt | default: 'Bottom left image' | escape }}'>
+          {%- if bottom_left_desktop_image != blank or bottom_left_mobile_image != blank -%}
+            <picture>
+              {%- if bottom_left_desktop_image != blank -%}
+                <source media='(min-width: 768px)' srcset='{{ bottom_left_desktop_image | image_url: width: 2000 }}'>
+              {%- endif -%}
+              {%- assign bottom_left_fallback = bottom_left_mobile_image | default: bottom_left_desktop_image -%}
+              {{
+                bottom_left_fallback
+                | image_url: width: 1600
+                | image_tag:
+                  loading: 'lazy',
+                  widths: '320, 480, 640, 800, 960, 1200, 1600, 2000',
+                  sizes: '(max-width: 767px) 50vw, 50vw',
+                  alt: bottom_left_alt
+              }}
+            </picture>
+          {%- else -%}
+            {{ 'lifestyle-2' | placeholder_svg_tag: 'trio-layout__placeholder placeholder-svg' }}
+          {%- endif -%}
+        </a>
+
+        <a class='trio-layout__bottom-item' href='{{ bottom_right_href }}' aria-label='{{ bottom_right_alt | default: 'Bottom right image' | escape }}'>
+          {%- if bottom_right_desktop_image != blank or bottom_right_mobile_image != blank -%}
+            <picture>
+              {%- if bottom_right_desktop_image != blank -%}
+                <source media='(min-width: 768px)' srcset='{{ bottom_right_desktop_image | image_url: width: 2000 }}'>
+              {%- endif -%}
+              {%- assign bottom_right_fallback = bottom_right_mobile_image | default: bottom_right_desktop_image -%}
+              {{
+                bottom_right_fallback
+                | image_url: width: 1600
+                | image_tag:
+                  loading: 'lazy',
+                  widths: '320, 480, 640, 800, 960, 1200, 1600, 2000',
+                  sizes: '(max-width: 767px) 50vw, 50vw',
+                  alt: bottom_right_alt
+              }}
+            </picture>
+          {%- else -%}
+            {{ 'lifestyle-2' | placeholder_svg_tag: 'trio-layout__placeholder placeholder-svg' }}
+          {%- endif -%}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Stacked hero trio",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Top image"
+    },
+    {
+      "type": "image_picker",
+      "id": "top_desktop_image",
+      "label": "Top desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "top_mobile_image",
+      "label": "Top mobile image"
+    },
+    {
+      "type": "url",
+      "id": "top_link",
+      "label": "Top image link"
+    },
+    {
+      "type": "text",
+      "id": "top_alt",
+      "label": "Top image alt text"
+    },
+    {
+      "type": "header",
+      "content": "Bottom left image"
+    },
+    {
+      "type": "image_picker",
+      "id": "bottom_left_desktop_image",
+      "label": "Bottom left desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "bottom_left_mobile_image",
+      "label": "Bottom left mobile image"
+    },
+    {
+      "type": "url",
+      "id": "bottom_left_link",
+      "label": "Bottom left image link"
+    },
+    {
+      "type": "text",
+      "id": "bottom_left_alt",
+      "label": "Bottom left image alt text"
+    },
+    {
+      "type": "header",
+      "content": "Bottom right image"
+    },
+    {
+      "type": "image_picker",
+      "id": "bottom_right_desktop_image",
+      "label": "Bottom right desktop image"
+    },
+    {
+      "type": "image_picker",
+      "id": "bottom_right_mobile_image",
+      "label": "Bottom right mobile image"
+    },
+    {
+      "type": "url",
+      "id": "bottom_right_link",
+      "label": "Bottom right image link"
+    },
+    {
+      "type": "text",
+      "id": "bottom_right_alt",
+      "label": "Bottom right image alt text"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "row_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between rows",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "col_gap",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Gap between bottom images",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "General section settings"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "full-screen"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "0", "label": "0" },
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" },
+        { "value": "3", "label": "3" },
+        { "value": "4", "label": "4" },
+        { "value": "5", "label": "5" },
+        { "value": "6", "label": "6" },
+        { "value": "7", "label": "7" },
+        { "value": "8", "label": "8" }
+      ],
+      "default": "default",
+      "label": "Corner rounding"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "options": [
+        { "value": "default", "label": "Use global color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default",
+      "label": "Color scheme variant"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "1",
+      "label": "Color scheme",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background",
+      "default": false,
+      "label": "Show section background"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_desktop_side_paddings",
+      "default": true,
+      "label": "Add desktop side paddings"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_mobile_side_paddings",
+      "default": true,
+      "label": "Add mobile side paddings"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "none"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Stacked hero trio"
+    }
+  ]
+}
+{% endschema %}

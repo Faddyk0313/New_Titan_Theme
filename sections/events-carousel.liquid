@@ -1,0 +1,693 @@
+{%- liquid
+  assign options = section.settings
+  assign add_side_paddings = options.add_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+  assign color_scheme = options.color_scheme
+  assign container_size = options.container_size
+  assign heading = options.heading
+  assign subheading = options.subheading
+  assign button_text = options.buttonText
+  assign preselected_size = options.preselected_size
+  assign carousel_heading = options.carousel_heading
+  assign carousel_heading_template = options.carousel_heading_template
+  assign heading_size = options.heading_size
+  assign alignment = options.alignment
+  assign desktop_columns = options.desktop_columns
+  assign mobile_columns = options.mobile_columns
+  assign desktop_layout = options.desktop_layout
+  assign mobile_layout = options.mobile_layout
+  
+  comment
+    For laptops and tablets, reduce columns from desktop setting
+  endcomment
+  assign laptop_columns = desktop_columns | minus: 1
+  if laptop_columns < 2
+    assign laptop_columns = 2
+  endif
+  
+  assign tablet_columns = desktop_columns | minus: 2
+  if tablet_columns < 2
+    assign tablet_columns = 2
+  endif
+
+  assign desktop_space_between_cards = options.desktop_space_between_cards | times: 0.1
+  assign mobile_space_between_cards = options.mobile_space_between_cards | times: 0.1
+
+  assign show_navigation_on_hover = options.show_navigation_on_hover
+  assign autoplay_mode = options.autoplay_mode
+  assign autoplay_interval = options.autoplay_interval
+
+  assign product_card_with_bottom_spacing = false
+  if settings.round_level != '0'
+    assign product_card_with_bottom_spacing = true
+  endif
+
+  assign show_mobile_carousel = false
+  if mobile_layout == 'carousel'
+    assign show_mobile_carousel = false
+  else
+    assign show_mobile_carousel = true
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+
+  assign swatch_patterns = settings.primary_custom_colors_and_patterns
+  assign primary_custom_colors_and_patterns = swatch_patterns | newline_to_br | split: '<br />'
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{section.id}} {
+        --gsc-space-between-cards: {{mobile_space_between_cards}}rem;
+        --gsc-columns: {{mobile_columns}};
+        --gsc-slide-width: calc((100% - (({{mobile_columns}} - 1) * {{mobile_space_between_cards}}rem)) / {{mobile_columns}});
+        --gsc-section-spacing-top: {{ section_spacing_top }}px;
+        --gsc-section-spacing-bottom: {{ section_spacing_bottom }}px;
+    }
+
+    @media screen and (min-width: 768px) {
+        .section-{{section.id}} {
+            --gsc-space-between-cards: {{desktop_space_between_cards}}rem;
+            --gsc-columns: {{desktop_columns}};
+            --gsc-slide-width: calc((100% - (({{desktop_columns}} - 1) * {{desktop_space_between_cards}}rem)) / {{desktop_columns}});
+        }
+    }
+
+    @media screen and (min-width: 768px) and (max-width: 880px) {
+      .section-{{ section.id }} {
+        --gsc-columns: {{tablet_columns}};
+        --gsc-slide-width: calc((100% - (({{tablet_columns}} - 1) * {{desktop_space_between_cards}}rem)) / {{tablet_columns}});
+      }
+    }
+
+    @media screen and (min-width: 880px) and (max-width: 1016px) {
+      .section-{{ section.id }} {
+        --gsc-columns: {{laptop_columns}};
+        --gsc-slide-width: calc((100% - (({{laptop_columns}} - 1) * {{desktop_space_between_cards}}rem)) / {{laptop_columns}});
+      }
+    }
+
+    .section-{{section.id}} .container__header {
+      margin-bottom: 16px;
+    }
+
+    .section-template--19430489129138__size_based_products_y9PAj4 .container.first {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+  {% endstyle %}
+{% endcapture %}
+
+<style>
+  /* TBG Custom Code - Event Card Styling Only */
+  .tbg-events__header { margin-bottom: 32px; }
+  .tbg-events__header h2 { margin: 0 0 8px; }
+  .tbg-events__sub { color: #666; margin: 0; }
+
+  /* Event Card Content */
+  .tbg-event-card {
+    background: #f2f2f2;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .tbg-event-card__date {
+    font-size: 13px;
+    color: #222;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .tbg-event-card__title {
+    font-size: 18px;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+
+  .tbg-event-card__location {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .tbg-event-card__image {
+    margin-top: auto;
+    margin-bottom: 12px;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .tbg-event-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .tbg-event-card__cta {
+    text-align: center;
+  }
+
+  .tbg-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #111;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .tbg-btn:hover {
+    background: #333;
+  }
+
+  .tbg-btn--secondary {
+    background: #444;
+  }
+
+  .tbg-event-card__tags {
+    list-style: none;
+    display: flex;
+    gap: 6px;
+    padding: 12px 0 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .tbg-event-card__tags li {
+    background: #d5e9ff;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  /* End TBG Custom Code */
+</style>
+
+{% render 'inline-css-minifier', css: css %}
+
+{%- assign entries = shop.metaobjects.event.values | default: shop.metaobjects.events.values -%}
+
+<div class='collection section section-{{ section.id }} color-{{ color_scheme }}'>
+  <div class='collection__container container first container--{{ container_size }} section-spacing {% if add_side_paddings == true %}container--with-aside-paddings{% endif %}'>
+    
+    {%- if heading != blank -%}
+      <div class='container__header collection__header {% if alignment == 'center' %} collection__header--center {% elsif alignment == 'right' %} collection__header--right {% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+        {% if enable_content_slide_in %}
+          style='--gsc-animation-order: 1;'
+        {% endif %}
+      >
+        <h2 class='collection__title {{ heading_size }}'>{{ heading }}</h2>
+      </div>
+    {%- endif -%}
+    
+    {% if subheading != blank %}
+      <p class="section-subheading" style="text-align: {{ alignment }}; margin-block: 10px;">{{ subheading }}</p>
+    {% endif %}
+
+    <div class="products-carousel-wrapper-{{section.id}} active" id="products-carousel-wrapper-{{section.id}}">
+      <slider-grid
+        class='slider-grid {% if show_navigation_on_hover %}card-carousel--navigation-on-hover{% endif %}'
+        {% if autoplay_mode != 'disabled' %}
+          autoplay-mode='{{autoplay_mode}}'
+          autoplay-interval='{{autoplay_interval}}'
+        {% endif %}
+        {% if desktop_layout == 'grid' %}
+          desktop-disabled
+        {% endif %}
+        {% if mobile_layout == 'grid' %}
+          mobile-disabled
+        {% endif %}
+      >
+        <div
+          slider-grid-track
+          class='slider-grid-track slider-grid__d-{% if desktop_layout == 'grid' %}grid{% else %}carousel{% endif %} slider-grid__m-{% if mobile_layout == 'grid' %}one-column{% else %}carousel{% endif %}'
+          id='slider-grid-track-{{section.id}}'
+        >
+          {%- for e in entries -%}
+            <div class="slider-grid__slide cus  scroll-trigger animate--slide-in" slider-grid-slide>
+              <article class="card tbg-event-card" data-event-date="{{ e.start_date.value | default: e.start_date }}">
+                <div class="tbg-event-card__date">
+                  {%- assign d = e.start_date | date: "%B %e, %Y" -%}
+                  {{ d }}
+                </div>
+
+                <h3 class="tbg-event-card__title">
+                  {{ e.name | escape }}
+                </h3>
+
+                {%- assign loc = e.location_display | default: e.city -%}
+                {%- if e.state != blank -%}
+                  {%- assign loc = loc | append: ', ' | append: e.state -%}
+                {%- endif -%}
+                {%- if e.country and e.country != blank -%}
+                  {%- if loc != blank -%}
+                    {%- assign loc = loc | append: ', ' | append: e.country -%}
+                  {%- else -%}
+                    {%- assign loc = e.country -%}
+                  {%- endif -%}
+                {%- endif -%}
+                <div class="tbg-event-card__location">{{ loc }}</div>
+
+                {%- if e.image and e.image != blank -%}
+                  <div class="tbg-event-card__image">
+                    <img
+                      loading="lazy"
+                      alt="{{ e.name | escape }}"
+                      src="{{ e.image | image_url: width: 800 }}"
+                      width="400" height="240">
+                  </div>
+                {%- endif -%}
+
+                {% comment %} <div class="tbg-event-card__cta">
+                  <a class="tbg-btn" href="{{ e.cta_url | default: '#' }}">
+                    {{ e.cta_label | default: 'Learn More' }}
+                  </a>
+                </div> {% endcomment %}
+                {% comment %} <div class="tbg-event-card__cta">
+                  {%- render 'button',
+                    label: e.cta_label,
+                    link: e.cta_url,
+                    size: "sm",
+                    width: '150px',
+                    style: "primary",
+                  -%}
+                </div> {% endcomment %}
+
+                {% comment %} {%- if e.partner_tags.value and e.partner_tags.value.size > 0 -%}
+                  <ul class="tbg-event-card__tags">
+                    {%- for tag in e.partner_tags.value -%}
+                      <li>{{ tag }}</li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%} {% endcomment %}
+              </article>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        {% if desktop_layout == 'carousel' %}
+          <div class='card-carousel__position-btn-wrap card-carousel__position-btn-wrap--prev'>
+            <div class='shape shape--default'>
+              <button
+                type='button'
+                class='carousel-btn card-carousel__carousel-btn card-carousel__carousel-btn--prev'
+                data-direction='prev'
+                tabindex='0'
+                disabled
+              >
+                {% render 'icon', icon_name: 'chevron', class: 'carousel-btn__icon x-flip' %}
+              </button>
+            </div>
+          </div>
+
+          <div class='card-carousel__position-btn-wrap card-carousel__position-btn-wrap--next'>
+            <div class='shape shape--default'>
+              <button
+                type='button'
+                class='carousel-btn card-carousel__carousel-btn card-carousel__carousel-btn--next'
+                data-direction='next'
+                tabindex='0'
+                disabled
+              >
+                {%- render 'icon', icon_name: 'chevron', class: 'carousel-btn__icon' -%}
+              </button>
+            </div>
+          </div>
+
+          <div
+            class='progress-bar progress-bar--with-background card-carousel__progress-bar {% if mobile_layout == 'grid' %}progress-bar--desktop-only{% endif %}'
+            data-target='scroll'
+          >
+            <div class='slider-grid__progress-bar-indicator' slider-grid-progress></div>
+          </div>
+        {% endif %}
+      </slider-grid>
+    </div>
+
+    <script>
+      (function() {
+        const sectionId = '{{section.id}}';
+        const track = document.getElementById('slider-grid-track-' + sectionId);
+        const progressBar = document.querySelector('.section-' + sectionId + ' [slider-grid-progress]');
+
+        if (!track || !progressBar) return;
+
+        // FIX: Override progress bar calculation to use correct percentage (MOBILE ONLY)
+        function updateProgressBar() {
+          const viewport = window.innerWidth;
+          const isMobile = viewport < 768;
+
+          // Only apply fix on mobile
+          if (!isMobile) {
+            // Remove our override so the original theme's calculation works on tablet/desktop
+            progressBar.style.removeProperty('--gsc-slider-grid-progress');
+            return;
+          }
+
+          const scrollLeft = track.scrollLeft;
+          const scrollWidth = track.scrollWidth;
+          const clientWidth = track.clientWidth;
+          const maxScroll = scrollWidth - clientWidth;
+
+          if (maxScroll > 0) {
+            const progressPercent = (scrollLeft / maxScroll) * 100;
+            // The progress is controlled by CSS custom property, not width
+            progressBar.style.setProperty('--gsc-slider-grid-progress', progressPercent + '%');
+          } else {
+            progressBar.style.setProperty('--gsc-slider-grid-progress', '0%');
+          }
+        }
+
+        // Update on scroll
+        track.addEventListener('scroll', updateProgressBar);
+
+        // Update on resize
+        window.addEventListener('resize', updateProgressBar);
+
+        // Initial update
+        setTimeout(updateProgressBar, 500);
+
+        // Periodic update to catch any changes from the original script
+        setInterval(updateProgressBar, 100);
+      })();
+    </script>
+
+  </div>
+</div>
+
+{% render 'save-section-data-in-global-scope', section: section %}
+
+{% schema %}
+{
+  "name": "Upcoming Events Carousel",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Shop by Size"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading Size",
+      "options": [
+        {
+          "value": "display1",
+          "label": "Display 1"
+        },
+        {
+          "value": "display2",
+          "label": "Display 2"
+        },
+        {
+          "value": "display3",
+          "label": "Display 3"
+        },
+        {
+          "value": "h1",
+          "label": "H1"
+        },
+        {
+          "value": "h2",
+          "label": "H2"
+        },
+        {
+          "value": "h3",
+          "label": "H3"
+        },
+        {
+          "value": "h4",
+          "label": "H4"
+        },
+        {
+          "value": "h5",
+          "label": "H5"
+        },
+        {
+          "value": "h6",
+          "label": "H6"
+        }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "Heading Alignment",
+      "default": "center"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Select your size to see available products"
+    },
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "options": [
+        {
+          "value": "carousel",
+          "label": "Carousel"
+        },
+        {
+          "value": "grid",
+          "label": "Grid"
+        }
+      ],
+      "default": "carousel",
+      "label": "Desktop Layout"
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "options": [
+        {
+          "value": "carousel",
+          "label": "Carousel"
+        },
+        {
+          "value": "grid",
+          "label": "Grid"
+        }
+      ],
+      "default": "carousel",
+      "label": "Mobile Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_columns",
+      "min": 2,
+      "max": 6,
+      "step": 0.5,
+      "default": 5,
+      "label": "Desktop Columns",
+      "info": "Number of product cards per row. Works for both carousel and grid."
+    },
+    {
+      "type": "range",
+      "id": "mobile_columns",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 2,
+      "label": "Mobile Columns",
+      "info": "Number of product cards per row. Works for both carousel and grid."
+    },
+    {
+      "type": "range",
+      "id": "desktop_space_between_cards",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "unit": "px",
+      "label": "Desktop Space Between Cards"
+    },
+    {
+      "type": "range",
+      "id": "mobile_space_between_cards",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "unit": "px",
+      "label": "Mobile Space Between Cards"
+    },
+    {
+      "type": "header",
+      "content": "Carousel Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_navigation_on_hover",
+      "default": true,
+      "label": "Show Navigation on Hover",
+      "info": "Only applies when carousel layout is selected"
+    },
+    {
+      "type": "select",
+      "id": "autoplay_mode",
+      "options": [
+        {
+          "value": "disabled",
+          "label": "Disabled"
+        },
+        {
+          "value": "one_at_time",
+          "label": "One at a Time"
+        },
+        {
+          "value": "seamless",
+          "label": "Seamless"
+        }
+      ],
+      "default": "disabled",
+      "label": "Autoplay Mode",
+      "info": "Only applies when carousel layout is selected"
+    },
+    {
+      "type": "range",
+      "id": "autoplay_interval",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 3,
+      "unit": "s",
+      "label": "Autoplay Interval",
+      "info": "Only applies when carousel layout is selected"
+    },
+    {
+      "type": "header",
+      "content": "Section Settings"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.color_scheme_option_default_label"
+        },
+        {
+          "value": "primary",
+          "label": "t:sections.general_section_settings.color_scheme_option_primary_label"
+        },
+        {
+          "value": "secondary",
+          "label": "t:sections.general_section_settings.color_scheme_option_secondary_label"
+        },
+        {
+          "value": "custom-1",
+          "label": "t:sections.general_section_settings.color_scheme_option_custom_1_label"
+        },
+        {
+          "value": "custom-2",
+          "label": "t:sections.general_section_settings.color_scheme_option_custom_2_label"
+        },
+        {
+          "value": "custom-3",
+          "label": "t:sections.general_section_settings.color_scheme_option_custom_3_label"
+        },
+        {
+          "value": "white",
+          "label": "t:sections.general_section_settings.color_scheme_option_white_text_label"
+        },
+        {
+          "value": "black",
+          "label": "t:sections.general_section_settings.color_scheme_option_black_text_label"
+        },
+        {
+          "value": "custom-5",
+          "label": "t:sections.general_section_settings.color_scheme_option_custom_5_label"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.color_scheme_label",
+      "info": "t:sections.general_section_settings.color_scheme_tip"
+    },
+    {
+      "type": "select",
+      "id": "container_size",
+      "options": [
+        {
+          "value": "full-screen",
+          "label": "Full Screen"
+        },
+        {
+          "value": "page-width",
+          "label": "Page Width"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "small",
+          "label": "Small"
+        }
+      ],
+      "default": "page-width",
+      "label": "Container Size"
+    },
+    {
+      "type": "checkbox",
+      "id": "add_side_paddings",
+      "default": true,
+      "label": "Add Side Paddings"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "unit": "px",
+      "label": "Top Spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "unit": "px",
+      "label": "Bottom Spacing"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Upcoming Events Carousel"
+    }
+  ],
+  "disabled_on": {
+    "templates": ["password"]
+  }
+}
+{% endschema %}

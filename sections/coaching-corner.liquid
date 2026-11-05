@@ -1,0 +1,319 @@
+{% liquid 
+  assign section_spacing_top = section.settings.section_spacing_top
+  assign section_spacing_bottom = section.settings.section_spacing_bottom
+-%}
+{% capture css %}
+  {% style %}
+    .section-{{section.id}} {
+        --gsc-section-spacing-top: {{ section_spacing_top }}px;
+        --gsc-section-spacing-bottom: {{ section_spacing_bottom }}px;
+    }
+  {% endstyle %}
+{% endcapture %}
+
+<style>
+  #shopify-section-{{ section.id }} .section {
+    padding-top: {{ section_spacing_top }}px;
+    padding-bottom: {{ section_spacing_bottom }}px;
+  }
+  #shopify-section-{{ section.id }} .subSection {
+    padding-bottom: 2.5rem;
+  }
+
+  #shopify-section-{{ section.id }} .subSection.last {
+    padding-block: 2.5rem;
+    background-color: black;
+  }
+  
+  #shopify-section-{{ section.id }} .subSection.last .button.button--primary {
+    background: white !important;
+    color: black !important;
+  }
+  #shopify-section-{{ section.id }} .subSection.last .button.button--primary:hover {
+    color: white !important;
+  }
+  #shopify-section-{{ section.id }} .subSection.last .button.button--primary .btn-fill {
+    background: black !important;
+  }
+
+  #shopify-section-{{ section.id }} .cus_header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #shopify-section-{{ section.id }} .section-number {
+    background-color: #000000;
+    color: #ffffff;
+    font-size: 44px;
+    padding: 0px 20px;
+    padding-left: 80px;
+    padding-bottom: 3px;
+    margin: 0;
+  }
+
+  #shopify-section-{{ section.id }} .cus_section-heading {
+    font-size: 44px;
+  }
+
+  #shopify-section-{{ section.id }} .product-showcase {
+    margin: 0 auto;
+    padding-block: 1.5rem;
+    padding-inline: var(--page-padding);
+  }
+
+  #shopify-section-{{ section.id }} .product-image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  #shopify-section-{{ section.id }} .cta-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    #shopify-section-{{ section.id }} .section-number {
+      font-size: 24px;
+      padding: 0px 10px;
+      padding-left: 30px;
+      padding-bottom: 3px;
+    }
+
+    #shopify-section-{{ section.id }} .cus_section-heading {
+      font-size: 20px;
+    }
+  }
+
+  .extra-side-padding {
+    max-width: 800px;
+    margin-inline: auto;
+  }
+</style>
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class="section section-spacing team-neck-protection-section">
+  <div class="subSection relative">
+    <div class="cus_header">
+      <h2 class="section-number">1</h2>
+      <h2 class="cus_section-heading">{{ section.settings.heading_1 }}</h2>
+    </div>
+    <div class="product-showcase">
+      <picture>
+        <source
+          media="(max-width: 768px)"
+          srcset="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/color_fan_12_colors_mobile.png?v=1760789017"
+        >
+        <img
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/color_fan_12_colors.png?v=1760789016"
+          alt="TITAN neck protection available in 12 colors"
+          class="product-image"
+          width="500px"
+          height="200px"
+        >
+      </picture>
+    </div>
+
+    <div class="cta-wrapper">
+      {% comment %} {%- render 'button',
+        label: section.settings.button_label_1,
+        link: section.settings.button_link_1,
+        size: section.settings.button_size,
+        style: section.settings.button_style,
+        textSize: section.settings.button_font_size,
+      -%} {% endcomment %}
+        {% render 'cus-button',
+        btn_text: section.settings.button_label_1,
+        btn_url: section.settings.button_link_1,
+        btn_style: section.settings.button_style,
+        enable_content_slide_in: true,
+        %}
+    </div>
+  </div>
+  <div class="subSection relative">
+    <div class="cus_header">
+      <h2 class="section-number">2</h2>
+      <h2 class="cus_section-heading">{{ section.settings.heading_2 }}</h2>
+    </div>
+    <div class="product-showcase extra-side-padding">
+      
+        <video
+          src="https://cdn.shopify.com/videos/c/o/v/fce15e698316458a941bc663c31e583e.mp4"
+          alt="TITAN neck protection available in 12 colors"
+          class="product-image"
+          controls
+          width="500px"
+          height="200px"
+        />
+    </div>
+
+    <div class="cta-wrapper">
+      {% comment %} {%- render 'button',
+        label: section.settings.button_label_2,
+        link: section.settings.button_link_2,
+        size: section.settings.button_size,
+        style: section.settings.button_style,
+        textSize: section.settings.button_font_size,
+      -%} {% endcomment %}
+        {% render 'cus-button',
+        btn_text: section.settings.button_label_2,
+        btn_url: section.settings.button_link_2,
+        btn_style: section.settings.button_style,
+        enable_content_slide_in: true,
+        %}
+    </div>
+  </div>
+  <div class="subSection relative">
+    <div class="cus_header">
+      <h2 class="section-number">3</h2>
+      <h2 class="cus_section-heading">{{ section.settings.heading_3 }}</h2>
+    </div>
+    <div class="klaviyo-form-WxY69r page-width extra-side-padding"></div>
+    {% comment %} <div class="product-showcase">
+      <picture>
+        <source
+          media="(max-width: 768px)"
+          srcset="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/color_fan_12_colors_mobile.png?v=1760789017"
+        >
+        <img
+          src="https://cdn.shopify.com/s/files/1/0635/2401/2210/files/color_fan_12_colors.png?v=1760789016"
+          alt="TITAN neck protection available in 12 colors"
+          class="product-image"
+          width="500px"
+          height="200px"
+        >
+      </picture>
+    </div> {% endcomment %}
+
+    {% comment %} <div class="cta-wrapper">
+      {%- render 'button',
+        label: section.settings.button_label_3,
+        link: section.settings.button_link_3,
+        size: section.settings.button_size,
+        style: section.settings.button_style,
+        textSize: section.settings.button_font_size,
+      -%}
+    </div> {% endcomment %}
+  </div>
+  
+</div>
+
+{% schema %}
+{
+  "name": "Team Neck Protection",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Sub Section 1"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading_1",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "button_label_1",
+      "default": "Button label",
+      "label": "Button label",
+    },
+    {
+      "type": "url",
+      "id": "button_link_1",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Sub Section 2"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading_2",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "button_label_2",
+      "default": "Button label",
+      "label": "Button label",
+    },
+    {
+      "type": "url",
+      "id": "button_link_2",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Sub Section 3"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading_3",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "button_label_3",
+      "default": "Button label",
+      "label": "Button label",
+    },
+    {
+      "type": "url",
+      "id": "button_link_3",
+      "label": "Button link"
+    },
+    {
+      "type": "header",
+      "content": "Section"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "options": [
+        {
+            "value": "solid",
+            "label": "t:sections.rich_text.buttons_block_btn_style_option_solid_label"
+        },
+        {
+            "value": "outline",
+            "label": "t:sections.rich_text.buttons_block_btn_style_option_outline_label"
+        },
+        {
+            "value": "link",
+            "label": "t:sections.rich_text.buttons_block_btn_style_option_link_label"
+        }
+      ],
+      "label": "t:sections.rich_text.buttons_block_btn_style_label"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "unit": "px",
+      "label": "Top Spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50,
+      "unit": "px",
+      "label": "Bottom Spacing"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Team Neck Protection"
+    }
+  ]
+}
+{% endschema %}

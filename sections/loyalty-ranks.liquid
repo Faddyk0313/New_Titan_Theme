@@ -1,0 +1,1144 @@
+{%- comment -%}TBG custom Code{%- endcomment -%}
+{%- liquid
+  assign options = section.settings
+
+  assign heading = options.heading
+  assign heading_size = options.heading_size
+  assign subheading = options.subheading
+  assign subheading_size = options.subheading_size
+
+  assign rank_title_size = options.rank_title_size
+  assign rank_tagline_size = options.rank_tagline_size
+  assign benefit_text_size = options.benefit_text_size
+  assign footer_text_size = options.footer_text_size
+
+  assign container_size = options.container_size
+  assign round_level = options.round_level
+  assign add_desktop_side_paddings = options.add_desktop_side_paddings
+  assign add_mobile_side_paddings = options.add_mobile_side_paddings
+  assign section_spacing_top = options.section_spacing_top
+  assign section_spacing_bottom = options.section_spacing_bottom
+
+  assign color_scheme = settings.default_color_scheme
+  if options.color_scheme_variant == 'own'
+    assign color_scheme = options.color_scheme
+  endif
+
+  assign enable_content_slide_in = settings.enable_content_slide_in
+
+  assign show_background = options.show_background
+  assign color_container_background = false
+  if show_background == false and settings.default_color_scheme.settings.background != color_scheme.settings.background
+    assign color_container_background = true
+  endif
+-%}
+
+{%- comment -%}
+  TBG custom Code — the customer's current rank. When "Show current rank" is on
+  the section reads the metafield named in the settings so the subheading can
+  name it, and the matching card gets highlighted. Falls back to the manual
+  value so the section still reads correctly for guests and in the editor.
+{%- endcomment -%}
+{%- liquid
+  assign current_rank = ''
+
+  if options.show_current_rank
+    assign current_rank = options.current_rank_fallback
+
+    if customer
+      assign namespace = options.current_rank_namespace
+      assign key = options.current_rank_key
+      assign metafield_value = customer.metafields[namespace][key].value | default: '' | append: ''
+
+      if metafield_value != blank
+        assign current_rank = metafield_value
+      endif
+    endif
+  endif
+
+  assign current_rank = current_rank | strip_html | strip
+  assign current_rank_key = current_rank | downcase
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
+      --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+      --lrk-columns: 1;
+      --lrk-gap: {{ options.cards_gap_mobile }}px;
+      --lrk-header-gap: {{ options.header_gap }}px;
+      --lrk-content-gap: {{ options.content_gap }}px;
+      --lrk-slide-width: {{ options.slide_width_mobile }}%;
+      --lrk-card-bg: {{ options.card_background }};
+      --lrk-card-border: {{ options.card_border_color }};
+      --lrk-card-radius: {{ options.card_radius }}px;
+      --lrk-card-padding: {{ options.card_padding_mobile }}px;
+      --lrk-badge-ratio: {{ options.badge_ratio }};
+      --lrk-badge-bg: {{ options.badge_background }};
+      --lrk-title-color: {{ options.title_color }};
+      --lrk-tagline-color: {{ options.tagline_color }};
+      --lrk-subheading-color: {{ options.subheading_color }};
+      --lrk-benefit-bg: {{ options.benefit_background }};
+      --lrk-benefit-text: {{ options.benefit_text_color }};
+      --lrk-benefit-icon: {{ options.benefit_icon_color }};
+      --lrk-benefit-radius: {{ options.benefit_radius }}px;
+      --lrk-benefit-padding: {{ options.benefit_padding }}px;
+      --lrk-benefit-gap: {{ options.benefit_gap }}px;
+      --lrk-footer-bg: {{ options.footer_background }};
+      --lrk-footer-text: {{ options.footer_text_color }};
+      --lrk-footer-padding: {{ options.footer_padding }}px;
+      --lrk-accent: {{ options.accent_color }};
+    }
+
+    @media {% render 'media-queries', screen: 'md' %} {
+      .section-{{ section.id }} {
+        --lrk-columns: {{ options.columns_tablet }};
+        --lrk-gap: {{ options.cards_gap }}px;
+        --lrk-slide-width: {{ options.slide_width }}%;
+        --lrk-card-padding: {{ options.card_padding }}px;
+      }
+    }
+
+    @media {% render 'media-queries', screen: 'lg' %} {
+      .section-{{ section.id }} {
+        --lrk-columns: {{ options.columns_desktop }};
+      }
+    }
+
+    .section-{{ section.id }} .lrk {
+      display: flex;
+      flex-direction: column;
+      gap: var(--lrk-content-gap);
+    }
+
+    .section-{{ section.id }} .lrk__header {
+      display: flex;
+      flex-direction: column;
+      gap: var(--lrk-header-gap);
+      text-align: {{ options.header_alignment }};
+      align-items: {% if options.header_alignment == 'center' %}center{% elsif options.header_alignment == 'right' %}flex-end{% else %}flex-start{% endif %};
+    }
+
+    .section-{{ section.id }} .lrk__heading,
+    .section-{{ section.id }} .lrk__subheading {
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    .section-{{ section.id }} .lrk__heading p,
+    .section-{{ section.id }} .lrk__subheading p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .lrk__subheading {
+      color: var(--lrk-subheading-color);
+    }
+
+    {%- comment -%}
+      TBG custom Code — [rank] inherits the subheading color by default; the
+      "accent [rank]" toggle is what lifts it to the accent color.
+    {%- endcomment -%}
+    .section-{{ section.id }} .lrk__current {
+      color: {% if options.accent_current_rank %}var(--lrk-accent){% else %}inherit{% endif %};
+    }
+
+    /* --- Grid ------------------------------------------------------------ */
+    .section-{{ section.id }} .lrk__grid {
+      display: grid;
+      grid-template-columns: repeat(var(--lrk-columns), minmax(0, 1fr));
+      gap: var(--lrk-gap);
+      align-items: stretch;
+    }
+
+    /* --- Carousel -------------------------------------------------------- */
+    .section-{{ section.id }} .lrk__carousel {
+      position: relative;
+    }
+
+    .section-{{ section.id }} .lrk__container {
+      gap: var(--lrk-gap);
+      align-items: stretch;
+    }
+
+    .section-{{ section.id }} .lrk__slide {
+      flex: 0 0 var(--lrk-slide-width);
+      min-width: 0;
+      display: flex;
+    }
+
+    .section-{{ section.id }} .lrk__slide > * {
+      width: 100%;
+    }
+
+    /* --- Card ------------------------------------------------------------ */
+    .section-{{ section.id }} .lrk__card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--lrk-card-bg);
+      border: {{ options.card_border_thickness }}px solid var(--lrk-card-border);
+      border-radius: var(--lrk-card-radius);
+    }
+
+    {%- if options.highlight_current_rank -%}
+      .section-{{ section.id }} .lrk__card--current {
+        border-color: var(--lrk-accent);
+        box-shadow: 0 0 0 {{ options.card_border_thickness | plus: 1 }}px var(--lrk-accent);
+      }
+    {%- endif -%}
+
+    .section-{{ section.id }} .lrk__badge {
+      position: relative;
+      aspect-ratio: var(--lrk-badge-ratio);
+      background-color: var(--lrk-badge-bg);
+      overflow: hidden;
+    }
+
+    .section-{{ section.id }} .lrk__badge-image {
+      width: 100%;
+      height: 100%;
+      object-fit: {{ options.badge_fit }};
+      display: block;
+    }
+
+    .section-{{ section.id }} .lrk__body {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--lrk-benefit-gap);
+      padding: var(--lrk-card-padding);
+    }
+
+    .section-{{ section.id }} .lrk__head {
+      display: flex;
+      flex-direction: column;
+      gap: {{ options.title_gap }}px;
+    }
+
+    .section-{{ section.id }} .lrk__title {
+      margin: 0;
+      color: var(--lrk-title-color);
+      text-transform: uppercase;
+      line-height: {{ options.rank_title_line_height | divided_by: 100.00 }};
+    }
+
+    .section-{{ section.id }} .lrk__title p,
+    .section-{{ section.id }} .lrk__tagline p {
+      margin: 0;
+    }
+
+    .section-{{ section.id }} .lrk__tagline {
+      color: var(--lrk-tagline-color);
+    }
+
+    /* --- Benefits -------------------------------------------------------- */
+    .section-{{ section.id }} .lrk__benefits {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: {{ options.benefit_row_gap }}px;
+      /* Pushes the footer bar to the bottom so footers line up across cards
+         even when one rank lists fewer benefits than its neighbours. */
+      flex: 1 1 auto;
+    }
+
+    .section-{{ section.id }} .lrk__benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: {{ options.benefit_icon_gap }}px;
+      padding: var(--lrk-benefit-padding);
+      border-radius: var(--lrk-benefit-radius);
+      background-color: var(--lrk-benefit-bg);
+    }
+
+    .section-{{ section.id }} .lrk__benefit-icon {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: {{ options.benefit_icon_size }}px;
+      height: {{ options.benefit_icon_size }}px;
+      color: var(--lrk-benefit-icon);
+    }
+
+    .section-{{ section.id }} .lrk__benefit-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .section-{{ section.id }} .lrk__benefit-text {
+      min-width: 0;
+      color: var(--lrk-benefit-text);
+      line-height: {{ options.benefit_line_height | divided_by: 100.00 }};
+    }
+
+    /* --- Footer bar ------------------------------------------------------ */
+    .section-{{ section.id }} .lrk__footer {
+      margin-top: {{ options.footer_spacing }}px;
+      padding: var(--lrk-footer-padding);
+      background-color: var(--lrk-footer-bg);
+      color: var(--lrk-footer-text);
+      text-align: center;
+      text-transform: uppercase;
+      border-radius: {{ options.footer_radius }}px;
+      display: block;
+    }
+
+    .section-{{ section.id }} .lrk__footer--link {
+      text-decoration: none;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    .section-{{ section.id }} .lrk__footer--link:hover,
+    .section-{{ section.id }} .lrk__footer--link:focus-visible {
+      background-color: var(--lrk-accent);
+      color: var(--lrk-footer-bg);
+    }
+
+    /* --- Carousel arrows -------------------------------------------------- */
+    /* Anchored inside the carousel box rather than hanging off it, so the
+       buttons never spill past the section's side padding on narrow screens. */
+    .section-{{ section.id }} .lrk__btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 4;
+      width: {{ options.arrow_size }}px;
+      height: {{ options.arrow_size }}px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background-color: var(--lrk-footer-bg);
+      color: var(--lrk-footer-text);
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} .lrk__btn svg {
+      width: 40%;
+      height: 40%;
+    }
+
+    .section-{{ section.id }} .lrk__btn--prev {
+      inset-inline-start: 0;
+    }
+
+    .section-{{ section.id }} .lrk__btn--next {
+      inset-inline-end: 0;
+    }
+
+    /* --- Carousel dots ---------------------------------------------------- */
+    .section-{{ section.id }} .lrk__dots {
+      display: flex;
+      justify-content: center;
+      margin-inline: auto;
+      margin-block-start: {{ options.dots_spacing }}px;
+    }
+
+    .section-{{ section.id }} .lrk__dots.is-hidden,
+    .section-{{ section.id }} .lrk__dots .solid-dots-carousel__solid-dot.is-hidden {
+      display: none;
+    }
+
+    .section-{{ section.id }} .lrk__dots .solid-dots-carousel__container {
+      display: flex;
+      align-items: center;
+      gap: {{ options.dots_gap }}px;
+    }
+
+    .section-{{ section.id }} .lrk__dots .solid-dots-carousel__solid-dot {
+      cursor: pointer;
+    }
+
+    .section-{{ section.id }} .lrk__dots .solid-dots-carousel__solid-dot-circle {
+      width: {{ options.dots_size }}px;
+      height: {{ options.dots_size }}px;
+      border-radius: 50%;
+      background-color: {{ options.dots_color }};
+      transition: background-color 0.2s ease;
+    }
+
+    .section-{{ section.id }} .lrk__dots .solid-dots-carousel__solid-dot.is-primary .solid-dots-carousel__solid-dot-circle {
+      background-color: var(--lrk-accent);
+    }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section-{{ section.id }} {% if round_level != 'default' %}round-level-{{ round_level }}{% endif %} section color-{{ color_scheme }} spacing-block {% if add_mobile_side_paddings %}spacing-inline-mobile{% endif %} {% if add_desktop_side_paddings %}spacing-inline-desktop{% endif %} {% if color_container_background == false %}section-background{% endif %}'>
+  <div class='container container--{{ container_size }} {% if color_container_background %}container-background{% endif %}'>
+    <div class='lrk'>
+      {%- if heading != blank or subheading != blank -%}
+        <div class='lrk__header'>
+          {%- if heading != blank -%}
+            <div
+              class='lrk__heading {{ heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 1;'
+              role='heading'
+              aria-level='2'
+            >
+              {{ heading }}
+            </div>
+          {%- endif -%}
+
+          {%- if subheading != blank -%}
+            {%- comment -%}
+              TBG custom Code — `[rank]` in the subheading is swapped for the
+              customer's current rank, so the copy stays editable while the
+              value stays dynamic.
+            {%- endcomment -%}
+            {%- capture rank_markup -%}<span class='lrk__current'>{{ current_rank }}</span>{%- endcapture -%}
+            {%- assign subheading_rendered = subheading | replace: '[rank]', rank_markup -%}
+
+            <div
+              class='lrk__subheading {{ subheading_size }} body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              style='--gsc-animation-order: 2;'
+            >
+              {{ subheading_rendered }}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if section.blocks.size > 0 -%}
+        {%- if options.mobile_layout == 'carousel' -%}
+          {%- comment -%}
+            TBG custom Code — native carousel-component on small screens, plain
+            grid from the tablet breakpoint up. Two markup branches would
+            duplicate the cards, so the carousel wrapper is only emitted when
+            the merchant asks for it, and CSS turns the viewport back into a
+            grid on desktop is avoided by keeping the carousel for all widths
+            with the desktop card width controlling how many fit.
+          {%- endcomment -%}
+          <carousel-component
+            id='lrk-carousel-{{ section.id }}'
+            class='carousel lrk__carousel'
+            data-section-id='{{ section.id }}'
+            data-contain-scroll='trimSnaps'
+            data-draggable
+            data-align='start'
+            data-axis='x'
+            data-slides-to-scroll='1'
+          >
+            {%- if options.show_navigation_arrows -%}
+              <carousel-button
+                class='carousel__btn lrk__btn lrk__btn--prev'
+                data-direction='prev'
+                tabindex='0'
+                aria-label='{{ 'accessibility.prev_slide' | t }}'
+              >
+                {%- render 'icon', icon_name: 'chevron', class: 'x-flip', stroke_width: 1 -%}
+              </carousel-button>
+            {%- endif -%}
+
+            <div class='carousel__viewport carousel__viewport--overflow embla' data-carousel-viewport>
+              <div class='carousel__container lrk__container' data-carousel-container>
+                {%- for block in section.blocks -%}
+                  <div
+                    class='carousel__slide lrk__slide {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{ forloop.index }};'
+                    {% endif %}
+                    block-id='{{ block.id }}'
+                  >
+                    {%- render 'loyalty-rank-card',
+                      block: block,
+                      card_index: forloop.index,
+                      rank_title_size: rank_title_size,
+                      rank_tagline_size: rank_tagline_size,
+                      benefit_text_size: benefit_text_size,
+                      footer_text_size: footer_text_size,
+                      current_rank: current_rank_key
+                    -%}
+                  </div>
+                {%- endfor -%}
+              </div>
+            </div>
+
+            {%- if options.show_navigation_arrows -%}
+              <carousel-button
+                class='carousel__btn lrk__btn lrk__btn--next'
+                data-direction='next'
+                tabindex='0'
+                aria-label='{{ 'accessibility.next_slide' | t }}'
+              >
+                {%- render 'icon', icon_name: 'chevron', stroke_width: 1 -%}
+              </carousel-button>
+            {%- endif -%}
+
+            {%- if options.show_pagination_dots and section.blocks.size > 1 -%}
+              <carousel-dots
+                class='solid-dots-carousel lrk__dots is-hidden'
+                data-lrk-dots
+                data-contain-scroll='keepSnaps'
+                data-align='center'
+                data-axis='x'
+              >
+                <div class='solid-dots-carousel__viewport embla' data-carousel-viewport>
+                  <div class='solid-dots-carousel__container' data-carousel-container>
+                    {%- for block in section.blocks -%}
+                      <div
+                        class='solid-dots-carousel__solid-dot {% if forloop.first %}is-primary{% endif %}'
+                        tabindex='0'
+                        data-carousel-dot
+                        data-dot-index='{{ forloop.index0 }}'
+                      >
+                        <div class='solid-dots-carousel__solid-dot-circle'></div>
+                      </div>
+                    {%- endfor -%}
+                  </div>
+                </div>
+              </carousel-dots>
+            {%- endif -%}
+          </carousel-component>
+        {%- else -%}
+          <div class='lrk__grid'>
+            {%- for block in section.blocks -%}
+              <div
+                class='lrk__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                {% if enable_content_slide_in %}
+                  style='--gsc-animation-order: {{ forloop.index }};'
+                {% endif %}
+                block-id='{{ block.id }}'
+              >
+                {%- render 'loyalty-rank-card',
+                  block: block,
+                  card_index: forloop.index,
+                  rank_title_size: rank_title_size,
+                  rank_tagline_size: rank_tagline_size,
+                  benefit_text_size: benefit_text_size,
+                  footer_text_size: footer_text_size,
+                  current_rank: current_rank_key
+                -%}
+              </div>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{%- comment -%}
+  TBG custom Code — dots only show once the cards actually overflow. Reuses the
+  signal the next arrow already computes (embla.canScrollNext), same as the
+  feature card carousel, so there is no separate width maths.
+{%- endcomment -%}
+{%- if options.mobile_layout == 'carousel' and options.show_pagination_dots and section.blocks.size > 1 -%}
+  <script>
+    (() => {
+      const root = document.querySelector('.section-{{ section.id }}');
+
+      if (!root) return;
+
+      const dots = root.querySelector('[data-lrk-dots]');
+      const carousel = root.querySelector('carousel-component');
+
+      if (!dots || !carousel) return;
+
+      const syncDots = () => {
+        const embla = carousel.embla;
+
+        if (!embla) return;
+
+        const snapCount = embla.scrollSnapList().length;
+        const overflows = embla.canScrollNext() || embla.canScrollPrev();
+
+        dots.classList.toggle('is-hidden', !overflows);
+        dots.querySelectorAll('[data-carousel-dot]').forEach((dot, index) => {
+          dot.classList.toggle('is-hidden', index >= snapCount);
+        });
+      };
+
+      customElements.whenDefined('carousel-component').then(() => {
+        let attempts = 0;
+
+        const bind = () => {
+          if (!carousel.embla) {
+            if (attempts++ < 60) requestAnimationFrame(bind);
+            return;
+          }
+
+          syncDots();
+          carousel.embla.on('reInit', syncDots);
+          carousel.embla.on('resize', syncDots);
+          carousel.embla.on('select', syncDots);
+        };
+
+        bind();
+      });
+
+      document.fonts?.ready.then(syncDots);
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Loyalty ranks",
+  "tag": "section",
+  "class": "shopify-section-loyalty-ranks",
+  "settings": [
+    { "type": "header", "content": "Header" },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading",
+      "default": "<p>Titan alliance ranks</p>"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "h0", "label": "H0" },
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" }
+      ],
+      "default": "h1"
+    },
+    {
+      "type": "richtext",
+      "id": "subheading",
+      "label": "Subheading",
+      "info": "Use [rank] to insert the customer's current rank.",
+      "default": "<p>You are currently ranked as [rank].</p>"
+    },
+    {
+      "type": "select",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" }
+      ],
+      "default": "body2"
+    },
+    {
+      "type": "color",
+      "id": "subheading_color",
+      "label": "Subheading color",
+      "default": "#4a545c"
+    },
+    {
+      "type": "checkbox",
+      "id": "accent_current_rank",
+      "label": "Use accent color for [rank]",
+      "info": "Off: [rank] matches the subheading color.",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "header_alignment",
+      "label": "Header alignment",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "range",
+      "id": "header_gap",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Gap between header lines",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "content_gap",
+      "min": 0, "max": 100, "step": 4, "unit": "px",
+      "label": "Gap between header and cards",
+      "default": 48
+    },
+
+    { "type": "header", "content": "Current rank" },
+    {
+      "type": "checkbox",
+      "id": "show_current_rank",
+      "label": "Show current rank",
+      "info": "Reads the customer metafield below and fills [rank] in the subheading.",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "current_rank_namespace",
+      "label": "Metafield namespace",
+      "default": "loyalty",
+      "visible_if": "{{ section.settings.show_current_rank }}"
+    },
+    {
+      "type": "text",
+      "id": "current_rank_key",
+      "label": "Metafield key",
+      "default": "rank",
+      "visible_if": "{{ section.settings.show_current_rank }}"
+    },
+    {
+      "type": "text",
+      "id": "current_rank_fallback",
+      "label": "Fallback rank",
+      "info": "Used for guests and when the metafield is empty.",
+      "default": "Delta",
+      "visible_if": "{{ section.settings.show_current_rank }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "highlight_current_rank",
+      "label": "Highlight the matching card",
+      "default": false,
+      "visible_if": "{{ section.settings.show_current_rank }}"
+    },
+
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "label": "Layout",
+      "options": [
+        { "value": "grid", "label": "Grid" },
+        { "value": "carousel", "label": "Carousel" }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1, "max": 6, "step": 1,
+      "label": "Columns on desktop",
+      "default": 4,
+      "visible_if": "{{ section.settings.mobile_layout == 'grid' }}"
+    },
+    {
+      "type": "range",
+      "id": "columns_tablet",
+      "min": 1, "max": 4, "step": 1,
+      "label": "Columns on tablet",
+      "default": 2,
+      "visible_if": "{{ section.settings.mobile_layout == 'grid' }}"
+    },
+    {
+      "type": "range",
+      "id": "cards_gap",
+      "min": 0, "max": 64, "step": 2, "unit": "px",
+      "label": "Gap between cards (desktop)",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "cards_gap_mobile",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Gap between cards (mobile)",
+      "default": 16
+    },
+
+    { "type": "header", "content": "Carousel" },
+    {
+      "type": "range",
+      "id": "slide_width",
+      "min": 15, "max": 100, "step": 1, "unit": "%",
+      "label": "Card width (desktop)",
+      "default": 25,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "slide_width_mobile",
+      "min": 40, "max": 100, "step": 1, "unit": "%",
+      "label": "Card width (mobile)",
+      "default": 80,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_navigation_arrows",
+      "label": "Show navigation arrows",
+      "default": true,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "arrow_size",
+      "min": 28, "max": 72, "step": 2, "unit": "px",
+      "label": "Arrow size",
+      "default": 44,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_pagination_dots",
+      "label": "Show pagination dots",
+      "default": true,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "dots_size",
+      "min": 4, "max": 24, "step": 1, "unit": "px",
+      "label": "Dot size",
+      "default": 8,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "dots_gap",
+      "min": 2, "max": 32, "step": 1, "unit": "px",
+      "label": "Gap between dots",
+      "default": 10,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "range",
+      "id": "dots_spacing",
+      "min": 0, "max": 80, "step": 2, "unit": "px",
+      "label": "Space above dots",
+      "default": 24,
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+    {
+      "type": "color",
+      "id": "dots_color",
+      "label": "Dot color",
+      "default": "#4a545c",
+      "visible_if": "{{ section.settings.mobile_layout == 'carousel' }}"
+    },
+
+    { "type": "header", "content": "Card" },
+    { "type": "color", "id": "card_background", "label": "Card background", "default": "#ffffff" },
+    { "type": "color", "id": "card_border_color", "label": "Card border color", "default": "#e5e5e5" },
+    {
+      "type": "range",
+      "id": "card_border_thickness",
+      "min": 0, "max": 6, "step": 1, "unit": "px",
+      "label": "Card border thickness",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Card corner radius",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "card_padding",
+      "min": 0, "max": 60, "step": 2, "unit": "px",
+      "label": "Card padding (desktop)",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "card_padding_mobile",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Card padding (mobile)",
+      "default": 20
+    },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#d4ff32" },
+
+    { "type": "header", "content": "Badge image" },
+    {
+      "type": "select",
+      "id": "badge_ratio",
+      "label": "Badge aspect ratio",
+      "options": [
+        { "value": "1/1", "label": "Square (1:1)" },
+        { "value": "4/3", "label": "Landscape (4:3)" },
+        { "value": "3/2", "label": "Landscape (3:2)" },
+        { "value": "16/9", "label": "Wide (16:9)" },
+        { "value": "3/4", "label": "Portrait (3:4)" }
+      ],
+      "default": "1/1"
+    },
+    {
+      "type": "select",
+      "id": "badge_fit",
+      "label": "Badge image fit",
+      "options": [
+        { "value": "cover", "label": "Cover" },
+        { "value": "contain", "label": "Contain" }
+      ],
+      "default": "cover"
+    },
+    { "type": "color", "id": "badge_background", "label": "Badge background", "default": "#1c242b" },
+
+    { "type": "header", "content": "Rank name" },
+    {
+      "type": "select",
+      "id": "rank_title_size",
+      "label": "Rank name size",
+      "options": [
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h5", "label": "H5" },
+        { "value": "h6", "label": "H6" }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "range",
+      "id": "rank_title_line_height",
+      "min": 80, "max": 160, "step": 5, "unit": "%",
+      "label": "Rank name line height",
+      "default": 100
+    },
+    { "type": "color", "id": "title_color", "label": "Rank name color", "default": "#12181d" },
+    {
+      "type": "select",
+      "id": "rank_tagline_size",
+      "label": "Tagline size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" }
+      ],
+      "default": "body3"
+    },
+    { "type": "color", "id": "tagline_color", "label": "Tagline color", "default": "#4a545c" },
+    {
+      "type": "range",
+      "id": "title_gap",
+      "min": 0, "max": 24, "step": 1, "unit": "px",
+      "label": "Gap between rank name and tagline",
+      "default": 4
+    },
+
+    { "type": "header", "content": "Benefits" },
+    {
+      "type": "select",
+      "id": "benefit_text_size",
+      "label": "Benefit text size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" }
+      ],
+      "default": "body4"
+    },
+    {
+      "type": "range",
+      "id": "benefit_line_height",
+      "min": 90, "max": 180, "step": 5, "unit": "%",
+      "label": "Benefit line height",
+      "default": 130
+    },
+    { "type": "color", "id": "benefit_text_color", "label": "Benefit text color", "default": "#12181d" },
+    { "type": "color", "id": "benefit_background", "label": "Benefit row background", "default": "#dfe3e8" },
+    { "type": "color", "id": "benefit_icon_color", "label": "Benefit icon color", "default": "#12181d" },
+    {
+      "type": "range",
+      "id": "benefit_icon_size",
+      "min": 10, "max": 32, "step": 1, "unit": "px",
+      "label": "Benefit icon size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "benefit_icon_gap",
+      "min": 0, "max": 24, "step": 1, "unit": "px",
+      "label": "Gap after benefit icon",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "benefit_padding",
+      "min": 0, "max": 32, "step": 1, "unit": "px",
+      "label": "Benefit row padding",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "benefit_radius",
+      "min": 0, "max": 24, "step": 1, "unit": "px",
+      "label": "Benefit row corner radius",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "benefit_row_gap",
+      "min": 0, "max": 24, "step": 1, "unit": "px",
+      "label": "Gap between benefit rows",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "benefit_gap",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Gap between card sections",
+      "default": 20
+    },
+
+    { "type": "header", "content": "Footer bar" },
+    {
+      "type": "select",
+      "id": "footer_text_size",
+      "label": "Footer text size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" }
+      ],
+      "default": "body3"
+    },
+    { "type": "color", "id": "footer_background", "label": "Footer background", "default": "#12181d" },
+    { "type": "color", "id": "footer_text_color", "label": "Footer text color", "default": "#ffffff" },
+    {
+      "type": "range",
+      "id": "footer_padding",
+      "min": 4, "max": 40, "step": 2, "unit": "px",
+      "label": "Footer padding",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "footer_radius",
+      "min": 0, "max": 40, "step": 2, "unit": "px",
+      "label": "Footer corner radius",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "footer_spacing",
+      "min": 0, "max": 48, "step": 2, "unit": "px",
+      "label": "Space above footer",
+      "default": 12
+    },
+
+    { "type": "header", "content": "Section" },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "xsmall", "label": "Extra small" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-screen", "label": "Full screen" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "select",
+      "id": "round_level",
+      "label": "Round level",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "none", "label": "None" },
+        { "value": "small", "label": "Small" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "large", "label": "Large" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme_variant",
+      "label": "Color scheme variant",
+      "options": [
+        { "value": "default", "label": "Use default color scheme" },
+        { "value": "own", "label": "Choose section color scheme" }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "1",
+      "visible_if": "{{ section.settings.color_scheme_variant == 'own' }}"
+    },
+    { "type": "checkbox", "id": "show_background", "label": "Show section background", "default": true },
+    { "type": "checkbox", "id": "add_desktop_side_paddings", "label": "Add desktop side paddings", "default": true },
+    { "type": "checkbox", "id": "add_mobile_side_paddings", "label": "Add mobile side paddings", "default": true },
+    {
+      "type": "select",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    },
+    {
+      "type": "select",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xxxs", "label": "XXXS" },
+        { "value": "xxs", "label": "XXS" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" },
+        { "value": "l", "label": "L" },
+        { "value": "xl", "label": "XL" },
+        { "value": "xxl", "label": "XXL" },
+        { "value": "xxxl", "label": "XXXL" }
+      ],
+      "default": "l"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "rank",
+      "name": "Rank",
+      "settings": [
+        { "type": "checkbox", "id": "show_badge", "label": "Show badge image", "default": true },
+        { "type": "image_picker", "id": "badge_image", "label": "Badge image" },
+        { "type": "richtext", "id": "rank_title", "label": "Rank name", "default": "<p>Delta</p>" },
+        { "type": "richtext", "id": "rank_tagline", "label": "Tagline", "default": "<p>Start your journey</p>" },
+        {
+          "type": "richtext",
+          "id": "benefits",
+          "label": "Benefits",
+          "info": "One benefit per list item.",
+          "default": "<ul><li>10% One-Time Discount</li><li>Free Shipping</li><li>1st Access to Exclusive Drops</li><li>Exclusive Gifts - Eligible</li><li>Vote on New Drops - Eligible</li></ul>"
+        },
+        { "type": "text", "id": "footer_text", "label": "Footer text", "default": "Enlisted" },
+        { "type": "url", "id": "footer_link", "label": "Footer link", "info": "Optional. Turns the footer bar into a link." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Loyalty ranks",
+      "blocks": [
+        { "type": "rank" },
+        { "type": "rank" },
+        { "type": "rank" },
+        { "type": "rank" }
+      ]
+    }
+  ]
+}
+{% endschema %}

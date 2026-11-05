@@ -1,0 +1,1196 @@
+{%- liquid
+  assign options = section.settings
+  assign color_scheme = options.color_scheme
+  assign container_size = options.container_size
+  assign enable_content_slide_in = settings.enable_content_slide_in
+-%}
+
+{% capture css %}
+  {% style %}
+    .section-{{ section.id }} {
+      --gsc-section-spacing-top: {{ options.section_spacing_top }}px;
+      --gsc-section-spacing-bottom: {{ options.section_spacing_bottom }}px;
+      --jr-accent: {{ options.accent_color }};
+      --jr-star-on: {{ options.star_color }};
+      --jr-star-off: {{ options.star_empty_color }};
+      --jr-track: {{ options.bar_track_color }};
+      --jr-bar-height: {{ options.bar_height_mobile }}px;
+      --jr-star-size: {{ options.summary_star_size_mobile }}px;
+      --jr-review-star-size: {{ options.review_star_size_mobile }}px;
+      --jr-divider: {{ options.divider_color }};
+      --jr-gap: {{ options.column_gap_mobile }}px;
+      --jr-summary-width: {{ options.summary_column_width }}fr;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} {
+        --jr-bar-height: {{ options.bar_height }}px;
+        --jr-star-size: {{ options.summary_star_size }}px;
+        --jr-review-star-size: {{ options.review_star_size }}px;
+        --jr-gap: {{ options.column_gap }}px;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-reviews {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--jr-gap);
+    }
+
+    .section-{{ section.id }} .judgeme-summary,
+    .section-{{ section.id }} .judgeme-list-wrap {
+      min-width: 0;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-reviews {
+        grid-template-columns: minmax(0, var(--jr-summary-width)) minmax(0, {{ options.list_column_width }}fr);
+        align-items: start;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-reviews__heading {
+      margin: 0;
+      {% if options.heading_color != blank %}color: {{ options.heading_color }};{% endif %}
+    }
+
+    .section-{{ section.id }} .judgeme-reviews__subheading {
+      margin: 0.4rem 0 0;
+      {% if options.subheading_color != blank %}color: {{ options.subheading_color }};{% endif %}
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-reviews__subheading {
+        margin-block-start: {{ options.subheading_spacing }}px;
+      }
+    }
+
+    /* ---------- summary column ---------- */
+
+    .section-{{ section.id }} .judgeme-summary__body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: {{ options.badge_gap_mobile }}px;
+      margin-block-start: {{ options.bars_spacing_mobile }}px;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__body {
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+        gap: 0;
+        margin-block-start: {{ options.bars_spacing }}px;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__bars {
+      display: flex;
+      flex-direction: column;
+      gap: {{ options.bar_gap_mobile }}px;
+      min-width: 0;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__bars {
+        gap: {{ options.bar_gap }}px;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__row {
+      display: flex;
+      align-items: center;
+      gap: {{ options.bar_row_gap_mobile }}px;
+      min-width: 0;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__row {
+        gap: {{ options.bar_row_gap }}px;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__row-stars {
+      display: inline-flex;
+      gap: 0.2rem;
+      flex: 0 0 auto;
+    }
+
+    .section-{{ section.id }} .judgeme-summary__row-stars svg {
+      width: var(--jr-star-size);
+      height: var(--jr-star-size);
+      display: block;
+    }
+
+    .section-{{ section.id }} .judgeme-star--on { fill: var(--jr-star-on); }
+    .section-{{ section.id }} .judgeme-star--off { fill: var(--jr-star-off); }
+
+    .section-{{ section.id }} .judgeme-summary__track {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: {{ options.bar_width_mobile }}px;
+      min-width: 0;
+      height: var(--jr-bar-height);
+      border-radius: calc(var(--jr-bar-height) / 2);
+      background-color: var(--jr-track);
+      overflow: hidden;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__track {
+        flex: 0 0 auto;
+        width: {{ options.bar_width }}px;
+        max-width: 100%;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__fill {
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: 0;
+      width: 0;
+      border-radius: calc(var(--jr-bar-height) / 2);
+      background-color: var(--jr-accent);
+      transition: width 0.6s ease;
+    }
+
+    .section-{{ section.id }} .judgeme-summary__badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      margin-block-start: 0;
+      min-width: 0;
+      max-width: {{ options.badge_width_mobile }}px;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__badge {
+        margin-block-start: {{ options.badge_spacing }}px;
+        align-items: {{ options.badge_alignment }};
+        max-width: none;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__badge img,
+    .section-{{ section.id }} .judgeme-summary__badge svg {
+      width: {{ options.badge_width_mobile }}px;
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    @media screen and (min-width: 1024px) {
+      .section-{{ section.id }} .judgeme-summary__badge img,
+      .section-{{ section.id }} .judgeme-summary__badge svg {
+        width: {{ options.badge_width }}px;
+      }
+    }
+
+    .section-{{ section.id }} .judgeme-summary__badge-caption {
+      text-decoration: underline;
+      text-underline-offset: 0.3rem;
+      {% if options.badge_caption_color != blank %}color: {{ options.badge_caption_color }};{% endif %}
+    }
+
+    /* ---------- review list ---------- */
+
+    .section-{{ section.id }} .judgeme-list {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .section-{{ section.id }} .judgeme-list.is-fading { opacity: 0; }
+
+    .section-{{ section.id }} .judgeme-review {
+      display: flex;
+      flex-direction: column;
+      gap: {{ options.review_inner_gap }}px;
+      padding-block: {{ options.review_padding }}px;
+      border-block-end: 1px solid var(--jr-divider);
+    }
+
+    .section-{{ section.id }} .judgeme-review:first-child { padding-block-start: 0; }
+
+    .section-{{ section.id }} .judgeme-review__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .section-{{ section.id }} .judgeme-review__top-start {
+      display: flex;
+      align-items: center;
+      gap: {{ options.badge_inline_gap }}px;
+    }
+
+    .section-{{ section.id }} .judgeme-review__stars {
+      display: inline-flex;
+      gap: 0.2rem;
+      flex-shrink: 0;
+    }
+
+    .section-{{ section.id }} .judgeme-review__stars svg {
+      width: var(--jr-review-star-size);
+      height: var(--jr-review-star-size);
+      display: block;
+    }
+
+    .section-{{ section.id }} .judgeme-review__verified {
+      background-color: var(--jr-accent);
+      color: {{ options.verified_text_color }};
+      padding: {{ options.verified_padding_block }}px {{ options.verified_padding_inline }}px;
+      border-radius: {{ options.verified_radius }}px;
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .section-{{ section.id }} .judgeme-review__date {
+      {% if options.date_color != blank %}color: {{ options.date_color }};{% endif %}
+      flex-shrink: 0;
+    }
+
+    .section-{{ section.id }} .judgeme-review__title {
+      font-weight: 700;
+      margin: 0;
+      {% if options.review_title_color != blank %}color: {{ options.review_title_color }};{% endif %}
+    }
+
+    .section-{{ section.id }} .judgeme-review__body {
+      margin: 0;
+      {% if options.review_body_color != blank %}color: {{ options.review_body_color }};{% endif %}
+    }
+
+    .section-{{ section.id }} .judgeme-review__body-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: {{ options.body_line_clamp }};
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .section-{{ section.id }} .judgeme-review__more {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 0.2rem;
+      align-self: flex-start;
+    }
+
+    .section-{{ section.id }} .judgeme-review__more:hover { opacity: 0.7; }
+
+    .section-{{ section.id }} .judgeme-review__author {
+      margin: 0;
+      font-weight: 700;
+      {% if options.author_color != blank %}color: {{ options.author_color }};{% endif %}
+    }
+
+    /* ---------- pagination ---------- */
+
+    .section-{{ section.id }} .judgeme-pagination {
+      margin-block-start: {{ options.pagination_spacing }}px;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__list {
+      align-items: center;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: {{ options.pagination_arrow_size }}px;
+      background: none;
+      border: none;
+      font: inherit;
+      line-height: 1;
+      color: inherit;
+      cursor: pointer;
+      padding: 0.4rem;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__item.active,
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__item.active:hover {
+      color: var(--jr-accent);
+      background: none;
+      font-weight: 700;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__item:hover { opacity: 0.7; }
+
+    .section-{{ section.id }} .judgeme-pagination .classic-pagination__item[disabled] {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .judgeme-pagination__arrow {
+      padding-inline: {{ options.pagination_arrow_gap }}px;
+      font-size: 0;
+      line-height: 0;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .judgeme-pagination__icon {
+      width: {{ options.pagination_arrow_size }}px;
+      height: {{ options.pagination_arrow_size }}px;
+      display: block;
+      flex: 0 0 auto;
+    }
+
+    .section-{{ section.id }} .judgeme-pagination .judgeme-pagination__icon title {
+      display: none;
+    }
+
+    .section-{{ section.id }} .judgeme-reviews__state {
+      padding-block: 2.4rem;
+      {% if options.review_body_color != blank %}color: {{ options.review_body_color }};{% endif %}
+    }
+
+    .section-{{ section.id }} .judgeme-reviews__state[hidden] { display: none; }
+  {% endstyle %}
+{% endcapture %}
+
+{% render 'inline-css-minifier', css: css %}
+
+<div class='section section-{{ section.id }} color-{{ color_scheme }} spacing-block'>
+  <div class='container container--{{ container_size }} container-background'>
+    <div
+      class='judgeme-reviews {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+      data-judgeme-reviews
+      data-collection-handle='{{ options.collection_handle }}'
+      data-per-page-desktop='{{ options.per_page }}'
+      data-per-page-mobile='{{ options.per_page_mobile }}'
+      {% if enable_content_slide_in %}
+        style='--gsc-animation-order: 1;'
+      {% endif %}
+    >
+      <div class='judgeme-summary'>
+        {%- if options.heading != blank -%}
+          <{{ options.heading_tag }} class='judgeme-reviews__heading {{ options.heading_size }}'>
+            {{- options.heading -}}
+          </{{ options.heading_tag }}>
+        {%- endif -%}
+
+        <p
+          class='judgeme-reviews__subheading {{ options.subheading_size }}'
+          data-judgeme-subheading
+          data-template='{{ options.subheading | escape }}'
+        >
+          {{- options.subheading | replace: '[rating]', '—' | replace: '[count]', '—' -}}
+        </p>
+
+        <div class='judgeme-summary__body'>
+          <div class='judgeme-summary__bars' data-judgeme-bars>
+            {%- for i in (1..5) -%}
+              {%- assign stars_filled = 6 | minus: forloop.index -%}
+              <div class='judgeme-summary__row' data-judgeme-row='{{ stars_filled }}'>
+                <span class='judgeme-summary__row-stars' aria-hidden='true'>
+                  {%- for s in (1..5) -%}
+                    <svg viewBox='0 0 18 17' xmlns='http://www.w3.org/2000/svg' focusable='false'>
+                      <path
+                        class='{% if forloop.index <= stars_filled %}judgeme-star--on{% else %}judgeme-star--off{% endif %}'
+                        d='M9 0L11.3276 5.79629L17.5595 6.21885L12.7662 10.2237L14.2901 16.2812L9 12.96L3.70993 16.2812L5.23382 10.2237L0.440492 6.21885L6.67237 5.79629L9 0Z'
+                      ></path>
+                    </svg>
+                  {%- endfor -%}
+                </span>
+                <span class='judgeme-summary__track'>
+                  <span class='judgeme-summary__fill' data-judgeme-fill></span>
+                </span>
+              </div>
+            {%- endfor -%}
+          </div>
+
+          {%- if options.badge_image != blank or options.badge_caption != blank -%}
+            <div class='judgeme-summary__badge'>
+              {%- if options.badge_image != blank -%}
+                <img {% render 'image-attributes', image: options.badge_image, class: 'judgeme-summary__badge-image' %}>
+              {%- endif -%}
+              {%- if options.badge_caption != blank -%}
+                <span class='judgeme-summary__badge-caption {{ options.badge_caption_size }}'>
+                  {{- options.badge_caption -}}
+                </span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+
+      <div class='judgeme-list-wrap'>
+        <div class='judgeme-list' data-judgeme-list></div>
+
+        <p class='judgeme-reviews__state {{ options.review_body_size }}' data-judgeme-state>
+          {{- options.loading_text -}}
+        </p>
+
+        <nav class='classic-pagination judgeme-pagination' data-judgeme-pagination aria-label='{{ 'accessibility.pagination' | t | default: 'Pagination' }}'>
+          <ul class='classic-pagination__list' data-judgeme-pagination-list></ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+{%- capture chevron_next -%}
+  {% render 'icon', icon_name: 'chevron', class: 'judgeme-pagination__icon' %}
+{%- endcapture -%}
+
+{%- capture chevron_prev -%}
+  {% render 'icon', icon_name: 'chevron', class: 'judgeme-pagination__icon x-flip' %}
+{%- endcapture -%}
+
+<script>
+  (() => {
+    const root = document.querySelector('.section-{{ section.id }} [data-judgeme-reviews]');
+    if (!root) return;
+
+    const ENDPOINT = 'https://hocky-name-generator-seven.vercel.app/api/reviewsByCollection';
+    const listEl = root.querySelector('[data-judgeme-list]');
+    const stateEl = root.querySelector('[data-judgeme-state]');
+    const pagListEl = root.querySelector('[data-judgeme-pagination-list]');
+    const subheadingEl = root.querySelector('[data-judgeme-subheading]');
+    const handle = root.dataset.collectionHandle;
+
+    const CHEVRON_PREV = {{ chevron_prev | strip_newlines | json }};
+    const CHEVRON_NEXT = {{ chevron_next | strip_newlines | json }};
+    const EMPTY_TEXT = {{ options.empty_text | json }};
+    const ERROR_TEXT = {{ options.error_text | json }};
+    const READ_MORE = {{ options.read_more_text | json }};
+    const READ_LESS = {{ options.read_less_text | json }};
+    const AUTHOR_PREFIX = {{ options.author_prefix | json }};
+    const VERIFIED_LABEL = {{ options.verified_label | json }};
+    const SHOW_VERIFIED = {{ options.show_verified_badge | json }};
+    const SHOW_DATE = {{ options.show_date | json }};
+    const ABBREVIATE = {{ options.abbreviate_last_name | json }};
+    const CLAMP = {{ options.body_line_clamp }};
+    const MAX_BUTTONS = {{ options.max_page_buttons }};
+    const SCROLL_OFFSET = {{ options.scroll_offset }};
+
+    const STAR_PATH =
+      'M9 0L11.3276 5.79629L17.5595 6.21885L12.7662 10.2237L14.2901 16.2812L9 12.96L3.70993 16.2812L5.23382 10.2237L0.440492 6.21885L6.67237 5.79629L9 0Z';
+
+    let reviews = [];
+    let page = 1;
+    let isInitial = true;
+    let lastWidth = window.innerWidth;
+    let rafId = null;
+
+    const perPage = () =>
+      window.matchMedia('(min-width: 1024px)').matches
+        ? parseInt(root.dataset.perPageDesktop, 10)
+        : parseInt(root.dataset.perPageMobile, 10);
+
+    const escapeHtml = (str) =>
+      String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const ratingOf = (r) => {
+      const n = parseInt(r && r.rating, 10);
+      return Number.isFinite(n) ? Math.min(5, Math.max(0, n)) : 0;
+    };
+
+    const isVerified = (r) => String((r && r.verified) || '').toLowerCase().includes('verified');
+
+    const reviewerName = (r) => {
+      const rev = r && r.reviewer;
+      let name = '';
+      if (rev && typeof rev === 'object') {
+        name = rev.name || [rev.first_name, rev.last_name].filter(Boolean).join(' ');
+      } else if (typeof rev === 'string') {
+        name = rev;
+      }
+      name = (name || '').trim();
+      if (!name) return 'Anonymous';
+      if (!ABBREVIATE) return name;
+      const parts = name.split(/\s+/);
+      return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0]}.` : parts[0];
+    };
+
+    const formatDate = (iso) => {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+    };
+
+    const starsMarkup = (rating) => {
+      let html = '';
+      for (let i = 1; i <= 5; i++) {
+        html +=
+          `<svg viewBox="0 0 18 17" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">` +
+          `<path class="${i <= rating ? 'judgeme-star--on' : 'judgeme-star--off'}" d="${STAR_PATH}"></path></svg>`;
+      }
+      return html;
+    };
+
+    const setState = (text) => {
+      if (!stateEl) return;
+      stateEl.textContent = text || '';
+      stateEl.hidden = !text;
+    };
+
+    function renderSummary() {
+      const total = reviews.length;
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let sum = 0;
+
+      reviews.forEach((r) => {
+        const rating = ratingOf(r);
+        if (counts[rating] !== undefined) counts[rating] += 1;
+        sum += rating;
+      });
+
+      const average = total ? sum / total : 0;
+
+      if (subheadingEl) {
+        const template = subheadingEl.dataset.template || '';
+        subheadingEl.textContent = template
+          .replace(/\[rating\]/g, total ? average.toFixed(1) : '0')
+          .replace(/\[count\]/g, String(total));
+      }
+
+      root.querySelectorAll('[data-judgeme-row]').forEach((row) => {
+        const star = parseInt(row.dataset.judgemeRow, 10);
+        const fill = row.querySelector('[data-judgeme-fill]');
+        const pct = total ? (counts[star] / total) * 100 : 0;
+        if (fill) fill.style.width = `${pct}%`;
+        row.setAttribute('aria-label', `${star} star: ${counts[star]} of ${total} reviews`);
+      });
+    }
+
+    function renderList() {
+      const size = perPage();
+      const start = (page - 1) * size;
+      const slice = reviews.slice(start, start + size);
+
+      listEl.innerHTML = '';
+
+      slice.forEach((r) => {
+        const rating = ratingOf(r);
+        const title = (r.title || '').trim();
+        const body = (r.body || '').trim();
+        const date = SHOW_DATE ? formatDate(r.created_at || r.createdAt || '') : '';
+
+        const item = document.createElement('article');
+        item.className = 'judgeme-review';
+        item.innerHTML =
+          `<div class="judgeme-review__top">` +
+            `<div class="judgeme-review__top-start">` +
+              `<span class="judgeme-review__stars" role="img" aria-label="Rated ${rating} out of 5">${starsMarkup(rating)}</span>` +
+              (SHOW_VERIFIED && isVerified(r)
+                ? `<span class="judgeme-review__verified {{ options.verified_size }}">${escapeHtml(VERIFIED_LABEL)}</span>`
+                : '') +
+            `</div>` +
+            (date ? `<span class="judgeme-review__date {{ options.date_size }}">${escapeHtml(date)}</span>` : '') +
+          `</div>` +
+          (title
+            ? `<{{ options.review_title_tag }} class="judgeme-review__title {{ options.review_title_size }}">${escapeHtml(title)}</{{ options.review_title_tag }}>`
+            : '') +
+          (body ? `<p class="judgeme-review__body {{ options.review_body_size }}">${escapeHtml(body)}</p>` : '') +
+          `<p class="judgeme-review__author {{ options.author_size }}">${escapeHtml(AUTHOR_PREFIX + reviewerName(r))}</p>`;
+
+        listEl.appendChild(item);
+
+        const bodyEl = item.querySelector('.judgeme-review__body');
+        if (!bodyEl || !CLAMP) return;
+
+        bodyEl.classList.add('judgeme-review__body-clamp');
+
+        requestAnimationFrame(() => {
+          if (bodyEl.scrollHeight <= bodyEl.clientHeight + 1) {
+            bodyEl.classList.remove('judgeme-review__body-clamp');
+            return;
+          }
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'judgeme-review__more {{ options.review_body_size }}';
+          btn.textContent = READ_MORE;
+          btn.addEventListener('click', () => {
+            const clamped = bodyEl.classList.toggle('judgeme-review__body-clamp');
+            btn.textContent = clamped ? READ_MORE : READ_LESS;
+          });
+          bodyEl.insertAdjacentElement('afterend', btn);
+        });
+      });
+    }
+
+    function addPageButton(label, targetPage, { active = false, arrow = false, disabled = false, icon = '' } = {}) {
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'classic-pagination__item classic-pagination__link' + (arrow ? ' judgeme-pagination__arrow' : '');
+      if (active) btn.classList.add('active');
+      if (disabled) btn.disabled = true;
+
+      if (arrow) {
+        btn.innerHTML = icon;
+        btn.setAttribute('aria-label', label);
+      } else {
+        btn.textContent = label;
+        btn.setAttribute('aria-label', `Page ${label}`);
+        if (active) btn.setAttribute('aria-current', 'true');
+      }
+
+      btn.addEventListener('click', () => {
+        if (page === targetPage) return;
+        page = targetPage;
+        refresh();
+      });
+
+      li.appendChild(btn);
+      pagListEl.appendChild(li);
+    }
+
+    function renderPagination() {
+      pagListEl.innerHTML = '';
+      const total = Math.ceil(reviews.length / perPage()) || 1;
+      if (total <= 1) return;
+
+      const half = Math.floor(MAX_BUTTONS / 2);
+      let start = Math.max(1, page - half);
+      let end = Math.min(total, start + MAX_BUTTONS - 1);
+      start = Math.max(1, end - MAX_BUTTONS + 1);
+
+      addPageButton('Previous', Math.max(1, page - 1), { arrow: true, disabled: page === 1, icon: CHEVRON_PREV });
+      for (let i = start; i <= end; i++) addPageButton(String(i), i, { active: i === page });
+      addPageButton('Next', Math.min(total, page + 1), { arrow: true, disabled: page === total, icon: CHEVRON_NEXT });
+    }
+
+    function refresh() {
+      listEl.classList.add('is-fading');
+
+      setTimeout(() => {
+        renderList();
+        listEl.classList.remove('is-fading');
+
+        if (!isInitial) {
+          const top = root.getBoundingClientRect().top + window.pageYOffset - SCROLL_OFFSET;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+        isInitial = false;
+      }, 300);
+
+      renderPagination();
+    }
+
+    async function load() {
+      if (!handle) {
+        setState(EMPTY_TEXT);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${ENDPOINT}?collectionHandle=${encodeURIComponent(handle)}`);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const data = await res.json();
+        const grouped = (data && data.groupedReviews) || {};
+
+        reviews = Object.keys(grouped)
+          .reduce((acc, key) => (Array.isArray(grouped[key]) ? acc.concat(grouped[key]) : acc), [])
+          .filter((r) => r && String(r.hidden).toLowerCase() !== 'true')
+          .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      } catch (e) {
+        console.error('Judge.me reviews failed to load:', e);
+        reviews = [];
+        setState(ERROR_TEXT);
+        renderSummary();
+        return;
+      }
+
+      setState(reviews.length ? '' : EMPTY_TEXT);
+      renderSummary();
+      page = 1;
+      refresh();
+    }
+
+    load();
+
+    window.addEventListener('resize', () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (window.innerWidth === lastWidth) return;
+        lastWidth = window.innerWidth;
+        page = 1;
+        renderList();
+        renderPagination();
+      });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Judge.me Reviews",
+  "tag": "section",
+  "class": "shopify-section-judgeme-reviews",
+  "settings": [
+    { "type": "header", "content": "Data source" },
+    {
+      "type": "text",
+      "id": "collection_handle",
+      "label": "Collection handle",
+      "default": "cut-resistant-baselayer",
+      "info": "Reviews are fetched for this collection handle."
+    },
+    { "type": "header", "content": "Heading" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "REVIEWS" },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "label": "Heading tag",
+      "options": [
+        { "value": "h1", "label": "H1" },
+        { "value": "h2", "label": "H2" },
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "div", "label": "Div" },
+        { "value": "p", "label": "Paragraph" }
+      ],
+      "default": "h2"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "label": "Heading size",
+      "options": [
+        { "value": "display1", "label": "Display 1" },
+        { "value": "display2", "label": "Display 2" },
+        { "value": "display3", "label": "Display 3" },
+        { "value": "h1", "label": "Heading 1" },
+        { "value": "h2", "label": "Heading 2" },
+        { "value": "h3", "label": "Heading 3" },
+        { "value": "h4", "label": "Heading 4" },
+        { "value": "h5", "label": "Heading 5" },
+        { "value": "h6", "label": "Heading 6" }
+      ],
+      "default": "display3"
+    },
+    { "type": "color", "id": "heading_color", "label": "Heading color", "default": "#ffffff" },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Rated [rating] by [count] hockey players & parents",
+      "info": "Use [rating] for the average score and [count] for the number of reviews. Both fill in from live data."
+    },
+    {
+      "type": "select",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body3"
+    },
+    { "type": "color", "id": "subheading_color", "label": "Subheading color", "default": "#ffffff" },
+    {
+      "type": "range",
+      "id": "subheading_spacing",
+      "label": "Space above subheading (desktop)",
+      "min": 0, "max": 100, "step": 2, "unit": "px", "default": 40
+    },
+    { "type": "header", "content": "Rating bars" },
+    {
+      "type": "range",
+      "id": "bars_spacing",
+      "label": "Space above bars (desktop)",
+      "min": 0, "max": 120, "step": 4, "unit": "px", "default": 48
+    },
+    {
+      "type": "range",
+      "id": "bars_spacing_mobile",
+      "label": "Space above bars (mobile)",
+      "min": 0, "max": 120, "step": 4, "unit": "px", "default": 24
+    },
+    {
+      "type": "range",
+      "id": "bar_width",
+      "label": "Bar width (desktop)",
+      "min": 100, "max": 400, "step": 10, "unit": "px", "default": 200
+    },
+    {
+      "type": "range",
+      "id": "bar_width_mobile",
+      "label": "Max bar width (mobile)",
+      "min": 60, "max": 320, "step": 10, "unit": "px", "default": 130,
+      "info": "Bars shrink below this when space is tight so the badge always fits."
+    },
+    {
+      "type": "range",
+      "id": "bar_height",
+      "label": "Bar height (desktop)",
+      "min": 6, "max": 32, "step": 1, "unit": "px", "default": 14
+    },
+    {
+      "type": "range",
+      "id": "bar_height_mobile",
+      "label": "Bar height (mobile)",
+      "min": 6, "max": 32, "step": 1, "unit": "px", "default": 12
+    },
+    {
+      "type": "range",
+      "id": "bar_gap",
+      "label": "Space between bars (desktop)",
+      "min": 0, "max": 40, "step": 1, "unit": "px", "default": 12
+    },
+    {
+      "type": "range",
+      "id": "bar_gap_mobile",
+      "label": "Space between bars (mobile)",
+      "min": 0, "max": 40, "step": 1, "unit": "px", "default": 10
+    },
+    {
+      "type": "range",
+      "id": "bar_row_gap",
+      "label": "Space between stars and bar (desktop)",
+      "min": 0, "max": 60, "step": 2, "unit": "px", "default": 24
+    },
+    {
+      "type": "range",
+      "id": "bar_row_gap_mobile",
+      "label": "Space between stars and bar (mobile)",
+      "min": 0, "max": 60, "step": 2, "unit": "px", "default": 10
+    },
+    {
+      "type": "range",
+      "id": "summary_star_size",
+      "label": "Summary star size (desktop)",
+      "min": 10, "max": 40, "step": 1, "unit": "px", "default": 24
+    },
+    {
+      "type": "range",
+      "id": "summary_star_size_mobile",
+      "label": "Summary star size (mobile)",
+      "min": 10, "max": 40, "step": 1, "unit": "px", "default": 15
+    },
+    { "type": "color", "id": "accent_color", "label": "Bar fill / accent color", "default": "#dcfd75" },
+    { "type": "color", "id": "bar_track_color", "label": "Bar track color", "default": "#4a5568" },
+    { "type": "color", "id": "star_color", "label": "Filled star color", "default": "#ffffff" },
+    { "type": "color", "id": "star_empty_color", "label": "Empty star color", "default": "#4a5568" },
+    { "type": "header", "content": "Judge.me badge" },
+    { "type": "image_picker", "id": "badge_image", "label": "Badge image" },
+    {
+      "type": "range",
+      "id": "badge_width",
+      "label": "Badge width (desktop)",
+      "min": 80, "max": 360, "step": 4, "unit": "px", "default": 240
+    },
+    {
+      "type": "range",
+      "id": "badge_width_mobile",
+      "label": "Badge width (mobile)",
+      "min": 60, "max": 360, "step": 4, "unit": "px", "default": 120
+    },
+    { "type": "text", "id": "badge_caption", "label": "Badge caption", "default": "Verified" },
+    {
+      "type": "select",
+      "id": "badge_caption_size",
+      "label": "Badge caption size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body3"
+    },
+    { "type": "color", "id": "badge_caption_color", "label": "Badge caption color", "default": "#ffffff" },
+    {
+      "type": "range",
+      "id": "badge_spacing",
+      "label": "Space above badge (desktop)",
+      "min": 0, "max": 160, "step": 4, "unit": "px", "default": 56
+    },
+    {
+      "type": "range",
+      "id": "badge_gap_mobile",
+      "label": "Space beside badge (mobile)",
+      "min": 0, "max": 80, "step": 2, "unit": "px", "default": 12
+    },
+    {
+      "type": "select",
+      "id": "badge_alignment",
+      "label": "Badge alignment (desktop)",
+      "options": [
+        { "value": "flex-start", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Right" }
+      ],
+      "default": "center"
+    },
+    { "type": "header", "content": "Review list" },
+    {
+      "type": "range",
+      "id": "per_page",
+      "label": "Reviews per page (desktop)",
+      "min": 1, "max": 12, "step": 1, "default": 3
+    },
+    {
+      "type": "range",
+      "id": "per_page_mobile",
+      "label": "Reviews per page (mobile)",
+      "min": 1, "max": 12, "step": 1, "default": 3
+    },
+    {
+      "type": "range",
+      "id": "body_line_clamp",
+      "label": "Body lines before \"Read more\"",
+      "min": 0, "max": 10, "step": 1, "default": 2,
+      "info": "Set to 0 to always show the full review text."
+    },
+    { "type": "text", "id": "read_more_text", "label": "Read more label", "default": "Read more" },
+    { "type": "text", "id": "read_less_text", "label": "Read less label", "default": "Read less" },
+    { "type": "checkbox", "id": "show_verified_badge", "label": "Show verified badge", "default": true },
+    { "type": "text", "id": "verified_label", "label": "Verified label", "default": "Verified" },
+    { "type": "checkbox", "id": "show_date", "label": "Show review date", "default": true },
+    { "type": "checkbox", "id": "abbreviate_last_name", "label": "Abbreviate last name", "default": true, "info": "Shows \"Tyler R.\" instead of the full name." },
+    { "type": "text", "id": "author_prefix", "label": "Author prefix", "default": "- " },
+    {
+      "type": "range",
+      "id": "review_padding",
+      "label": "Review vertical padding",
+      "min": 4, "max": 60, "step": 2, "unit": "px", "default": 20
+    },
+    {
+      "type": "range",
+      "id": "review_inner_gap",
+      "label": "Space between review parts",
+      "min": 0, "max": 32, "step": 1, "unit": "px", "default": 10
+    },
+    {
+      "type": "range",
+      "id": "review_star_size",
+      "label": "Review star size (desktop)",
+      "min": 10, "max": 32, "step": 1, "unit": "px", "default": 18
+    },
+    {
+      "type": "range",
+      "id": "review_star_size_mobile",
+      "label": "Review star size (mobile)",
+      "min": 10, "max": 32, "step": 1, "unit": "px", "default": 16
+    },
+    {
+      "type": "select",
+      "id": "review_title_tag",
+      "label": "Review title tag",
+      "options": [
+        { "value": "h3", "label": "H3" },
+        { "value": "h4", "label": "H4" },
+        { "value": "h5", "label": "H5" },
+        { "value": "div", "label": "Div" },
+        { "value": "p", "label": "Paragraph" }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "select",
+      "id": "review_title_size",
+      "label": "Review title size",
+      "options": [
+        { "value": "h3", "label": "Heading 3" },
+        { "value": "h4", "label": "Heading 4" },
+        { "value": "h5", "label": "Heading 5" },
+        { "value": "h6", "label": "Heading 6" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" }
+      ],
+      "default": "h5"
+    },
+    {
+      "type": "select",
+      "id": "review_body_size",
+      "label": "Review body size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "select",
+      "id": "author_size",
+      "label": "Author size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body3"
+    },
+    {
+      "type": "select",
+      "id": "date_size",
+      "label": "Date size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body4"
+    },
+    {
+      "type": "select",
+      "id": "verified_size",
+      "label": "Verified badge size",
+      "options": [
+        { "value": "body0", "label": "Body 0" },
+        { "value": "body1", "label": "Body 1" },
+        { "value": "body2", "label": "Body 2" },
+        { "value": "body3", "label": "Body 3" },
+        { "value": "body4", "label": "Body 4" },
+        { "value": "body5", "label": "Body 5" },
+        { "value": "body6", "label": "Body 6" }
+      ],
+      "default": "body5"
+    },
+    {
+      "type": "range",
+      "id": "verified_padding_block",
+      "label": "Verified badge vertical padding",
+      "min": 0, "max": 16, "step": 1, "unit": "px", "default": 5
+    },
+    {
+      "type": "range",
+      "id": "verified_padding_inline",
+      "label": "Verified badge horizontal padding",
+      "min": 0, "max": 24, "step": 1, "unit": "px", "default": 10
+    },
+    {
+      "type": "range",
+      "id": "verified_radius",
+      "label": "Verified badge corner radius",
+      "min": 0, "max": 20, "step": 1, "unit": "px", "default": 4
+    },
+    {
+      "type": "range",
+      "id": "badge_inline_gap",
+      "label": "Space between stars and verified badge",
+      "min": 0, "max": 40, "step": 2, "unit": "px", "default": 12
+    },
+    { "type": "color", "id": "review_title_color", "label": "Review title color", "default": "#ffffff" },
+    { "type": "color", "id": "review_body_color", "label": "Review body color", "default": "#e2e8f0" },
+    { "type": "color", "id": "author_color", "label": "Author color", "default": "#ffffff" },
+    { "type": "color", "id": "date_color", "label": "Date color", "default": "#ffffff" },
+    { "type": "color", "id": "verified_text_color", "label": "Verified badge text color", "default": "#000000" },
+    { "type": "color", "id": "divider_color", "label": "Divider color", "default": "#4a5568" },
+    { "type": "header", "content": "Pagination" },
+    {
+      "type": "range",
+      "id": "max_page_buttons",
+      "label": "Maximum page numbers shown",
+      "min": 3, "max": 9, "step": 1, "default": 5
+    },
+    {
+      "type": "range",
+      "id": "pagination_spacing",
+      "label": "Space above pagination",
+      "min": 0, "max": 80, "step": 2, "unit": "px", "default": 24
+    },
+    {
+      "type": "range",
+      "id": "pagination_arrow_size",
+      "label": "Pagination arrow size",
+      "min": 12, "max": 40, "step": 1, "unit": "px", "default": 20
+    },
+    {
+      "type": "range",
+      "id": "pagination_arrow_gap",
+      "label": "Space around pagination arrows",
+      "min": 0, "max": 32, "step": 1, "unit": "px", "default": 6
+    },
+    {
+      "type": "range",
+      "id": "scroll_offset",
+      "label": "Scroll offset on page change",
+      "min": 0, "max": 300, "step": 10, "unit": "px", "default": 150,
+      "info": "Keeps the section clear of a sticky header when paging."
+    },
+    { "type": "header", "content": "Messages" },
+    { "type": "text", "id": "loading_text", "label": "Loading text", "default": "Loading reviews…" },
+    { "type": "text", "id": "empty_text", "label": "Empty state text", "default": "No reviews yet." },
+    { "type": "text", "id": "error_text", "label": "Error text", "default": "Reviews are unavailable right now." },
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "range",
+      "id": "summary_column_width",
+      "label": "Summary column width",
+      "min": 1, "max": 6, "step": 1, "default": 2,
+      "info": "Relative to the review list column."
+    },
+    {
+      "type": "range",
+      "id": "list_column_width",
+      "label": "Review list column width",
+      "min": 1, "max": 8, "step": 1, "default": 3
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Space between columns (desktop)",
+      "min": 0, "max": 160, "step": 4, "unit": "px", "default": 64
+    },
+    {
+      "type": "range",
+      "id": "column_gap_mobile",
+      "label": "Space between blocks (mobile)",
+      "min": 0, "max": 120, "step": 4, "unit": "px", "default": 40
+    },
+    { "type": "header", "content": "Section" },
+    { "type": "color_scheme", "id": "color_scheme", "label": "Color scheme", "default": "scheme-1" },
+    {
+      "type": "select",
+      "id": "container_size",
+      "label": "Container size",
+      "options": [
+        { "value": "full-screen", "label": "Full screen" },
+        { "value": "page-width", "label": "Page width" },
+        { "value": "large", "label": "Large" },
+        { "value": "medium", "label": "Medium" }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_top",
+      "label": "Top spacing",
+      "min": 0, "max": 200, "step": 4, "unit": "px", "default": 60
+    },
+    {
+      "type": "range",
+      "id": "section_spacing_bottom",
+      "label": "Bottom spacing",
+      "min": 0, "max": 200, "step": 4, "unit": "px", "default": 60
+    }
+  ],
+  "presets": [{ "name": "Judge.me Reviews" }]
+}
+{% endschema %}

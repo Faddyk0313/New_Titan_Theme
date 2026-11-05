@@ -1,0 +1,211 @@
+{%- liquid
+  comment
+    Battlegear collection product card.
+    Used only by sections/products-battlegear.liquid.
+
+    Metafields (product, namespace "custom"):
+      custom.card_category   single_line_text_field  -> long pill segment, e.g. "YOUTH | CUT-RESISTANT"
+      custom.card_generation single_line_text_field  -> short pill segment, e.g. "GEN_3"
+      custom.card_title      single_line_text_field  -> card title override, e.g. "ELEVATE BASELAYER"
+      custom.card_color      single_line_text_field  -> colourway line override, e.g. "USA HOCKEY"
+      custom.card_tab        single_line_text_field  -> corner tab override, e.g. "NEW IN STOCK"
+
+    Each falls back to derivable data, so the card renders before the
+    metafields are created.
+  endcomment
+
+  assign price = product.price | default: 0
+  assign compare_at_price = product.compare_at_price | default: 0
+
+  if settings.show_currency_code
+    assign money_price = price | money_with_currency
+    assign money_compare_at_price = compare_at_price | money_with_currency
+  else
+    assign money_price = price | money
+    assign money_compare_at_price = compare_at_price | money
+  endif
+
+  assign on_sale = false
+  if compare_at_price > price and product.available
+    assign on_sale = true
+  endif
+
+  assign price_varies = false
+  if product.price_varies
+    assign price_varies = true
+  endif
+-%}
+
+{%- liquid
+  comment
+    Corner tab. Metafield override wins, then an explicit tag, then sale /
+    sold-out state. tab_kind drives the colour.
+  endcomment
+
+  assign tab_label = blank
+  assign tab_kind = blank
+
+  assign tab_override = product.metafields.custom.card_tab.value | default: product.metafields.custom.card_tab
+  if tab_override != blank
+    assign tab_label = tab_override
+    assign tab_kind = 'custom'
+  endif
+
+  if tab_label == blank
+    for tag in product.tags
+      assign tag_downcase = tag | downcase
+      if tag_downcase == 'new in stock' or tag_downcase == 'new-in-stock'
+        assign tab_label = 'NEW IN STOCK'
+        assign tab_kind = 'new'
+        break
+      elsif tag_downcase == 'last chance' or tag_downcase == 'last-chance'
+        assign tab_label = 'LAST CHANCE'
+        assign tab_kind = 'last'
+        break
+      endif
+    endfor
+  endif
+
+  if tab_label == blank and product.available == false
+    assign tab_label = 'SOLD OUT'
+    assign tab_kind = 'sold-out'
+  endif
+
+  if tab_label == blank and on_sale
+    assign tab_label = 'SALE'
+    assign tab_kind = 'sale'
+  endif
+-%}
+
+{%- liquid
+  comment
+    Subheading pill. Long segment then short segment.
+    Category falls back to the product type, generation has no fallback —
+    without the metafield the short segment is simply omitted.
+  endcomment
+
+  assign pill_category = product.metafields.custom.card_category.value | default: product.metafields.custom.card_category | default: product.type
+  assign pill_generation = product.metafields.custom.card_generation.value | default: product.metafields.custom.card_generation
+-%}
+
+{%- liquid
+  comment
+    Title and colourway. The colourway falls back to the first colour option
+    value, and when it is used the title drops that suffix so the two lines do
+    not repeat each other.
+  endcomment
+
+  assign card_title = product.metafields.custom.card_title.value | default: product.metafields.custom.card_title
+  assign card_color = product.metafields.custom.card_color.value | default: product.metafields.custom.card_color
+
+  if card_color == blank
+    assign color_option_names = settings.primary_option_name | split: ','
+    for name in color_option_names
+      assign name_striped = name | strip
+      if product.options_by_name[name_striped] != blank
+        assign card_color = product.options_by_name[name_striped].values | first
+        break
+      endif
+    endfor
+  endif
+
+  if card_title == blank
+    assign card_title = product.title
+
+    comment
+      Product titles read "YTH CUT-RESISTANT BASELAYER 3.0 - BLACK". When the
+      colourway is shown on its own line, strip the " - COLOUR" suffix.
+    endcomment
+    if card_color != blank and card_title contains ' - '
+      assign title_parts = card_title | split: ' - '
+      assign title_last = title_parts | last | downcase | strip
+      assign color_downcase = card_color | downcase | strip
+      if title_last == color_downcase
+        assign card_title = title_parts | first
+      endif
+    endif
+  endif
+-%}
+
+{%- liquid
+  assign card_image = product.featured_media
+  assign hover_image = blank
+  if product.media.size > 1
+    assign hover_image = product.media[1]
+  endif
+-%}
+
+<div class='bg-card{% if product.available == false %} bg-card--sold-out{% endif %}'>
+  <a
+    class='bg-card__link'
+    href='{{ product.url }}'
+    aria-label='{{ product.title | escape }}'
+  >
+    <div class='bg-card__media-wrap'>
+      {%- if tab_label != blank -%}
+        <span class='bg-card__tab bg-card__tab--{{ tab_kind }}'>{{ tab_label }}</span>
+      {%- endif -%}
+
+      <div class='bg-card__media'>
+        {%- if card_image -%}
+          {{
+            card_image
+            | image_url: width: 800
+            | image_tag:
+              loading: 'lazy',
+              widths: '200,300,400,500,600,800',
+              sizes: '(min-width: 1024px) 25vw, 50vw',
+              class: 'bg-card__image bg-card__image--primary',
+              alt: product.title
+          }}
+          {%- if hover_image -%}
+            {{
+              hover_image
+              | image_url: width: 800
+              | image_tag:
+                loading: 'lazy',
+                widths: '200,300,400,500,600,800',
+                sizes: '(min-width: 1024px) 25vw, 50vw',
+                class: 'bg-card__image bg-card__image--hover',
+                alt: product.title
+            }}
+          {%- endif -%}
+        {%- else -%}
+          {{ 'product-1' | placeholder_svg_tag: 'bg-card__image bg-card__placeholder' }}
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class='bg-card__content'>
+      {%- if pill_category != blank or pill_generation != blank -%}
+        <div class='bg-card__pill'>
+          {%- if pill_category != blank -%}
+            <span class='bg-card__pill-main'>{{ pill_category }}</span>
+          {%- endif -%}
+          {%- if pill_generation != blank -%}
+            <span class='bg-card__pill-gen'>{{ pill_generation }}</span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      <h3 class='bg-card__title'>{{ card_title }}</h3>
+
+      {%- if card_color != blank -%}
+        <div class='bg-card__color'>{{ card_color }}</div>
+      {%- endif -%}
+
+      <div class='bg-card__price{% if on_sale %} bg-card__price--on-sale{% endif %}'>
+        <span class='bg-card__price-current'>
+          {%- if price_varies and on_sale == false -%}
+            {{- 'cards.product_card.store_front.from_price_html' | t: price: money_price -}}
+          {%- else -%}
+            {{- money_price -}}
+          {%- endif -%}
+        </span>
+        {%- if on_sale -%}
+          <s class='bg-card__price-compare'>{{ money_compare_at_price }}</s>
+        {%- endif -%}
+      </div>
+    </div>
+  </a>
+</div>
