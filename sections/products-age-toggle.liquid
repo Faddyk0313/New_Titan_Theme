@@ -712,7 +712,6 @@
     const SIZE_LABEL = {{ options.filter_size_label | json }}
     const INSTOCK_LABEL = {{ options.filter_instock_label | json }}
     const SIZE_GROUPS = {{ options.filter_size_groups | json }}
-    const HIDE_EMPTY_OPTIONS = {{ options.filter_hide_empty_options | json }}
     const YES_LABEL = {{ options.filter_instock_yes | json }}
     const NO_LABEL = {{ options.filter_instock_no | json }}
 
@@ -760,25 +759,8 @@
       const list = item.querySelector('.filters__options')
       if (!list || !sizeGroups.length || list.dataset.subgrouped === 'true') return
 
-      let options = Array.from(list.querySelectorAll('.checkbox'))
+      const options = Array.from(list.querySelectorAll('.checkbox'))
       if (!options.length) return
-
-      /*
-       * Shopify still renders options with a zero product count, just
-       * disabled. On a collection holding a single age group that would
-       * leave the other group's sizes greyed out under their own heading,
-       * so drop them entirely when the setting asks for it. An option the
-       * shopper has actually selected is always kept.
-       */
-      if (HIDE_EMPTY_OPTIONS) {
-        options.forEach((option) => {
-          const input = option.querySelector('.checkbox__input')
-          const isEmpty = option.classList.contains('checkbox--disabled')
-          if (isEmpty && !(input && input.checked)) option.remove()
-        })
-        options = Array.from(list.querySelectorAll('.checkbox'))
-        if (!options.length) return
-      }
 
       const buckets = sizeGroups.map((group) => ({
         heading: group.heading,
@@ -972,14 +954,7 @@
       "id": "filter_size_groups",
       "label": "Size sub-groups",
       "default": "YOUTH:YTH-, SENIOR:SR-",
-      "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. Options matching nothing stay at the end."
-    },
-    {
-      "type": "checkbox",
-      "id": "filter_hide_empty_options",
-      "default": true,
-      "label": "Hide size options with no products",
-      "info": "Shopify greys out options that match nothing instead of removing them. With this on they are dropped, so a sub-heading whose options all match nothing disappears too — e.g. no SENIOR heading on a youth-only collection."
+      "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. A heading with no matching options is not rendered, so a youth-only collection shows no SENIOR heading. Options matching no prefix stay at the end."
     },
     {
       "type": "text",
