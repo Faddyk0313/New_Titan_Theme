@@ -41,80 +41,16 @@
   assign pagination_type = options.pagination_type
 
   comment
-    Age group toggle. Each block is one option with its own product tag.
+    Age group links.
 
-    State lives in the URL as a collection tag route
-    (/collections/<handle>/<tag>), readable in Liquid through
-    `current_tags`. Query parameters are NOT readable in Liquid, and this
-    section is re-rendered server-side on every AJAX update, so the
-    selection has to survive that refetch: a tag route is what does.
-
-    A tag route is inclusive, so /collections/x/senior returns Senior-tagged
-    products only. The exclusion rule (untagged products stay visible under
-    every option) is applied by the grid below, which also orders the
-    selected group first.
+    Each block is one collection the section links to. These are plain
+    navigation links, not filters: every collection already holds a single
+    age group, so no filtering or exclusion happens here. The block whose
+    collection is the one being viewed renders as the active link.
   endcomment
 
   assign heading = options.heading
   assign toggle_blocks = section.blocks | where: 'type', 'age_option'
-
-  comment
-    Which option is active: the tag in the current route when it belongs to
-    a block, else the configured default, else the first block.
-  endcomment
-  assign active_age = blank
-  for block in toggle_blocks
-    assign block_key = block.settings.tag | downcase | strip
-    for tag in current_tags
-      assign tag_key = tag | downcase | strip
-      if tag_key == block_key
-        assign active_age = block.settings.tag | strip
-        break
-      endif
-    endfor
-    if active_age != blank
-      break
-    endif
-  endfor
-
-  if active_age == blank
-    assign default_tag_downcase = options.default_age_tag | downcase | strip
-    if default_tag_downcase != blank
-      for block in toggle_blocks
-        assign block_key = block.settings.tag | downcase | strip
-        if block_key == default_tag_downcase
-          assign active_age = block.settings.tag | strip
-          break
-        endif
-      endfor
-    endif
-  endif
-  if active_age == blank and toggle_blocks.size > 0
-    assign active_age = toggle_blocks[0].settings.tag | strip
-  endif
-  assign active_age_downcase = active_age | downcase | strip
-
-  comment
-    Tags belonging to the non-selected options: what the grid excludes.
-  endcomment
-  assign excluded_tags = ''
-  for block in toggle_blocks
-    assign block_tag = block.settings.tag | strip
-    assign block_tag_downcase = block_tag | downcase
-    if block_tag != blank and block_tag_downcase != active_age_downcase
-      assign excluded_tags = excluded_tags | append: block_tag_downcase | append: ','
-    endif
-  endfor
-  assign excluded_tag_list = excluded_tags | split: ','
-
-  comment
-    The grid always applies the exclusion: a tag route narrows to the tagged
-    products only, and the untagged ones have to be added back.
-  endcomment
-  assign apply_liquid_exclusion = false
-  if excluded_tag_list.size > 0
-    assign apply_liquid_exclusion = true
-  endif
 
   assign product_card_align = options.product_card_align
 
@@ -448,60 +384,39 @@
         {%- endif -%}
 
         {%- if toggle_blocks.size > 0 -%}
-          <age-toggle
-            class='shop-age__toggle'
-            role='group'
-            aria-label='{{ options.toggle_aria_label | escape }}'
-
-          >
+          <div class='shop-age__toggle' role='group' aria-label='{{ options.toggle_aria_label | escape }}'>
             {%- for block in toggle_blocks -%}
               {%- liquid
-                assign block_tag = block.settings.tag | strip
-                assign block_tag_downcase = block_tag | downcase
+                comment
+                  A `collection` setting resolves to the collection object
+                  itself, so use it directly rather than looking it up.
+                endcomment
+                assign block_collection = block.settings.collection
+                assign block_url = block_collection.url
+
+                comment
+                  The link for the collection currently being viewed is the
+                  active one. Compare handles rather than URLs so a tag or
+                  filter in the address does not break the match.
+                endcomment
                 assign is_active = false
-                if block_tag_downcase == active_age_downcase
+                if block_collection != blank and block_collection.handle == collection.handle
                   assign is_active = true
                 endif
 
-                comment
-                  Build this option's URL as a collection tag route,
-                  /collections/<handle>/<tag>. That is the only state Liquid
-                  can read back (via `current_tags`) after the AJAX refetch
-                  re-renders this section, and it needs no app setup.
-
-                  Active filters and the sort order ride along as the query
-                  string so the toggle composes with the sidebar. Paging is
-                  dropped so the grid restarts at page 1.
-                endcomment
-                assign tag_handle = block_tag | handleize
-                assign block_url = collection.url | append: '/' | append: tag_handle
-
-                assign current_query = ''
-                for f in collection.filters
-                  for v in f.active_values
-                    assign pair = v.param_name | append: '=' | append: v.value
-                    assign current_query = current_query | append: pair | append: '&'
-                  endfor
-                endfor
-                if collection.sort_by != blank
-                  assign current_query = current_query | append: 'sort_by=' | append: collection.sort_by | append: '&'
-                endif
-                if current_query != ''
-                  assign current_query = current_query | split: '&' | join: '&'
-                  assign block_url = block_url | append: '?' | append: current_query
-                endif
+                assign block_label = block.settings.label | default: block_collection.title
               -%}
-              <a
-                class='shop-age__option{% if is_active %} is-active{% endif %}'
-                href='{{ block_url }}'
-                data-age-option
-                data-age-value='{{ block_tag | escape }}'
-                aria-pressed='{{ is_active }}'
-              >
-                {{- block.settings.label | default: block_tag -}}
-              </a>
+              {%- if block_url != blank -%}
+                <a
+                  class='shop-age__option{% if is_active %} is-active{% endif %}'
+                  href='{{ block_url }}'
+                  {% if is_active %}aria-current='page'{% endif %}
+                >
+                  {{- block_label -}}
+                </a>
+              {%- endif -%}
             {%- endfor -%}
-          </age-toggle>
+          </div>
         {%- endif -%}
 
         {%- if enable_sorting -%}
@@ -569,32 +484,7 @@
       >
         {%- if show_product_count -%}
           <div class='shop__product-count' id='ShopProductCount'>
-            {%- liquid
-              comment
-                `collection.products_count` ignores the toggle, so when an
-                exclusion is active count the whole collection instead. Liquid
-                only exposes the current page, so fall back to the unfiltered
-                count once the collection spans more than one page.
-              endcomment
-              assign age_total = collection.products_count
-              if apply_liquid_exclusion and collection.products_count <= collection.products.size
-                assign age_total = 0
-                for product in collection.products
-                  assign skip_total = false
-                  for product_tag in product.tags
-                    assign product_tag_downcase = product_tag | downcase | strip
-                    if excluded_tag_list contains product_tag_downcase
-                      assign skip_total = true
-                      break
-                    endif
-                  endfor
-                  unless skip_total
-                    assign age_total = age_total | plus: 1
-                  endunless
-                endfor
-              endif
-            -%}
-            {{ 'shop.store_front.results_count' | t: count: age_total }}
+            {{ 'shop.store_front.results_count' | t: count: collection.products_count }}
           </div>
         {%- endif -%}
         {%- if show_column_count_switcher -%}
@@ -696,37 +586,7 @@
 
       <div class='shop__products' id='ShopProducts'>
         {%- paginate collection.products by product_per_page -%}
-          {%- liquid
-            comment
-              Apply the toggle exclusion to this page of products.
-
-              Liquid cannot build an array of objects, so the exclusion is
-              evaluated per product inside the loop below. Here we only count
-              how many survive, so the empty state and the grid agree.
-
-              Pagination runs over the unfiltered collection, so a page can
-              come back partly or fully empty while later pages still hold
-              matches. `paginate.pages` keeps the pager correct, and the
-              "no results" copy only shows when nothing matched anywhere.
-            endcomment
-            assign visible_count = 0
-            for product in collection.products
-              assign skip_product = false
-              if apply_liquid_exclusion
-                for product_tag in product.tags
-                  assign product_tag_downcase = product_tag | downcase | strip
-                  if excluded_tag_list contains product_tag_downcase
-                    assign skip_product = true
-                    break
-                  endif
-                endfor
-              endif
-              unless skip_product
-                assign visible_count = visible_count | plus: 1
-              endunless
-            endfor
-          -%}
-          {%- if visible_count > 0 -%}
+          {%- if collection.products.size > 0 -%}
             <div class='shop__products-grid-wrap'>
               <div class='shop__products-grid' id='ShopProductsGrid'>
                 {%- comment -%}
@@ -735,62 +595,30 @@
                   the untagged ones shown under every option. Products tagged
                   with a non-selected option are skipped in both passes.
                 {%- endcomment -%}
-                {%- assign grid_position = 0 -%}
-                {%- for render_pass in (1..2) -%}
-                  {%- for product in collection.products -%}
-                    {%- liquid
-                      assign skip_product = false
-                      assign has_active_tag = false
-
-                      for product_tag in product.tags
-                        assign product_tag_downcase = product_tag | downcase | strip
-                        if apply_liquid_exclusion and excluded_tag_list contains product_tag_downcase
-                          assign skip_product = true
-                          break
-                        endif
-                        if product_tag_downcase == active_age_downcase
-                          assign has_active_tag = true
-                        endif
-                      endfor
-
-                      comment
-                        Pass 1 takes the tagged products, pass 2 the rest.
-                      endcomment
-                      if skip_product == false
-                        if render_pass == 1 and has_active_tag == false
-                          assign skip_product = true
-                        endif
-                        if render_pass == 2 and has_active_tag
-                          assign skip_product = true
-                        endif
-                      endif
-                    -%}
-                    {%- if skip_product -%}{%- continue -%}{%- endif -%}
-                    {%- assign grid_position = grid_position | plus: 1 -%}
-                    <div
-                      class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
-                      {% if enable_content_slide_in %}
-                        style='--gsc-animation-order: {{ grid_position }};'
-                      {% endif %}
-                    >
-                      {% render 'product-card',
-                        with_bottom_spacing: true,
-                        product: product,
-                        img_ratio: img_ratio,
-                        show_mobile_carousel: true,
-                        product_card_align: product_card_align,
-                        add_side_paddings: add_side_paddings,
-                        primary_custom_colors_and_patterns: primary_custom_colors_and_patterns,
-                        section_background_color: section_background_color
-                      %}
-                    </div>
-                  {%- endfor -%}
+                {%- for product in collection.products -%}
+                  <div
+                    class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+                    {% if enable_content_slide_in %}
+                      style='--gsc-animation-order: {{ forloop.index }};'
+                    {% endif %}
+                  >
+                    {% render 'product-card',
+                      with_bottom_spacing: true,
+                      product: product,
+                      img_ratio: img_ratio,
+                      show_mobile_carousel: true,
+                      product_card_align: product_card_align,
+                      add_side_paddings: add_side_paddings,
+                      primary_custom_colors_and_patterns: primary_custom_colors_and_patterns,
+                      section_background_color: section_background_color
+                    %}
+                  </div>
                 {%- endfor -%}
               </div>
               {% render 'loading-overlay', class: 'shop__loading-overlay', id: 'ShopProductsOverlay' %}
             </div>
           {%- else -%}
-            {%- if active_filter_count > 0 or apply_liquid_exclusion -%}
+            {%- if active_filter_count > 0 -%}
               <div
                 class='shop__products-stub {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
                 {% if enable_content_slide_in %}
@@ -862,83 +690,6 @@
 
 <script>
   /*
-   * Age toggle.
-   *
-   * Routes clicks through the existing <shop-component>, the same path the
-   * sidebar filters use, so the grid, the result count, the sort list and the
-   * filters all re-render in place instead of reloading the page. The anchors
-   * carry real hrefs, so this is progressive enhancement: without JS, or
-   * before it boots, clicking still works as a normal navigation.
-   */
-  ;(() => {
-    if (window.customElements.get('age-toggle')) return
-
-    class AgeToggle extends HTMLElement {
-      connectedCallback() {
-        this.addEventListener('click', this.handleClick)
-      }
-
-      disconnectedCallback() {
-        this.removeEventListener('click', this.handleClick)
-      }
-
-      /*
-       * The toggle and the sidebar both render the same tag filter, which
-       * would let them disagree. Hide that one filter group in the sidebar
-       * by matching its label, and re-hide it after every filter re-render.
-       */
-
-      handleClick = (event) => {
-        const option = event.target.closest('[data-age-option]')
-        if (!option || option.classList.contains('is-active')) {
-          // A click on the already-active option does nothing.
-          if (option) event.preventDefault()
-          return
-        }
-
-        const shop = document.querySelector('shop-component')
-        // No shop component (or it has not upgraded yet): fall back to a
-        // normal link navigation rather than swallowing the click.
-        if (!shop || typeof shop.updateShop !== 'function') return
-
-        const href = option.getAttribute('href') || ''
-        if (!href) return
-
-        event.preventDefault()
-        this.setActive(option)
-
-        /*
-         * The selection lives in the URL *path* (a collection tag route),
-         * not the query string, so shop.updateBySearchParams cannot be used:
-         * it rebuilds the URL from window.location.pathname and would drop
-         * the tag, re-rendering the very same products.
-         *
-         * Drive the same pipeline with the full href, and push that URL so
-         * refresh, back/forward and sharing all keep the selection.
-         */
-        const queryIndex = href.indexOf('?')
-        const searchParams = queryIndex === -1 ? '' : href.slice(queryIndex + 1)
-
-        history.pushState({ searchParams }, '', href)
-        shop.updateShop(href)
-        if (typeof shop.updateFilters === 'function') shop.updateFilters(href)
-      }
-
-      setActive(activeOption) {
-        this.querySelectorAll('[data-age-option]').forEach((item) => {
-          const isActive = item === activeOption
-          item.classList.toggle('is-active', isActive)
-          item.setAttribute('aria-pressed', String(isActive))
-        })
-      }
-    }
-
-    window.customElements.define('age-toggle', AgeToggle)
-  })()
-</script>
-
-<script>
-  /*
    * Filter sidebar enhancements.
    *
    * The sidebar markup is produced by the shared desktop-filters /
@@ -961,6 +712,7 @@
     const SIZE_LABEL = {{ options.filter_size_label | json }}
     const INSTOCK_LABEL = {{ options.filter_instock_label | json }}
     const SIZE_GROUPS = {{ options.filter_size_groups | json }}
+    const HIDE_EMPTY_OPTIONS = {{ options.filter_hide_empty_options | json }}
     const YES_LABEL = {{ options.filter_instock_yes | json }}
     const NO_LABEL = {{ options.filter_instock_no | json }}
 
@@ -1008,8 +760,25 @@
       const list = item.querySelector('.filters__options')
       if (!list || !sizeGroups.length || list.dataset.subgrouped === 'true') return
 
-      const options = Array.from(list.querySelectorAll('.checkbox'))
+      let options = Array.from(list.querySelectorAll('.checkbox'))
       if (!options.length) return
+
+      /*
+       * Shopify still renders options with a zero product count, just
+       * disabled. On a collection holding a single age group that would
+       * leave the other group's sizes greyed out under their own heading,
+       * so drop them entirely when the setting asks for it. An option the
+       * shopper has actually selected is always kept.
+       */
+      if (HIDE_EMPTY_OPTIONS) {
+        options.forEach((option) => {
+          const input = option.querySelector('.checkbox__input')
+          const isEmpty = option.classList.contains('checkbox--disabled')
+          if (isEmpty && !(input && input.checked)) option.remove()
+        })
+        options = Array.from(list.querySelectorAll('.checkbox'))
+        if (!options.length) return
+      }
 
       const buckets = sizeGroups.map((group) => ({
         heading: group.heading,
@@ -1178,14 +947,7 @@
       "id": "toggle_aria_label",
       "label": "Toggle accessibility label",
       "default": "Age group",
-      "info": "Describes the toggle group to screen readers."
-    },
-    {
-      "type": "text",
-      "id": "default_age_tag",
-      "label": "Default selected option",
-      "default": "Senior",
-      "info": "The product tag of the option selected on load, e.g. Senior. Must match one of the Age option blocks below. If it matches none, the first option is used."
+      "info": "Describes the link group to screen readers."
     },
     {
       "type": "header",
@@ -1211,6 +973,13 @@
       "label": "Size sub-groups",
       "default": "YOUTH:YTH-, SENIOR:SR-",
       "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. Options matching nothing stay at the end."
+    },
+    {
+      "type": "checkbox",
+      "id": "filter_hide_empty_options",
+      "default": true,
+      "label": "Hide size options with no products",
+      "info": "Shopify greys out options that match nothing instead of removing them. With this on they are dropped, so a sub-heading whose options all match nothing disappears too — e.g. no SENIOR heading on a youth-only collection."
     },
     {
       "type": "text",
@@ -1967,21 +1736,20 @@
   "blocks": [
     {
       "type": "age_option",
-      "name": "Age option",
+      "name": "Age link",
       "limit": 6,
       "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection",
+          "info": "The collection this button links to. The button is highlighted automatically when that collection is the one being viewed."
+        },
         {
           "type": "text",
           "id": "label",
           "label": "Button label",
-          "default": "Youth Battlegear"
-        },
-        {
-          "type": "text",
-          "id": "tag",
-          "label": "Product tag",
-          "default": "Youth",
-          "info": "The product tag this option shows, e.g. Youth. Must match the tag in Shopify exactly (case-insensitive). Requires a 'Product tag' filter enabled in Search & Discovery; products must be tagged for either option to show them."
+          "info": "Leave empty to use the collection's own title."
         }
       ]
     }
@@ -1993,15 +1761,13 @@
         {
           "type": "age_option",
           "settings": {
-            "label": "Youth Battlegear",
-            "tag": "Youth"
+            "label": "Youth Battlegear"
           }
         },
         {
           "type": "age_option",
           "settings": {
-            "label": "Senior Battlegear",
-            "tag": "Senior"
+            "label": "Senior Battlegear"
           }
         }
       ]
