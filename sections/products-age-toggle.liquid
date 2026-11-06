@@ -589,12 +589,6 @@
           {%- if collection.products.size > 0 -%}
             <div class='shop__products-grid-wrap'>
               <div class='shop__products-grid' id='ShopProductsGrid'>
-                {%- comment -%}
-                  Two passes so the selected age group leads the grid:
-                  pass 1 renders the products carrying the active tag, pass 2
-                  the untagged ones shown under every option. Products tagged
-                  with a non-selected option are skipped in both passes.
-                {%- endcomment -%}
                 {%- for product in collection.products -%}
                   <div
                     class='shop__grid-item {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
@@ -939,7 +933,7 @@
       "type": "text",
       "id": "filter_pill_groups",
       "label": "Filters shown as pills",
-      "default": "Age Group, Size, Product Type",
+      "default": "Size, Product Type",
       "info": "Comma-separated filter names, exactly as they appear in Search & Discovery. These render as horizontal pills; every other filter keeps the default checkbox style."
     },
     {
