@@ -151,9 +151,12 @@
      * `:has()` reads that state straight off the sidebar, so the offset
      * tracks it without any measuring.
      *
-     * Measured on the live page: the open sidebar is 380px wide and the
-     * product grid starts exactly at its trailing edge, so the open offset is
-     * the sidebar's own 38.4rem with no extra gutter.
+     * The open sidebar has no width of its own - `38.4rem` in the theme's
+     * CSS is only its *closed* width, used with a matching negative margin to
+     * pull it off-canvas. Open, it is a flex item sized by its content, which
+     * measures 380px on the live page, and the product grid starts exactly at
+     * its trailing edge. 38rem matches that, and `--gsc-age-grid-offset` lets
+     * it be overridden per theme without editing this file.
      *
      * Closed, the grid reclaims the full width and starts level with the
      * heading, so the two cannot both sit at the row's start. The first
@@ -169,7 +172,7 @@
       }
 
       .section-{{ section.id }}:has(.sidebar-filters--static.is-opened) .shop-age__bar{
-        grid-template-columns: 38.4rem 1fr auto;
+        grid-template-columns: var(--gsc-age-grid-offset, 38rem) 1fr auto;
         column-gap: 0;
       }
 
