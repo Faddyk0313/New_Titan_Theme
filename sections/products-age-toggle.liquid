@@ -140,28 +140,41 @@
     }
 
     /*
-     * Align the links with the product grid rather than centring them in
-     * the row.
+     * Align the links with the product grid, in CSS only.
      *
-     * The filter sidebar lives inside .shop__content, a sibling of this bar,
-     * so the bar cannot share that flex layout. Its width also depends on
-     * whether the sidebar is open, and the theme animates it. Rather than
-     * hardcode the theme's 38.4rem, a small script measures the live sidebar
-     * and publishes the offset as --gsc-age-grid-offset; the fallback of 0
-     * keeps the links left-aligned if that script has not run yet.
+     * The filter sidebar is a sibling of this bar inside .shop__content, so
+     * the bar cannot share that flex layout. Instead the bar is a grid whose
+     * first column mirrors the sidebar's own width.
+     *
+     * The theme gives the static sidebar 38.4rem and, while closed, pulls it
+     * off-canvas with a negative margin so the grid reclaims the full width.
+     * `:has()` reads that state straight off the sidebar, so the offset
+     * tracks it without any measuring: 0 when closed, the sidebar's width
+     * plus its 4rem gutter when open. Measured against the live page, the
+     * open sidebar occupies 384px and the grid starts at 444px.
      */
     @media (min-width: 1024px){
       .section-{{ section.id }} .shop-age__bar{
         display: grid;
-        grid-template-columns: var(--gsc-age-grid-offset, 0px) 1fr auto;
+        grid-template-columns: 0px 1fr auto;
         align-items: center;
         column-gap: 0;
+        transition: grid-template-columns 0.25s ease;
+      }
+
+      .section-{{ section.id }}:has(.sidebar-filters--static.is-opened) .shop-age__bar{
+        grid-template-columns: calc(38.4rem + {{ options.toggle_grid_gutter }}px) 1fr auto;
       }
 
       .section-{{ section.id }} .shop-age__heading,
       .section-{{ section.id }} .shop-age__heading-spacer{
         grid-column: 1;
         justify-self: start;
+        /* Never let a long heading push the links out of their column. */
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .section-{{ section.id }} .shop-age__toggle{
@@ -173,11 +186,6 @@
         grid-column: 3;
         margin-left: 0;
       }
-    }
-
-    .section-{{ section.id }} .shop-age__sort{
-      flex: 0 0 auto;
-      margin-left: auto;
     }
 
     .section-{{ section.id }} .shop-age__option{
@@ -247,7 +255,12 @@
        --------------------------------------------------------------- */
 
     .section-{{ section.id }} .filters,
-    .shop-sidebar-{{ section.id }} .filters{
+    /*
+     * Define the tokens on the sidebar itself. The theme renders no
+     * `.filters` element - the form is `.filters__form` - so hanging these
+     * off `.filters` left every var() unresolved and collapsed the borders.
+     */
+    .shop-sidebar-{{ section.id }}{
       --gsc-f-accent: {{ options.filter_accent_color }};
       --gsc-f-muted: {{ options.filter_muted_color }};
       --gsc-f-pill-gap: {{ options.filter_pill_gap }}px;
@@ -359,7 +372,32 @@
       color: var(--gsc-f-accent);
     }
 
-    /* ---- In stock only: Yes / No pills in place of the switch ---- */
+    /* ---- In stock only ----
+       Shopify serves this as a metafield filter whose values render as
+       colour swatches (<shape-swatch>), not text. Hide the swatch and the
+       tick box; the script writes the Yes / No wording into
+       .filters__instock-text, which the pill styling above then picks up. */
+    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__colors{
+      display: flex;
+      flex-flow: row wrap;
+      gap: var(--gsc-f-pill-gap);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock shape-swatch,
+    .shop-sidebar-{{ section.id }} .filters__item--instock .color-swatch,
+    .shop-sidebar-{{ section.id }} .filters__item--instock .checkbox__span{
+      display: none !important;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock tooltip-trigger{
+      display: block;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__instock-text{
+      display: inline-block;
+    }
+
+    /* Standalone Yes / No pills, used when the theme renders the switch. */
     .shop-sidebar-{{ section.id }} .filters__instock{
       display: flex;
       gap: var(--gsc-f-pill-gap);
@@ -378,11 +416,7 @@
       transition: color 0.2s ease, border-color 0.2s ease;
     }
 
-    .shop-sidebar-{{ section.id }} .filters__instock-option:hover{
-      border-color: var(--gsc-f-accent);
-      color: var(--gsc-f-accent);
-    }
-
+    .shop-sidebar-{{ section.id }} .filters__instock-option:hover,
     .shop-sidebar-{{ section.id }} .filters__instock-option.is-active{
       border-color: var(--gsc-f-accent);
       color: var(--gsc-f-accent);
@@ -1131,36 +1165,6 @@
       })
     }
 
-    /*
-     * Publish the filter sidebar's real width so the header bar can line its
-     * links up with the first product column. Measured rather than
-     * hardcoded, because the width depends on the open/closed state, the
-     * filter style and the theme's own breakpoints.
-     */
-    function syncGridOffset() {
-      const section = document.querySelector('.section-' + SECTION_ID) ||
-        document.querySelector('shop-component[data-section-id="' + SECTION_ID + '"]')
-      if (!section) return
-
-      const bar = section.querySelector('.shop-age__bar')
-      if (!bar) return
-
-      const sidebar = section.querySelector('.sidebar-filters--desktop')
-      const grid = section.querySelector('.shop__products')
-      let offset = 0
-
-      if (sidebar && grid) {
-        const sidebarBox = sidebar.getBoundingClientRect()
-        const gridBox = grid.getBoundingClientRect()
-        // Distance from the bar's left edge to where the grid starts.
-        offset = Math.max(0, Math.round(gridBox.left - bar.getBoundingClientRect().left))
-        // A collapsed sidebar is pulled off-canvas; ignore a negative width.
-        if (sidebarBox.width === 0) offset = 0
-      }
-
-      bar.style.setProperty('--gsc-age-grid-offset', offset + 'px')
-    }
-
     function enhance() {
       document
         .querySelectorAll('#SidebarFiltersDesktop, #SidebarFiltersMobile')
@@ -1182,23 +1186,11 @@
 
     const run = () => {
       enhance()
-      syncGridOffset()
-
-      // The sidebar animates open/closed and reflows on resize.
-      window.addEventListener('resize', syncGridOffset)
-      document.addEventListener('transitionend', (event) => {
-        if (event.target.closest && event.target.closest('.sidebar-filters--desktop')) {
-          syncGridOffset()
-        }
-      })
 
       const shop = document.querySelector('shop-component')
       // Re-apply after every filter re-render.
       if (shop && typeof shop.on === 'function') {
-        shop.on('filtersUpdated', () => {
-          enhance()
-          syncGridOffset()
-        })
+        shop.on('filtersUpdated', enhance)
       }
 
       /*
@@ -1212,10 +1204,7 @@
         const addedElement = records.some((record) =>
           Array.from(record.addedNodes).some((node) => node.nodeType === 1)
         )
-        if (addedElement) {
-          enhance()
-          syncGridOffset()
-        }
+        if (addedElement) enhance()
       })
 
       document
@@ -1614,6 +1603,17 @@
       "unit": "px",
       "default": 12,
       "label": "Space between options"
+    },
+    {
+      "type": "range",
+      "id": "toggle_grid_gutter",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 60,
+      "label": "Toggle offset from filter panel",
+      "info": "Gap between the filter sidebar and the links, so they line up with the first product column. Only applies on desktop while the sidebar is open."
     },
     {
       "type": "range",
