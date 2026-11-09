@@ -141,24 +141,21 @@
 
     /*
      * Align the links with the product grid rather than centring them in
-     * the row. On desktop the static filter sidebar occupies 38.4rem plus a
-     * 4rem gutter, so the grid starts after that: lay the bar out as a grid
-     * whose first column matches the sidebar, putting the heading over the
-     * filter panel and the links at the grid's left edge.
+     * the row.
      *
-     * A closed sidebar is pulled off-canvas and the grid reclaims the full
-     * width, so the offset collapses to zero in that case.
+     * The filter sidebar lives inside .shop__content, a sibling of this bar,
+     * so the bar cannot share that flex layout. Its width also depends on
+     * whether the sidebar is open, and the theme animates it. Rather than
+     * hardcode the theme's 38.4rem, a small script measures the live sidebar
+     * and publishes the offset as --gsc-age-grid-offset; the fallback of 0
+     * keeps the links left-aligned if that script has not run yet.
      */
     @media (min-width: 1024px){
       .section-{{ section.id }} .shop-age__bar{
         display: grid;
-        grid-template-columns: 0px 1fr auto;
+        grid-template-columns: var(--gsc-age-grid-offset, 0px) 1fr auto;
         align-items: center;
         column-gap: 0;
-      }
-
-      .section-{{ section.id }}:has(.sidebar-filters--static.is-opened) .shop-age__bar{
-        grid-template-columns: 42.4rem 1fr auto;
       }
 
       .section-{{ section.id }} .shop-age__heading,
@@ -1134,6 +1131,36 @@
       })
     }
 
+    /*
+     * Publish the filter sidebar's real width so the header bar can line its
+     * links up with the first product column. Measured rather than
+     * hardcoded, because the width depends on the open/closed state, the
+     * filter style and the theme's own breakpoints.
+     */
+    function syncGridOffset() {
+      const section = document.querySelector('.section-' + SECTION_ID) ||
+        document.querySelector('shop-component[data-section-id="' + SECTION_ID + '"]')
+      if (!section) return
+
+      const bar = section.querySelector('.shop-age__bar')
+      if (!bar) return
+
+      const sidebar = section.querySelector('.sidebar-filters--desktop')
+      const grid = section.querySelector('.shop__products')
+      let offset = 0
+
+      if (sidebar && grid) {
+        const sidebarBox = sidebar.getBoundingClientRect()
+        const gridBox = grid.getBoundingClientRect()
+        // Distance from the bar's left edge to where the grid starts.
+        offset = Math.max(0, Math.round(gridBox.left - bar.getBoundingClientRect().left))
+        // A collapsed sidebar is pulled off-canvas; ignore a negative width.
+        if (sidebarBox.width === 0) offset = 0
+      }
+
+      bar.style.setProperty('--gsc-age-grid-offset', offset + 'px')
+    }
+
     function enhance() {
       document
         .querySelectorAll('#SidebarFiltersDesktop, #SidebarFiltersMobile')
@@ -1155,10 +1182,24 @@
 
     const run = () => {
       enhance()
+      syncGridOffset()
+
+      // The sidebar animates open/closed and reflows on resize.
+      window.addEventListener('resize', syncGridOffset)
+      document.addEventListener('transitionend', (event) => {
+        if (event.target.closest && event.target.closest('.sidebar-filters--desktop')) {
+          syncGridOffset()
+        }
+      })
 
       const shop = document.querySelector('shop-component')
       // Re-apply after every filter re-render.
-      if (shop && typeof shop.on === 'function') shop.on('filtersUpdated', enhance)
+      if (shop && typeof shop.on === 'function') {
+        shop.on('filtersUpdated', () => {
+          enhance()
+          syncGridOffset()
+        })
+      }
 
       /*
        * Unless the filter style is 'open-embed', each sidebar keeps its
@@ -1171,7 +1212,10 @@
         const addedElement = records.some((record) =>
           Array.from(record.addedNodes).some((node) => node.nodeType === 1)
         )
-        if (addedElement) enhance()
+        if (addedElement) {
+          enhance()
+          syncGridOffset()
+        }
       })
 
       document
