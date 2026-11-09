@@ -184,10 +184,15 @@
 
   assign card_title = mf.card_title.value | default: mf.card_title
 
+  comment
+    The `line:` value was downcased while parsing the tags, so upcase it
+    here: the card is uppercase by design and the text itself should read
+    that way rather than relying on `text-transform` alone.
+  endcomment
   if card_title == blank and tag_line != blank
-    assign card_title = tag_line
+    assign card_title = tag_line | upcase
     if product.type != blank
-      assign card_title = card_title | append: ' ' | append: product.type
+      assign card_title = card_title | append: ' ' | append: product.type | upcase
     endif
   endif
 
