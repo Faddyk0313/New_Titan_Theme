@@ -149,21 +149,28 @@
      * The theme gives the static sidebar 38.4rem and, while closed, pulls it
      * off-canvas with a negative margin so the grid reclaims the full width.
      * `:has()` reads that state straight off the sidebar, so the offset
-     * tracks it without any measuring: 0 when closed, the sidebar's width
-     * plus its 4rem gutter when open. Measured against the live page, the
-     * open sidebar occupies 384px and the grid starts at 444px.
+     * tracks it without any measuring.
+     *
+     * Measured on the live page: the open sidebar is 380px wide and the
+     * product grid starts exactly at its trailing edge, so the open offset is
+     * the sidebar's own 38.4rem with no extra gutter.
+     *
+     * Closed, the grid reclaims the full width and starts level with the
+     * heading, so the two cannot both sit at the row's start. The first
+     * column then sizes to the heading and a gap separates the links, which
+     * is what the closed state should look like.
      */
     @media (min-width: 1024px){
       .section-{{ section.id }} .shop-age__bar{
         display: grid;
-        grid-template-columns: 0px 1fr auto;
+        grid-template-columns: auto 1fr auto;
         align-items: center;
-        column-gap: 0;
-        transition: grid-template-columns 0.25s ease;
+        column-gap: {{ options.toggle_gap }}px;
       }
 
       .section-{{ section.id }}:has(.sidebar-filters--static.is-opened) .shop-age__bar{
-        grid-template-columns: calc(38.4rem + {{ options.toggle_grid_gutter }}px) 1fr auto;
+        grid-template-columns: 38.4rem 1fr auto;
+        column-gap: 0;
       }
 
       .section-{{ section.id }} .shop-age__heading,
@@ -1603,17 +1610,6 @@
       "unit": "px",
       "default": 12,
       "label": "Space between options"
-    },
-    {
-      "type": "range",
-      "id": "toggle_grid_gutter",
-      "min": 0,
-      "max": 100,
-      "step": 4,
-      "unit": "px",
-      "default": 60,
-      "label": "Toggle offset from filter panel",
-      "info": "Gap between the filter sidebar and the links, so they line up with the first product column. Only applies on desktop while the sidebar is open."
     },
     {
       "type": "range",
