@@ -305,15 +305,15 @@
         "age_option_rwg7E3": {
           "type": "age_option",
           "settings": {
-            "label": "Youth Battlegear",
-            "tag": "Youth"
+            "collection": "youth-battlegear",
+            "label": "Youth Battlegear"
           }
         },
         "age_option_rxj6Hm": {
           "type": "age_option",
           "settings": {
-            "label": "Senior Battlegear",
-            "tag": "Senior"
+            "collection": "senior-battlegear",
+            "label": "Senior Battlegear"
           }
         }
       },
@@ -326,7 +326,38 @@
         "heading": "Shop Battlegear",
         "heading_size": "h3",
         "toggle_aria_label": "Age group",
-        "default_age_tag": "Youth",
+        "use_battlegear_card": true,
+        "card_namespace": "custom",
+        "card_descriptor": "CUT-RESISTANT",
+        "card_background": "#1f232a",
+        "card_text_color": "#ffffff",
+        "card_muted_color": "#8b949e",
+        "card_accent_color": "#d4ff32",
+        "card_price_color": "#ffffff",
+        "card_badge_new_color": "#2ec5f6",
+        "card_pill_main_color": "#5a6470",
+        "card_pill_gen_color": "#3b434d",
+        "card_pill_text_color": "#ffffff",
+        "card_content_padding": 14,
+        "card_content_gap": 5,
+        "card_pill_font_size": 10,
+        "card_title_font_size": 20,
+        "card_color_font_size": 13,
+        "card_price_font_size": 15,
+        "card_badge_font_size": 10,
+        "filter_pill_groups": "Size, Product Type",
+        "filter_size_label": "Size",
+        "filter_size_groups": "YOUTH:YTH-, SENIOR:SR-",
+        "filter_instock_label": "In stock only",
+        "filter_instock_yes": "Yes",
+        "filter_instock_no": "No",
+        "filter_accent_color": "#d4ff32",
+        "filter_muted_color": "#8b949e",
+        "filter_pill_gap": 6,
+        "filter_pill_padding_block": 6,
+        "filter_pill_padding_inline": 10,
+        "filter_pill_font_size": 11,
+        "filter_subhead_font_size": 10,
         "toggle_min_width": 200,
         "toggle_gap": 12,
         "toggle_padding_block": 14,
