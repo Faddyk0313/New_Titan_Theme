@@ -198,19 +198,62 @@
 
 {%- liquid
   assign card_image = product.featured_media
-  assign hover_image = blank
-  if product.media.size > 1
-    assign hover_image = product.media[1]
+
+  comment
+    Hover matches the theme's own product card: the image zooms (per the
+    global `img_hover` setting) and the quick-view button appears. No
+    second-image swap - the standard card does not do that here.
+  endcomment
+  assign card_zoom_on_hover = false
+  if settings.img_hover contains 'zoom'
+    assign card_zoom_on_hover = true
+  endif
+
+  assign show_quick_view = false
+  if settings.card_buttons_type != 'none' and product.available
+    assign show_quick_view = true
   endif
 -%}
 
-<div class='bg-card{% if product.available == false %} bg-card--sold-out{% endif %}'>
-  <a class='bg-card__link' href='{{ product.url }}' aria-label='{{ product.title | escape }}'>
-    <div class='bg-card__media-wrap'>
-      {%- if badge_label != blank -%}
-        <span class='bg-card__badge bg-card__badge--{{ badge_kind }}'>{{ badge_label }}</span>
-      {%- endif -%}
+<div
+  class='
+    bg-card
+    {% if product.available == false %}bg-card--sold-out{% endif %}
+    {% if card_zoom_on_hover %}bg-card--zoom{% endif %}
+  '
+>
+  <div class='bg-card__media-wrap'>
+    {%- if badge_label != blank -%}
+      <span class='bg-card__badge bg-card__badge--{{ badge_kind }}'>{{ badge_label }}</span>
+    {%- endif -%}
 
+    {%- comment -%}
+      The quick-view button sits outside the product link: a button nested
+      inside an anchor is invalid markup and swallows the click. It targets
+      the theme's own Quick-view section, the same way the standard product
+      card's button does.
+    {%- endcomment -%}
+    {%- if show_quick_view -%}
+      <button
+        class='bg-card__quick-view'
+        data-quick-view-button
+        data-product-card-quick-view-button
+        data-product-card-button
+        data-quick-view-id='Quick-view'
+        data-product-url='{{ product.url }}'
+        data-product-id='{{ product.id }}'
+        type='button'
+        aria-label='{{- 'cards.product_card.store_front.quick_view_button_label' | t -}}'
+      >
+        {%- render 'icon', icon_name: 'plus', class: 'bg-card__quick-view-icon' -%}
+        <span class='bg-card__quick-view-label'>
+          {{- 'cards.product_card.store_front.quick_view_button_label' | t -}}
+        </span>
+        <div class='loading-spinner btn__loading-spinner'></div>
+      </button>
+    {%- endif -%}
+
+    <a class='bg-card__media-link' href='{{ product.url }}' aria-label='{{ product.title | escape }}' tabindex='-1'>
       <div class='bg-card__media'>
         {%- if card_image -%}
           {{
@@ -223,25 +266,14 @@
               class: 'bg-card__image bg-card__image--primary',
               alt: product.title
           }}
-          {%- if hover_image -%}
-            {{
-              hover_image
-              | image_url: width: 800
-              | image_tag:
-                loading: 'lazy',
-                widths: '200,300,400,500,600,800',
-                sizes: '(min-width: 1024px) 25vw, 50vw',
-                class: 'bg-card__image bg-card__image--hover',
-                alt: product.title
-            }}
-          {%- endif -%}
         {%- else -%}
           {{ 'product-1' | placeholder_svg_tag: 'bg-card__image bg-card__placeholder' }}
         {%- endif -%}
-      </div>
+        </div>
+      </a>
     </div>
 
-    <div class='bg-card__content'>
+    <a class='bg-card__content' href='{{ product.url }}'>
       {%- if pill_attributes != blank or pill_generation != blank -%}
         <div class='bg-card__pill'>
           {%- if pill_attributes != blank -%}
@@ -273,6 +305,5 @@
           <s class='bg-card__price-compare'>{{ money_compare_at_price }}</s>
         {%- endif -%}
       </div>
-    </div>
   </a>
 </div>
