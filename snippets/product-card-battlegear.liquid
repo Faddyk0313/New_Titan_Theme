@@ -1,0 +1,278 @@
+{%- liquid
+  comment
+    Battlegear product card.
+
+    Rendered by sections/products-age-toggle.liquid. The product image is
+    already transparent, so the card sits on a flat panel with no media
+    treatment of its own.
+
+    Four lines, top to bottom:
+
+      1. Attribute pill   YOUTH | CUT-RESISTANT  [GEN_3]
+      2. Title            ELEVATE BASELAYER        (the product line)
+      3. Colourway        MIAMI VICE               (the style / colour)
+      4. Price            $159.00  $179.00         (accent when on sale)
+
+    Every value falls back to something derivable, so the card renders
+    correctly before any of the metafields below exist.
+
+    Product metafields, namespace "custom" (create these when ready; the
+    section exposes the namespace/keys as settings so they can be renamed
+    without touching this file):
+
+      card_attributes  single_line_text_field  -> pill text, e.g. "YOUTH | CUT-RESISTANT"
+      card_generation  single_line_text_field  -> pill chip, e.g. "GEN_3"
+      card_title       single_line_text_field  -> title override
+      card_color       single_line_text_field  -> colourway override
+      card_badge       single_line_text_field  -> corner badge override
+
+    Fallbacks, all verified against the Senior BattleGear collection:
+
+      attributes  <- age from the Youth/Senior tag + "CUT-RESISTANT"
+      generation  <- the `generation:<n>` tag -> "GEN_3"
+      title       <- the `line:<name>` tag + product type -> "ELEVATE BASELAYER"
+      colour      <- the text after the last " - " in the title
+      badge       <- a sale / new / last-chance tag, else the sale state
+  endcomment
+
+  assign ns = card_namespace | default: 'custom'
+  assign mf = product.metafields[ns]
+
+  assign price = product.price | default: 0
+  assign compare_at_price = product.compare_at_price | default: 0
+
+  if settings.show_currency_code
+    assign money_price = price | money_with_currency
+    assign money_compare_at_price = compare_at_price | money_with_currency
+  else
+    assign money_price = price | money
+    assign money_compare_at_price = compare_at_price | money
+  endif
+
+  assign on_sale = false
+  if compare_at_price > price and product.available
+    assign on_sale = true
+  endif
+-%}
+
+{%- liquid
+  comment
+    Split the tags once into the pieces the card needs: the namespaced
+    `line:` / `generation:` values, the age group, and any badge tag.
+  endcomment
+
+  assign tag_line = blank
+  assign tag_generation = blank
+  assign tag_age = blank
+  assign tag_badge = blank
+  assign tag_badge_kind = blank
+
+  for tag in product.tags
+    assign tag_downcase = tag | downcase | strip
+
+    if tag_downcase contains 'line:'
+      assign tag_line = tag_downcase | split: 'line:' | last | strip
+    elsif tag_downcase contains 'generation:'
+      assign tag_generation = tag_downcase | split: 'generation:' | last | strip
+    elsif tag_downcase == 'youth' or tag_downcase == 'senior'
+      assign tag_age = tag_downcase
+    elsif tag_downcase == 'new in stock' or tag_downcase == 'new-in-stock'
+      assign tag_badge = 'NEW IN STOCK'
+      assign tag_badge_kind = 'new'
+    elsif tag_downcase == 'last chance' or tag_downcase == 'last-chance'
+      assign tag_badge = 'LAST CHANCE'
+      assign tag_badge_kind = 'last'
+    endif
+  endfor
+-%}
+
+{%- liquid
+  comment
+    Corner badge. Metafield wins, then a badge tag, then sold out, then the
+    sale state. `badge_kind` drives the colour.
+  endcomment
+
+  assign badge_label = mf.card_badge.value | default: mf.card_badge
+  assign badge_kind = 'custom'
+
+  if badge_label == blank and tag_badge != blank
+    assign badge_label = tag_badge
+    assign badge_kind = tag_badge_kind
+  endif
+
+  if badge_label == blank and product.available == false
+    assign badge_label = 'SOLD OUT'
+    assign badge_kind = 'sold-out'
+  endif
+
+  if badge_label == blank and on_sale
+    assign badge_label = 'SALE'
+    assign badge_kind = 'sale'
+  endif
+-%}
+
+{%- liquid
+  comment
+    Attribute pill. Falls back to the age group plus a configurable
+    descriptor, e.g. "SENIOR | CUT-RESISTANT".
+  endcomment
+
+  assign pill_attributes = mf.card_attributes.value | default: mf.card_attributes
+
+  if pill_attributes == blank
+    assign pill_parts = ''
+    if tag_age != blank
+      assign pill_parts = tag_age | upcase
+    endif
+    if card_descriptor != blank
+      if pill_parts != blank
+        assign pill_parts = pill_parts | append: ' | ' | append: card_descriptor
+      else
+        assign pill_parts = card_descriptor
+      endif
+    endif
+    assign pill_attributes = pill_parts
+  endif
+
+  comment
+    Generation chip. "generation:3.0" becomes "GEN_3": the trailing ".0" is
+    dropped so whole versions read as a single digit, while something like
+    3.5 keeps both parts.
+  endcomment
+
+  assign pill_generation = mf.card_generation.value | default: mf.card_generation
+
+  if pill_generation == blank and tag_generation != blank
+    assign generation_number = tag_generation
+    if generation_number contains '.'
+      assign generation_pieces = generation_number | split: '.'
+      if generation_pieces[1] == '0'
+        assign generation_number = generation_pieces[0]
+      else
+        assign generation_number = generation_pieces | join: '_'
+      endif
+    endif
+    assign pill_generation = 'GEN_' | append: generation_number
+  endif
+-%}
+
+{%- liquid
+  comment
+    Colourway: the text after the last " - " in the title. Verified against
+    every product in the Battlegear collections. A title with no separator
+    degrades to a blank line rather than a wrong one.
+  endcomment
+
+  assign card_color = mf.card_color.value | default: mf.card_color
+  assign title_base = product.title
+
+  if product.title contains ' - '
+    assign title_pieces = product.title | split: ' - '
+    assign title_color = title_pieces | last | strip
+    assign title_piece_count = title_pieces.size | minus: 1
+    assign title_base = title_pieces | slice: 0, title_piece_count | join: ' - '
+
+    if card_color == blank
+      assign card_color = title_color
+    endif
+  endif
+
+  comment
+    Title: the product line plus the product type, e.g. "ELEVATE" +
+    "Baselayer". Falls back to the title with the colourway stripped off.
+  endcomment
+
+  assign card_title = mf.card_title.value | default: mf.card_title
+
+  if card_title == blank and tag_line != blank
+    assign card_title = tag_line
+    if product.type != blank
+      assign card_title = card_title | append: ' ' | append: product.type
+    endif
+  endif
+
+  if card_title == blank
+    assign card_title = title_base
+  endif
+-%}
+
+{%- liquid
+  assign card_image = product.featured_media
+  assign hover_image = blank
+  if product.media.size > 1
+    assign hover_image = product.media[1]
+  endif
+-%}
+
+<div class='bg-card{% if product.available == false %} bg-card--sold-out{% endif %}'>
+  <a class='bg-card__link' href='{{ product.url }}' aria-label='{{ product.title | escape }}'>
+    <div class='bg-card__media-wrap'>
+      {%- if badge_label != blank -%}
+        <span class='bg-card__badge bg-card__badge--{{ badge_kind }}'>{{ badge_label }}</span>
+      {%- endif -%}
+
+      <div class='bg-card__media'>
+        {%- if card_image -%}
+          {{
+            card_image
+            | image_url: width: 800
+            | image_tag:
+              loading: 'lazy',
+              widths: '200,300,400,500,600,800',
+              sizes: '(min-width: 1024px) 25vw, 50vw',
+              class: 'bg-card__image bg-card__image--primary',
+              alt: product.title
+          }}
+          {%- if hover_image -%}
+            {{
+              hover_image
+              | image_url: width: 800
+              | image_tag:
+                loading: 'lazy',
+                widths: '200,300,400,500,600,800',
+                sizes: '(min-width: 1024px) 25vw, 50vw',
+                class: 'bg-card__image bg-card__image--hover',
+                alt: product.title
+            }}
+          {%- endif -%}
+        {%- else -%}
+          {{ 'product-1' | placeholder_svg_tag: 'bg-card__image bg-card__placeholder' }}
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class='bg-card__content'>
+      {%- if pill_attributes != blank or pill_generation != blank -%}
+        <div class='bg-card__pill'>
+          {%- if pill_attributes != blank -%}
+            <span class='bg-card__pill-main'>{{ pill_attributes }}</span>
+          {%- endif -%}
+          {%- if pill_generation != blank -%}
+            <span class='bg-card__pill-gen'>{{ pill_generation }}</span>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if card_title != blank -%}
+        <h3 class='bg-card__title'>{{ card_title }}</h3>
+      {%- endif -%}
+
+      {%- if card_color != blank -%}
+        <div class='bg-card__color'>{{ card_color }}</div>
+      {%- endif -%}
+
+      <div class='bg-card__price{% if on_sale %} bg-card__price--on-sale{% endif %}'>
+        <span class='bg-card__price-current'>
+          {%- if product.price_varies and on_sale == false -%}
+            {{- 'cards.product_card.store_front.from_price_html' | t: price: money_price -}}
+          {%- else -%}
+            {{- money_price -}}
+          {%- endif -%}
+        </span>
+        {%- if on_sale -%}
+          <s class='bg-card__price-compare'>{{ money_compare_at_price }}</s>
+        {%- endif -%}
+      </div>
+    </div>
+  </a>
+</div>
