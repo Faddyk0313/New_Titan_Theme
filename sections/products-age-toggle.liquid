@@ -286,13 +286,15 @@
       width: 7px;
       height: 7px;
       margin-top: -4px;
+      /* The rotated square's corner reaches past its box; keep it inside the row. */
+      margin-right: 2px;
       border-right: 2px solid currentColor;
       border-bottom: 2px solid currentColor;
       transform: rotate(45deg);
       transition: transform 0.25s ease, margin 0.25s ease;
     }
 
-    .section-{{ section.id }} .shop-age__sort .sort-list__btn.is-opened::after{
+    .section-{{ section.id }} .shop-age__sort .sort-list__btn[data-aria-expanded='true']::after{
       margin-top: 4px;
       transform: rotate(-135deg);
     }
