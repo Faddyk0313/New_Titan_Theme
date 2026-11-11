@@ -384,7 +384,7 @@
 
     /* TBG custom code
        Compact panel to match the design: tighter heading/group spacing,
-       smaller muted chevrons, visible but soft dividers, slimmer pills and
+       theme-size chevrons, visible but soft dividers, slimmer pills and
        tick boxes. Nothing in the panel is hard white. */
     .shop-sidebar-{{ section.id }} .filters__label{
       padding-bottom: 12px;
@@ -393,12 +393,6 @@
 
     .shop-sidebar-{{ section.id }} .filters__label--top-spacing{
       padding-top: 16px;
-    }
-
-    .shop-sidebar-{{ section.id }} .filters__chevron{
-      width: 16px;
-      height: 16px;
-      color: var(--gsc-f-muted);
     }
 
     /* Open groups get the theme's 32px bottom padding; trim it. The in-stock
@@ -446,10 +440,10 @@
 
     .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox{
       line-height: 1;
+      font-weight: 600;
       border-color: color-mix(in srgb, var(--gsc-f-muted) 60%, transparent);
     }
 
-    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox:has(.checkbox__input:checked),
     .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox:has(.checkbox__input:checked){
       font-weight: 600;
     }
@@ -1608,7 +1602,7 @@
       "type": "color",
       "id": "filter_heading_color",
       "label": "Group heading",
-      "default": "#c9cdd2"
+      "default": "#c0c0c0"
     },
     {
       "type": "range",
@@ -1711,7 +1705,7 @@
       "max": 32,
       "step": 1,
       "unit": "px",
-      "default": 14,
+      "default": 8,
       "label": "Option vertical padding"
     },
     {
