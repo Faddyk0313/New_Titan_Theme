@@ -609,8 +609,8 @@
 
     .section-{{ section.id }} .bg-card__pill-main,
     .section-{{ section.id }} .bg-card__pill-gen{
-      padding: 3px 8px;
-      color: {{ options.card_pill_text_color }};
+      padding: 2px 7px;
+      border: 1px solid {{ options.card_pill_main_color }};
       font-size: {{ options.card_pill_font_size }}px;
       font-weight: 600;
       letter-spacing: 0.04em;
@@ -619,14 +619,17 @@
       white-space: nowrap;
     }
 
+    /* TBG custom code: one pill colour = attribute fill + both borders + gen text; attribute text separate. */
     .section-{{ section.id }} .bg-card__pill-main{
+      color: {{ options.card_pill_text_color }};
       background: {{ options.card_pill_main_color }};
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .section-{{ section.id }} .bg-card__pill-gen{
-      background: {{ options.card_pill_gen_color }};
+      color: {{ options.card_pill_main_color }};
+      background: transparent;
     }
 
     .section-{{ section.id }} .bg-card__title{
@@ -1388,20 +1391,15 @@
     {
       "type": "color",
       "id": "card_pill_main_color",
-      "label": "Attribute pill background",
-      "default": "#5a6470"
-    },
-    {
-      "type": "color",
-      "id": "card_pill_gen_color",
-      "label": "Generation chip background",
-      "default": "#3b434d"
+      "label": "Pill colour",
+      "info": "Attribute background, attribute and generation borders, generation text.",
+      "default": "#dcdcdc"
     },
     {
       "type": "color",
       "id": "card_pill_text_color",
       "label": "Attribute pill text",
-      "default": "#ffffff"
+      "default": "#404040"
     },
     {
       "type": "range",
