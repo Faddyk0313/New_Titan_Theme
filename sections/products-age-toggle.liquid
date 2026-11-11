@@ -382,6 +382,84 @@
       color: var(--gsc-f-accent);
     }
 
+    /* TBG custom code
+       Compact panel to match the design: tighter heading/group spacing,
+       smaller muted chevrons, visible but soft dividers, slimmer pills and
+       tick boxes. Nothing in the panel is hard white. */
+    .shop-sidebar-{{ section.id }} .filters__label{
+      padding-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__label--top-spacing{
+      padding-top: 16px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__chevron{
+      width: 16px;
+      height: 16px;
+      color: var(--gsc-f-muted);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--bottom-spacing{
+      padding-bottom: 18px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--bordered + .filters__item--bordered{
+      border-top-color: color-mix(in srgb, var(--gsc-f-muted) 30%, transparent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__options{
+      padding-top: 0;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .filters__options{
+      row-gap: 10px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox{
+      align-items: center;
+      column-gap: 10px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__span{
+      width: 16px;
+      height: 16px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__span::before{
+      top: 1px;
+      left: 5px;
+      width: 5px;
+      height: 9px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox__span--outline{
+      border-color: color-mix(in srgb, var(--gsc-f-muted) 60%, transparent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox{
+      line-height: 1;
+      border-color: color-mix(in srgb, var(--gsc-f-muted) 60%, transparent);
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--pills .checkbox:has(.checkbox__input:checked),
+    .shop-sidebar-{{ section.id }} .filters__item--checks .checkbox:has(.checkbox__input:checked){
+      font-weight: 600;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__subhead{
+      margin: 2px 0 0;
+      color: {{ options.filter_heading_color }};
+      font-weight: 600;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__subhead::before{
+      content: '';
+      border-block: 3px solid transparent;
+      border-left: 4px solid currentColor;
+    }
+
     /* ---- In stock only: single on/off switch ----
        One row: the group heading on the left, a switch on the right, no
        accordion. The switch drives the filter's "in stock" checkbox (value
@@ -1524,7 +1602,7 @@
       "type": "color",
       "id": "filter_heading_color",
       "label": "Group heading",
-      "default": "#ffffff"
+      "default": "#c9cdd2"
     },
     {
       "type": "range",
@@ -1563,7 +1641,7 @@
       "max": 20,
       "step": 1,
       "unit": "px",
-      "default": 6,
+      "default": 3,
       "label": "Pill vertical padding"
     },
     {
@@ -1573,7 +1651,7 @@
       "max": 28,
       "step": 1,
       "unit": "px",
-      "default": 10,
+      "default": 7,
       "label": "Pill horizontal padding"
     },
     {
