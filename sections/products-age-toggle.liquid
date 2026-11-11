@@ -382,61 +382,98 @@
       color: var(--gsc-f-accent);
     }
 
-    /* ---- In stock only ----
-       Shopify serves this as a metafield filter whose values render as
-       colour swatches (<shape-swatch>), not text. Hide the swatch and the
-       tick box; the script writes the Yes / No wording into
-       .filters__instock-text, which the pill styling above then picks up. */
-    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__colors{
+    /* ---- In stock only: single on/off switch ----
+       One row: the group heading on the left, a switch on the right, no
+       accordion. The switch drives the filter's "in stock" checkbox (value
+       "1"), so only one state can ever be selected. The options list is
+       hidden; it stays in the DOM because the theme's form reads it.
+       Square, outlined and accent-on to match the pills, not the theme's
+       rounded default. */
+    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__accordeon{
       display: flex;
-      flex-flow: row wrap;
-      gap: var(--gsc-f-pill-gap);
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
 
-    .shop-sidebar-{{ section.id }} .filters__item--instock shape-swatch,
-    .shop-sidebar-{{ section.id }} .filters__item--instock .color-swatch,
-    .shop-sidebar-{{ section.id }} .filters__item--instock .checkbox__span{
+    .shop-sidebar-{{ section.id }} .filters__item--instock .accordeon__btn{
+      flex: 1 1 auto;
+      pointer-events: none;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__chevron,
+    .shop-sidebar-{{ section.id }} .filters__item--instock .accordeon__content-wrap{
       display: none !important;
     }
 
-    .shop-sidebar-{{ section.id }} .filters__item--instock tooltip-trigger{
-      display: block;
-    }
-
-    .shop-sidebar-{{ section.id }} .filters__instock-text{
-      display: inline-block;
-    }
-
-    /* Standalone Yes / No pills, used when the theme renders the switch. */
-    .shop-sidebar-{{ section.id }} .filters__instock{
-      display: flex;
-      gap: var(--gsc-f-pill-gap);
-      padding: 8px 0 0;
-    }
-
-    .shop-sidebar-{{ section.id }} .filters__instock-option{
-      padding: {{ options.filter_pill_padding_block }}px {{ options.filter_pill_padding_inline }}px;
+    .shop-sidebar-{{ section.id }} .filters__instock-switch{
+      position: relative;
+      flex: 0 0 auto;
+      width: 44px;
+      height: 22px;
+      padding: 0;
       border: 1px solid var(--gsc-f-muted);
-      color: var(--gsc-f-muted);
       background: transparent;
-      font-size: {{ options.filter_pill_font_size }}px;
-      letter-spacing: 0.02em;
-      text-transform: uppercase;
       cursor: pointer;
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: border-color 0.2s ease;
     }
 
-    .shop-sidebar-{{ section.id }} .filters__instock-option:hover,
-    .shop-sidebar-{{ section.id }} .filters__instock-option.is-active{
+    .shop-sidebar-{{ section.id }} .filters__instock-switch::after{
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      background: var(--gsc-f-muted);
+      transition: left 0.2s ease, background-color 0.2s ease;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__instock-switch[aria-checked='true']{
       border-color: var(--gsc-f-accent);
-      color: var(--gsc-f-accent);
     }
 
-    /* The original toggle switch is replaced by the pills above. */
-    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch{
-      display: none;
+    .shop-sidebar-{{ section.id }} .filters__instock-switch[aria-checked='true']::after{
+      left: calc(100% - 17px);
+      background: var(--gsc-f-accent);
     }
 
+    .shop-sidebar-{{ section.id }} .filters__instock-switch:focus-visible{
+      outline: 1px solid var(--gsc-f-accent);
+      outline-offset: 2px;
+    }
+
+    /* "Availability" label: the theme renders its own switch; restyle it the
+       same way instead of adding a second one. */
+    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch__container{
+      width: 44px;
+      height: 22px;
+      border: 1px solid var(--gsc-f-muted);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch__toggle{
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border: 0;
+      border-radius: 0;
+      background: var(--gsc-f-muted);
+      box-shadow: none;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch__checkbox:checked + .slider-switch__container{
+      border-color: var(--gsc-f-accent);
+      background: transparent;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock .slider-switch__checkbox:checked + .slider-switch__container .slider-switch__toggle{
+      left: calc(100% - 17px);
+      background: var(--gsc-f-accent);
+    }
 
     /* ---------------------------------------------------------------
        Battlegear product card.
@@ -1007,8 +1044,6 @@
     const SIZE_LABEL = {{ options.filter_size_label | json }}
     const INSTOCK_LABEL = {{ options.filter_instock_label | json }}
     const SIZE_GROUPS = {{ options.filter_size_groups | json }}
-    const YES_LABEL = {{ options.filter_instock_yes | json }}
-    const NO_LABEL = {{ options.filter_instock_no | json }}
 
     const norm = (value) => (value || '').trim().toLowerCase()
     const pillLabels = PILL_LABELS.split(',').map(norm).filter(Boolean)
@@ -1039,7 +1074,7 @@
 
         if (INSTOCK_LABEL && label.startsWith(norm(INSTOCK_LABEL))) {
           item.classList.add('filters__item--instock')
-          buildInStockPills(item)
+          buildInStockSwitch(item)
           return
         }
 
@@ -1091,79 +1126,48 @@
       list.dataset.subgrouped = 'true'
     }
 
-    function buildInStockPills(item) {
+    function buildInStockSwitch(item) {
       /*
-       * Two shapes exist for this filter:
+       * One on/off switch instead of Yes / No checkboxes, so the filter can
+       * never be multi-selected.
        *
-       *   - Labelled "Availability" exactly, the theme renders a slider
-       *     switch (see desktop-filters.liquid). Hide it and add pills that
-       *     drive its checkbox.
-       *   - Any other label, including "In stock only", falls through to the
-       *     generic checkbox branch. Shopify's availability values carry
-       *     empty labels, so those render as unlabelled boxes; style them as
-       *     pills and write the Yes / No text in.
+       * Labelled "Availability" exactly, the theme already renders a slider
+       * switch (desktop-filters.liquid); the CSS restyles that and there is
+       * nothing to build. Any other label, including "In stock only", is a
+       * metafield filter rendered as two checkboxes: value "1" = in stock,
+       * "0" = out of stock. The switch drives the "1" box only.
        */
-      const toggle = item.querySelector('.slider-switch__checkbox')
+      if (item.querySelector('.slider-switch__checkbox')) return
+      if (item.querySelector('.filters__instock-switch')) return
 
-      if (toggle) {
-        if (item.querySelector('.filters__instock')) return
+      const inputs = Array.from(item.querySelectorAll('.checkbox__input'))
+      const yes = inputs.find((input) => ['1', 'true'].includes((input.value || '').trim()))
+      const header = item.querySelector('.accordeon__btn, .filters__label')
+      if (!yes || !header) return
 
-        const wrap = document.createElement('div')
-        wrap.className = 'filters__instock'
+      // The heading is no longer a toggle: keep it out of the tab order.
+      header.setAttribute('tabindex', '-1')
 
-        // The theme's filter form listens for a native change event.
-        const makeOption = (text, checked) => {
-          const option = document.createElement('button')
-          option.type = 'button'
-          option.className = 'filters__instock-option'
-          option.textContent = text
-          option.classList.toggle('is-active', toggle.checked === checked)
-          option.addEventListener('click', () => {
-            if (toggle.checked === checked) return
-            toggle.checked = checked
-            toggle.dispatchEvent(new Event('change', { bubbles: true }))
-          })
-          return option
-        }
+      const toggle = document.createElement('button')
+      toggle.type = 'button'
+      toggle.className = 'filters__instock-switch'
+      toggle.setAttribute('role', 'switch')
+      toggle.setAttribute('aria-checked', String(yes.checked))
+      toggle.setAttribute('aria-label', (header.textContent || '').trim())
 
-        wrap.appendChild(makeOption(YES_LABEL, true))
-        wrap.appendChild(makeOption(NO_LABEL, false))
-
-        const label = item.querySelector('.filters__label')
-        if (label) label.insertAdjacentElement('afterend', wrap)
-        return
-      }
-
-      // Generic checkbox shape: label the options and render them as pills.
-      item.classList.add('filters__item--pills')
-
-      const options = Array.from(item.querySelectorAll('.checkbox'))
-      options.forEach((option) => {
-        if (option.dataset.instockLabelled === 'true') return
-
-        const input = option.querySelector('.checkbox__input')
-        if (!input) return
-
-        /*
-         * Shopify encodes in-stock as value "1" and out-of-stock as "0".
-         * Fall back to source order when the value is something else.
-         */
-        const raw = (input.value || '').trim()
-        let isYes
-        if (raw === '1' || raw === 'true') isYes = true
-        else if (raw === '0' || raw === 'false') isYes = false
-        else isYes = options.indexOf(option) === 0
-
-        let textNode = option.querySelector('.filters__instock-text')
-        if (!textNode) {
-          textNode = document.createElement('span')
-          textNode.className = 'filters__instock-text'
-          option.appendChild(textNode)
-        }
-        textNode.textContent = isYes ? YES_LABEL : NO_LABEL
-
-        option.dataset.instockLabelled = 'true'
+      toggle.addEventListener('click', () => {
+        // An old URL may still carry the out-of-stock value; clear it so the
+        // switch is the only state submitted.
+        inputs.forEach((input) => {
+          if (input !== yes) input.checked = false
+        })
+        // click() toggles the real checkbox and fires the native input and
+        // change events the theme's filter form listens for.
+        yes.click()
+        toggle.setAttribute('aria-checked', String(yes.checked))
       })
+
+      header.insertAdjacentElement('afterend', toggle)
     }
 
     function enhance() {
@@ -1490,18 +1494,6 @@
       "label": "In-stock filter name",
       "default": "In stock only",
       "info": "This filter's on/off switch is replaced with two pills."
-    },
-    {
-      "type": "text",
-      "id": "filter_instock_yes",
-      "label": "In-stock: on label",
-      "default": "Yes"
-    },
-    {
-      "type": "text",
-      "id": "filter_instock_no",
-      "label": "In-stock: off label",
-      "default": "No"
     },
     {
       "type": "header",
