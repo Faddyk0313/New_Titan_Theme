@@ -28,8 +28,7 @@
 
       attributes  <- age from the Youth/Senior tag + "CUT-RESISTANT"
       generation  <- the `generation:<n>` tag -> "GEN_3"
-      title       <- product type, prefixed by the `line:<name>` tag -> "ELEVATE BASELAYER"
-                     (no metafield; see the title block below)
+      title       <- product type only -> "BASELAYER" (no tags, no metafield)
       colour      <- the text after the last " - " in the title
       badge       <- the product's own `theme.label` list, coloured by
                      `theme.label_color` / `custom.product_label_text_color`;
@@ -58,19 +57,16 @@
 
 {%- liquid
   comment
-    Split the tags once into the pieces the card needs: the namespaced
-    `line:` / `generation:` values, the age group, and any badge tag.
+    Split the tags once into the pieces the card needs: the
+    `generation:` value and the age group.
   endcomment
 
-  assign tag_line = blank
   assign tag_generation = blank
   assign tag_age = blank
   for tag in product.tags
     assign tag_downcase = tag | downcase | strip
 
-    if tag_downcase contains 'line:'
-      assign tag_line = tag_downcase | split: 'line:' | last | strip
-    elsif tag_downcase contains 'generation:'
+    if tag_downcase contains 'generation:'
       assign tag_generation = tag_downcase | split: 'generation:' | last | strip
     elsif tag_downcase == 'youth' or tag_downcase == 'senior'
       assign tag_age = tag_downcase
@@ -208,23 +204,14 @@
   endif
 
   comment
-    Title: the product type (e.g. "Baselayer"), prefixed with the product
-    line from the `line:` tag (e.g. "ELEVATE") -> "ELEVATE BASELAYER".
-    No metafield override. Falls back to the title with the colourway
-    stripped off when the product has no type.
-
-    The `line:` value was downcased while parsing the tags, so the result is
-    upcased here: the card is uppercase by design and the text itself should
-    read that way rather than relying on `text-transform` alone.
+    TBG custom code
+    Title: the product type only, e.g. "Baselayer" -> "BASELAYER". Nothing
+    from tags or metafields. Upcased in the markup since the card is
+    uppercase by design. Falls back to the title minus its colourway only
+    when the product has no type, so the line is never blank.
   endcomment
 
-  assign card_title = blank
-  if product.type != blank
-    assign card_title = product.type | upcase
-    if tag_line != blank
-      assign card_title = tag_line | upcase | append: ' ' | append: card_title
-    endif
-  endif
+  assign card_title = product.type | upcase
 
   if card_title == blank
     assign card_title = title_base
@@ -270,7 +257,15 @@
     {% if card_zoom_on_hover %}bg-card--zoom{% endif %}
   '
 >
-  <div class='bg-card__media-wrap'>
+  {%- comment -%}
+    TBG custom code
+    `product-card__inner` is the theme's own image-wrapper class. Every theme
+    rule that sizes and shows the quick-view button is scoped to it (e.g.
+    `.product-card--button-type-desktop-both .product-card__inner
+    .product-card__btn { width: 100% }`), so with it the button is full width
+    and behaves exactly as on the standard card.
+  {%- endcomment -%}
+  <div class='bg-card__media-wrap product-card__inner'>
     {%- liquid
       comment
         Render every label the product carries, suppressing LAST CHANCE
