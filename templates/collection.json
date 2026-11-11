@@ -305,14 +305,14 @@
         "age_option_8bxijR": {
           "type": "age_option",
           "settings": {
-            "collection": "",
+            "collection": "youth-battlegear",
             "label": "Youth Battlegear"
           }
         },
         "age_option_UmmA6i": {
           "type": "age_option",
           "settings": {
-            "collection": "",
+            "collection": "senior-battlegear",
             "label": "Senior Battlegear"
           }
         }
