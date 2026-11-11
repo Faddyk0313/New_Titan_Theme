@@ -392,7 +392,7 @@
         "show_divider": true,
         "show_result_count": false,
         "enable_uppercase_title": true,
-        "container_size": "page-width",
+        "container_size": "large",
         "round_level": "default",
         "color_scheme_variant": "own",
         "color_scheme": "2",
