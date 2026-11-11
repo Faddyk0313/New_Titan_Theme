@@ -208,6 +208,8 @@
       background: transparent;
       color: currentColor;
       font-size: {{ options.toggle_font_size }}px;
+      /* TBG custom code: bolder link text */
+      font-weight: 600;
       letter-spacing: 0.04em;
       line-height: 1.1;
       text-align: center;
@@ -237,17 +239,62 @@
         gap: 12px;
       }
 
-      .section-{{ section.id }} .shop-age__toggle{
-        order: 3;
-        width: 100%;
+      /* TBG custom code
+         Mobile: heading on its own line, then the links and Sort share the
+         next line, Sort last. */
+      .section-{{ section.id }} .shop-age__heading,
+      .section-{{ section.id }} .shop-age__heading-spacer{
         flex: 1 0 100%;
+      }
+
+      .section-{{ section.id }} .shop-age__toggle{
+        order: 2;
+        flex: 1 1 0;
+        min-width: 0;
+        flex-wrap: nowrap;
         justify-content: stretch;
+      }
+
+      .section-{{ section.id }} .shop-age__sort{
+        order: 3;
+        flex: 0 0 auto;
       }
 
       .section-{{ section.id }} .shop-age__option{
         flex: 1 1 0;
         min-width: 0;
+        padding-inline: 8px;
       }
+    }
+
+    /* TBG custom code
+       Sort trigger: just the "Sort" label and a chevron, desktop and mobile.
+       The snippet is shared, so its icon and active-option text are hidden
+       here rather than removed. The chevron flips while the dropdown is open. */
+    .section-{{ section.id }} .shop-age__sort .sort-list__btn-icon,
+    .section-{{ section.id }} .shop-age__sort .sort-list-dropdown__active-sort-option{
+      display: none;
+    }
+
+    .section-{{ section.id }} .shop-age__sort .sort-list__btn{
+      column-gap: 8px;
+      white-space: nowrap;
+    }
+
+    .section-{{ section.id }} .shop-age__sort .sort-list__btn::after{
+      content: '';
+      width: 7px;
+      height: 7px;
+      margin-top: -4px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform 0.25s ease, margin 0.25s ease;
+    }
+
+    .section-{{ section.id }} .shop-age__sort .sort-list__btn.is-opened::after{
+      margin-top: 4px;
+      transform: rotate(-135deg);
     }
 
     /* ---------------------------------------------------------------
