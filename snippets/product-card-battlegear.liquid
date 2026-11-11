@@ -24,7 +24,6 @@
       card_generation  single_line_text_field  -> pill chip, e.g. "GEN_3"
       card_title       single_line_text_field  -> title override
       card_color       single_line_text_field  -> colourway override
-      card_badge       single_line_text_field  -> corner badge override
 
     Fallbacks, all verified against the Senior BattleGear collection:
 
@@ -32,7 +31,9 @@
       generation  <- the `generation:<n>` tag -> "GEN_3"
       title       <- the `line:<name>` tag + product type -> "ELEVATE BASELAYER"
       colour      <- the text after the last " - " in the title
-      badge       <- a sale / new / last-chance tag, else the sale state
+      badge       <- the product's own `theme.label` list, coloured by
+                     `theme.label_color` / `custom.product_label_text_color`;
+                     falls back to the sale state, then sold out
   endcomment
 
   assign ns = card_namespace | default: 'custom'
@@ -64,9 +65,6 @@
   assign tag_line = blank
   assign tag_generation = blank
   assign tag_age = blank
-  assign tag_badge = blank
-  assign tag_badge_kind = blank
-
   for tag in product.tags
     assign tag_downcase = tag | downcase | strip
 
@@ -76,38 +74,54 @@
       assign tag_generation = tag_downcase | split: 'generation:' | last | strip
     elsif tag_downcase == 'youth' or tag_downcase == 'senior'
       assign tag_age = tag_downcase
-    elsif tag_downcase == 'new in stock' or tag_downcase == 'new-in-stock'
-      assign tag_badge = 'NEW IN STOCK'
-      assign tag_badge_kind = 'new'
-    elsif tag_downcase == 'last chance' or tag_downcase == 'last-chance'
-      assign tag_badge = 'LAST CHANCE'
-      assign tag_badge_kind = 'last'
     endif
   endfor
 -%}
 
 {%- liquid
   comment
-    Corner badge. Metafield wins, then a badge tag, then sold out, then the
-    sale state. `badge_kind` drives the colour.
+    Corner badges.
+
+    Source of truth is the product metafield `theme.label` - a LIST of
+    single-line text, so a product can carry more than one - set per product
+    in the admin. These are the store's real values:
+
+      NEW IN STOCK, BACK IN STOCK, COMING SOON, COMING LATER,
+      LAST CHANCE, SOLD OUT
+
+    Colour comes from the product too, not from this card:
+
+      theme.label_color                 -> badge background (e.g. #00c3ff)
+      custom.product_label_text_color   -> badge text, when set
+
+    The one rule that is not in the metafield: a "LAST CHANCE" label only
+    shows on products that are actually in the Last Chance collection.
+    Elsewhere it is suppressed, because the label outlives the promotion.
+
+    The sale badge is separate and still computed from price, below.
   endcomment
 
-  assign badge_label = mf.card_badge.value | default: mf.card_badge
-  assign badge_kind = 'custom'
+  assign in_last_chance = false
+  for product_collection in product.collections
+    if product_collection.handle == badge_last_chance_handle
+      assign in_last_chance = true
+      break
+    endif
+  endfor
 
-  if badge_label == blank and tag_badge != blank
-    assign badge_label = tag_badge
-    assign badge_kind = tag_badge_kind
-  endif
+  assign badge_background = product.metafields.theme.label_color.value
+  assign badge_text_color = product.metafields.custom.product_label_text_color.value
+-%}
 
-  if badge_label == blank and product.available == false
-    assign badge_label = 'SOLD OUT'
-    assign badge_kind = 'sold-out'
-  endif
+{%- liquid
+  comment
+    Sale badge, kept as it was: derived from the price, shown only when the
+    product carries no label of its own and is not a Last Chance product.
+  endcomment
 
-  if badge_label == blank and on_sale
-    assign badge_label = 'SALE'
-    assign badge_kind = 'sale'
+  assign show_sale_badge = false
+  if on_sale and in_last_chance == false and product.metafields.theme.label.value == blank
+    assign show_sale_badge = true
   endif
 -%}
 
@@ -228,34 +242,95 @@
   '
 >
   <div class='bg-card__media-wrap'>
-    {%- if badge_label != blank -%}
-      <span class='bg-card__badge bg-card__badge--{{ badge_kind }}'>{{ badge_label }}</span>
+    {%- liquid
+      comment
+        Render every label the product carries, suppressing LAST CHANCE
+        outside the Last Chance collection. `theme.label` is a list, so a
+        product may legitimately show more than one.
+      endcomment
+    -%}
+    {%- if product.metafields.theme.label.value != blank -%}
+      <div class='bg-card__badges'>
+        {%- for label in product.metafields.theme.label.value -%}
+          {%- liquid
+            assign label_upcase = label | upcase | strip
+            assign render_label = true
+            if label_upcase == 'LAST CHANCE' and in_last_chance == false
+              assign render_label = false
+            endif
+          -%}
+          {%- if render_label -%}
+            <span
+              class='bg-card__badge bg-card__badge--label'
+              {% if badge_background != blank or badge_text_color != blank %}
+                style='
+                  {%- if badge_background != blank %}background:{{ badge_background }};{% endif -%}
+                  {%- if badge_text_color != blank %}color:{{ badge_text_color }};{% endif -%}
+                '
+              {% endif %}
+            >
+              {{- label | escape -}}
+            </span>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- elsif show_sale_badge -%}
+      <div class='bg-card__badges'>
+        <span class='bg-card__badge bg-card__badge--sale'>{{ badge_sale_label }}</span>
+      </div>
+    {%- elsif product.available == false -%}
+      <div class='bg-card__badges'>
+        <span class='bg-card__badge bg-card__badge--sold-out'>{{ badge_sold_out_label }}</span>
+      </div>
     {%- endif -%}
 
     {%- comment -%}
-      The quick-view button sits outside the product link: a button nested
-      inside an anchor is invalid markup and swallows the click. It targets
-      the theme's own Quick-view section, the same way the standard product
-      card's button does.
+      Quick view, exactly as the theme's own product card renders it: the
+      same `btn btn--<style> product-card__btn` classes, the same
+      `buy-icons-pack` icon driven by the global settings, and the same
+      `product-card__btns` / `product-card__btn-wrapper` wrappers, so the
+      theme's stylesheet positions and reveals it. Nothing here restyles the
+      button - that was not part of the redesign.
+
+      It sits outside the product link because a button nested inside an
+      anchor is invalid markup and swallows the click.
     {%- endcomment -%}
     {%- if show_quick_view -%}
-      <button
-        class='bg-card__quick-view'
-        data-quick-view-button
-        data-product-card-quick-view-button
-        data-product-card-button
-        data-quick-view-id='Quick-view'
-        data-product-url='{{ product.url }}'
-        data-product-id='{{ product.id }}'
-        type='button'
-        aria-label='{{- 'cards.product_card.store_front.quick_view_button_label' | t -}}'
-      >
-        {%- render 'icon', icon_name: 'plus', class: 'bg-card__quick-view-icon' -%}
-        <span class='bg-card__quick-view-label'>
-          {{- 'cards.product_card.store_front.quick_view_button_label' | t -}}
-        </span>
-        <div class='loading-spinner btn__loading-spinner'></div>
-      </button>
+      {%- liquid
+        assign quickview_type_setting_value = settings.product_card_quickview_icon | split: '-'
+        assign quickview_icon_type = quickview_type_setting_value | first | append: '-icon-with-styles'
+        assign quickview_icon_style = quickview_type_setting_value | last
+        assign quickview_icon_stroke_width = settings.product_card_quickview_icon_stroke_width
+        assign button_style = settings.button_style
+      -%}
+      <div class='product-card__btns' data-product-card-buttons>
+        <div class='product-card__btn-wrapper' id='product-card-quick-view-btn-{{ product.id }}'>
+          <button
+            class='btn btn--{{ button_style }} product-card__btn'
+            data-quick-view-button
+            data-product-card-quick-view-button
+            data-product-card-button
+            data-quick-view-id='Quick-view'
+            data-product-url='{{ product.url }}'
+            data-product-id='{{ product.id }}'
+            type='button'
+            aria-label='{{- 'cards.product_card.store_front.quick_view_button_label' | t -}}'
+          >
+            <span class='product-card__btn-inner'>
+              {%- render 'buy-icons-pack',
+                icon: quickview_icon_type,
+                class: 'product-card__btn-icon',
+                icon_style: quickview_icon_style,
+                stroke_width: quickview_icon_stroke_width
+              -%}
+              <span class='product-card__btn-label-text' data-product-card-button-text>
+                {{- 'cards.product_card.store_front.quick_view_button_label' | t -}}
+              </span>
+            </span>
+            <div class='loading-spinner btn__loading-spinner'></div>
+          </button>
+        </div>
+      </div>
     {%- endif -%}
 
     <a class='bg-card__media-link' href='{{ product.url }}' aria-label='{{ product.title | escape }}' tabindex='-1'>

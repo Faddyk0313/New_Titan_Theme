@@ -495,55 +495,34 @@
       opacity: 0.5;
     }
 
-    /* ---- Quick view, revealed on hover like the standard card ---- */
-    .section-{{ section.id }} .bg-card__quick-view{
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 12px;
-      border: 0;
-      color: {{ options.card_quick_view_text }};
-      background: {{ options.card_quick_view_background }};
-      font-size: {{ options.card_pill_font_size }}px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.25s ease, transform 0.25s ease;
-    }
+    /*
+     * Quick view is deliberately unstyled here: the card reuses the theme's
+     * own `product-card__btn` markup so the theme's stylesheet positions and
+     * reveals it. Restyling it was never part of this redesign.
+     */
 
-    .section-{{ section.id }} .bg-card:hover .bg-card__quick-view,
-    .section-{{ section.id }} .bg-card__quick-view:focus-visible{
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .section-{{ section.id }} .bg-card__quick-view-icon{
-      width: 14px;
-      height: 14px;
-    }
-
-    /* Touch devices never hover, so keep the button visible there. */
-    @media (hover: none){
-      .section-{{ section.id }} .bg-card__quick-view{
-        opacity: 1;
-        transform: none;
-      }
-    }
-
-    /* ---- Corner badge ---- */
-    .section-{{ section.id }} .bg-card__badge{
+    /* ---- Corner badges ---- */
+    /*
+     * Badge text and colour come from the product's own metafields
+     * (`theme.label`, `theme.label_color`, `custom.product_label_text_color`),
+     * applied inline by the card. The rules here only set the shape, so an
+     * inline colour always wins; the colours below are the fallbacks used
+     * when a product sets no colour of its own.
+     *
+     * `theme.label` is a list, so the stack handles a product with several.
+     */
+    .section-{{ section.id }} .bg-card__badges{
       position: absolute;
       top: 0;
       left: 0;
       z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+    }
+
+    .section-{{ section.id }} .bg-card__badge{
       padding: 4px 10px;
       color: #000;
       background: var(--gsc-bg-card-accent);
@@ -552,10 +531,17 @@
       letter-spacing: 0.04em;
       line-height: 1.2;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .section-{{ section.id }} .bg-card__badge--new{
+    .section-{{ section.id }} .bg-card__badge--label{
+      color: {{ options.card_badge_label_text_color }};
       background: {{ options.card_badge_new_color }};
+    }
+
+    .section-{{ section.id }} .bg-card__badge--sale{
+      color: #000;
+      background: var(--gsc-bg-card-accent);
     }
 
     .section-{{ section.id }} .bg-card__badge--sold-out{
@@ -902,7 +888,10 @@
                       {% render 'product-card-battlegear',
                         product: product,
                         card_namespace: options.card_namespace,
-                        card_descriptor: options.card_descriptor
+                        card_descriptor: options.card_descriptor,
+                        badge_last_chance_handle: options.card_badge_last_chance_handle,
+                        badge_sale_label: options.card_badge_sale_label,
+                        badge_sold_out_label: options.card_badge_sold_out_label
                       %}
                     {%- else -%}
                       {% render 'product-card',
@@ -1350,8 +1339,35 @@
     {
       "type": "color",
       "id": "card_badge_new_color",
-      "label": "\"New in stock\" badge",
+      "label": "Label badge background",
+      "info": "Fallback only. A product that sets theme.label_color uses its own colour instead.",
       "default": "#2ec5f6"
+    },
+    {
+      "type": "color",
+      "id": "card_badge_label_text_color",
+      "label": "Label badge text",
+      "info": "Fallback only. A product that sets custom.product_label_text_color uses its own colour instead.",
+      "default": "#000000"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_last_chance_handle",
+      "label": "Last Chance collection handle",
+      "info": "A \"LAST CHANCE\" label only shows on products in this collection, so the label can stay on a product after the promotion ends.",
+      "default": "last-chance"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_sale_label",
+      "label": "Sale badge text",
+      "default": "SALE"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_sold_out_label",
+      "label": "Sold out badge text",
+      "default": "SOLD OUT"
     },
     {
       "type": "color",
@@ -1440,18 +1456,6 @@
       "unit": "px",
       "default": 10,
       "label": "Badge font size"
-    },
-    {
-      "type": "color",
-      "id": "card_quick_view_background",
-      "label": "Quick view background",
-      "default": "#ffffff"
-    },
-    {
-      "type": "color",
-      "id": "card_quick_view_text",
-      "label": "Quick view text",
-      "default": "#000000"
     },
     {
       "type": "header",
