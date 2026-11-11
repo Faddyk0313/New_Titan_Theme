@@ -534,9 +534,11 @@
       white-space: nowrap;
     }
 
+    /* Labels are outlined: coloured border + text, never a fill. */
     .section-{{ section.id }} .bg-card__badge--label{
+      border: 1px solid {{ options.card_badge_new_color }};
       color: {{ options.card_badge_label_text_color }};
-      background: {{ options.card_badge_new_color }};
+      background: transparent;
     }
 
     .section-{{ section.id }} .bg-card__badge--sale{
@@ -1293,7 +1295,7 @@
       "id": "card_namespace",
       "label": "Metafield namespace",
       "default": "custom",
-      "info": "Namespace holding card_attributes, card_generation, card_title, card_color and card_badge. Each falls back to data derived from the product, so the card works before they exist."
+      "info": "Namespace holding card_attributes, card_generation and card_color. Each falls back to data derived from the product, so the card works before they exist."
     },
     {
       "type": "text",
@@ -1339,7 +1341,7 @@
     {
       "type": "color",
       "id": "card_badge_new_color",
-      "label": "Label badge background",
+      "label": "Label badge border",
       "info": "Fallback only. A product that sets theme.label_color uses its own colour instead.",
       "default": "#2ec5f6"
     },
@@ -1347,8 +1349,8 @@
       "type": "color",
       "id": "card_badge_label_text_color",
       "label": "Label badge text",
-      "info": "Fallback only. A product that sets custom.product_label_text_color uses its own colour instead.",
-      "default": "#000000"
+      "info": "Fallback only. A product uses custom.product_label_text_color, else its theme.label_color.",
+      "default": "#2ec5f6"
     },
     {
       "type": "text",

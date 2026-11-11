@@ -22,14 +22,14 @@
 
       card_attributes  single_line_text_field  -> pill text, e.g. "YOUTH | CUT-RESISTANT"
       card_generation  single_line_text_field  -> pill chip, e.g. "GEN_3"
-      card_title       single_line_text_field  -> title override
       card_color       single_line_text_field  -> colourway override
 
     Fallbacks, all verified against the Senior BattleGear collection:
 
       attributes  <- age from the Youth/Senior tag + "CUT-RESISTANT"
       generation  <- the `generation:<n>` tag -> "GEN_3"
-      title       <- the `line:<name>` tag + product type -> "ELEVATE BASELAYER"
+      title       <- product type, prefixed by the `line:<name>` tag -> "ELEVATE BASELAYER"
+                     (no metafield; see the title block below)
       colour      <- the text after the last " - " in the title
       badge       <- the product's own `theme.label` list, coloured by
                      `theme.label_color` / `custom.product_label_text_color`;
@@ -109,8 +109,15 @@
     endif
   endfor
 
-  assign badge_background = product.metafields.theme.label_color.value
-  assign badge_text_color = product.metafields.custom.product_label_text_color.value
+  comment
+    Outlined badges, transparent background:
+      border <- theme.label_color
+      text   <- custom.product_label_text_color, else the border colour so
+                border and text match as in the design
+    Section settings cover products that set neither.
+  endcomment
+  assign badge_border_color = product.metafields.theme.label_color.value
+  assign badge_text_color = product.metafields.custom.product_label_text_color.value | default: badge_border_color
 -%}
 
 {%- liquid
@@ -201,21 +208,21 @@
   endif
 
   comment
-    Title: the product line plus the product type, e.g. "ELEVATE" +
-    "Baselayer". Falls back to the title with the colourway stripped off.
+    Title: the product type (e.g. "Baselayer"), prefixed with the product
+    line from the `line:` tag (e.g. "ELEVATE") -> "ELEVATE BASELAYER".
+    No metafield override. Falls back to the title with the colourway
+    stripped off when the product has no type.
+
+    The `line:` value was downcased while parsing the tags, so the result is
+    upcased here: the card is uppercase by design and the text itself should
+    read that way rather than relying on `text-transform` alone.
   endcomment
 
-  assign card_title = mf.card_title.value | default: mf.card_title
-
-  comment
-    The `line:` value was downcased while parsing the tags, so upcase it
-    here: the card is uppercase by design and the text itself should read
-    that way rather than relying on `text-transform` alone.
-  endcomment
-  if card_title == blank and tag_line != blank
-    assign card_title = tag_line | upcase
-    if product.type != blank
-      assign card_title = card_title | append: ' ' | append: product.type | upcase
+  assign card_title = blank
+  if product.type != blank
+    assign card_title = product.type | upcase
+    if tag_line != blank
+      assign card_title = tag_line | upcase | append: ' ' | append: card_title
     endif
   endif
 
@@ -293,9 +300,9 @@
             {%- if render_label -%}
               <span
                 class='bg-card__badge bg-card__badge--label'
-                {% if badge_background != blank or badge_text_color != blank %}
+                {% if badge_border_color != blank or badge_text_color != blank %}
                   style='
-                    {%- if badge_background != blank %}background:{{ badge_background }};{% endif -%}
+                    {%- if badge_border_color != blank %}border-color:{{ badge_border_color }};{% endif -%}
                     {%- if badge_text_color != blank %}color:{{ badge_text_color }};{% endif -%}
                   '
                 {% endif %}
