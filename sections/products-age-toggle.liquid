@@ -401,8 +401,14 @@
       color: var(--gsc-f-muted);
     }
 
-    .shop-sidebar-{{ section.id }} .filters__item--bottom-spacing{
+    /* Open groups get the theme's 32px bottom padding; trim it. The in-stock
+       row has no content, so its heading padding alone spaces it. */
+    .shop-sidebar-{{ section.id }} .filters__accordeon[data-aria-expanded='true']{
       padding-bottom: 18px;
+    }
+
+    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__accordeon{
+      padding-bottom: 6px;
     }
 
     .shop-sidebar-{{ section.id }} .filters__item--bordered + .filters__item--bordered{
