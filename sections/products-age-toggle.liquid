@@ -389,15 +389,14 @@
        hidden; it stays in the DOM because the theme's form reads it.
        Square, outlined and accent-on to match the pills, not the theme's
        rounded default. */
-    .shop-sidebar-{{ section.id }} .filters__item--instock .filters__accordeon{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
+    /* TBG custom code
+       The switch lives inside the heading row, so it centres on the heading
+       text's line box. Centred against the whole row it sat low, because the
+       heading carries the theme's bottom padding. The heading itself no longer
+       toggles anything, so only the switch takes clicks. */
     .shop-sidebar-{{ section.id }} .filters__item--instock .accordeon__btn{
-      flex: 1 1 auto;
+      align-items: center;
+      gap: 16px;
       pointer-events: none;
     }
 
@@ -406,9 +405,12 @@
       display: none !important;
     }
 
+    /* TBG custom code */
     .shop-sidebar-{{ section.id }} .filters__instock-switch{
       position: relative;
       flex: 0 0 auto;
+      margin-left: auto;
+      pointer-events: auto;
       width: 44px;
       height: 22px;
       padding: 0;
@@ -1126,6 +1128,7 @@
       list.dataset.subgrouped = 'true'
     }
 
+    // TBG custom code
     function buildInStockSwitch(item) {
       /*
        * One on/off switch instead of Yes / No checkboxes, so the filter can
@@ -1155,7 +1158,13 @@
       toggle.setAttribute('aria-checked', String(yes.checked))
       toggle.setAttribute('aria-label', (header.textContent || '').trim())
 
-      toggle.addEventListener('click', () => {
+      // TBG custom code
+      // The switch sits inside the theme's accordion heading: keep its clicks
+      // and keys from reaching the accordion, which would otherwise toggle
+      // (and swallow Space).
+      toggle.addEventListener('keydown', (event) => event.stopPropagation())
+      toggle.addEventListener('click', (event) => {
+        event.stopPropagation()
         // An old URL may still carry the out-of-stock value; clear it so the
         // switch is the only state submitted.
         inputs.forEach((input) => {
@@ -1167,7 +1176,8 @@
         toggle.setAttribute('aria-checked', String(yes.checked))
       })
 
-      header.insertAdjacentElement('afterend', toggle)
+      // TBG custom code: inside the heading row, so it centres on the text.
+      header.appendChild(toggle)
     }
 
     function enhance() {
