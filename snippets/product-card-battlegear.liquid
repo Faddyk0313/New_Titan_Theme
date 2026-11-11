@@ -234,9 +234,22 @@
   endif
 -%}
 
+{%- comment -%}
+  The `product-card--*` classes are the theme's own. They are what its
+  stylesheet keys the quick-view button off - its position over the image and
+  its reveal on hover both come from
+  `product-card--button-position-desktop-<setting>` - so the button behaves
+  exactly as it does on the standard card, driven by the same settings.
+{%- endcomment -%}
 <div
   class='
     bg-card
+    product-card
+    product-card--card-button-type-{{ settings.card_buttons_type }}
+    product-card--button-position-desktop-{{ settings.desktop_button_position }}
+    product-card--button-position-mobile-{{ settings.mobile_button_position }}
+    product-card--button-type-desktop-{{ settings.desktop_button_type }}
+    product-card--button-type-mobile-{{ settings.mobile_button_type }}
     {% if product.available == false %}bg-card--sold-out{% endif %}
     {% if card_zoom_on_hover %}bg-card--zoom{% endif %}
   '
@@ -303,9 +316,10 @@
         assign quickview_icon_stroke_width = settings.product_card_quickview_icon_stroke_width
         assign button_style = settings.button_style
       -%}
-      <div class='product-card__btns' data-product-card-buttons>
-        <div class='product-card__btn-wrapper' id='product-card-quick-view-btn-{{ product.id }}'>
-          <button
+      <div class='product-card__actions'>
+        <div class='product-card__btns' data-product-card-buttons>
+          <div class='product-card__btn-wrapper' id='product-card-quick-view-btn-{{ product.id }}'>
+            <button
             class='btn btn--{{ button_style }} product-card__btn'
             data-quick-view-button
             data-product-card-quick-view-button
@@ -328,7 +342,8 @@
               </span>
             </span>
             <div class='loading-spinner btn__loading-spinner'></div>
-          </button>
+            </button>
+          </div>
         </div>
       </div>
     {%- endif -%}
