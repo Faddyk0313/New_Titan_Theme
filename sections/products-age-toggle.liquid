@@ -204,11 +204,12 @@
       align-items: center;
       justify-content: center;
       min-width: {{ options.toggle_min_width }}px;
-      padding: {{ options.toggle_padding_block }}px {{ options.toggle_padding_inline }}px;
+      /* TBG custom code: desktop/tablet sizes; mobile overrides below. */
+      padding: {{ options.toggle_padding_block_desktop }}px {{ options.toggle_padding_inline }}px;
       border: 1px solid var(--gsc-age-border);
       background: transparent;
       color: currentColor;
-      font-size: {{ options.toggle_font_size }}px;
+      font-size: {{ options.toggle_font_size_desktop }}px;
       /* TBG custom code: bolder link text */
       font-weight: 600;
       letter-spacing: 0.04em;
@@ -264,7 +265,9 @@
       .section-{{ section.id }} .shop-age__option{
         flex: 1 1 0;
         min-width: 0;
-        padding-inline: 8px;
+        /* TBG custom code: mobile sizes */
+        padding: {{ options.toggle_padding_block }}px {{ options.toggle_padding_inline_mobile }}px;
+        font-size: {{ options.toggle_font_size }}px;
       }
     }
 
@@ -1426,307 +1429,37 @@
     },
     {
       "type": "header",
-      "content": "Product card"
-    },
-    {
-      "type": "checkbox",
-      "id": "use_battlegear_card",
-      "default": true,
-      "label": "Use the Battlegear card",
-      "info": "Off falls back to the theme's standard product card. Both cards use the same hover behaviour and quick-view button, so this only changes the card's layout."
-    },
-    {
-      "type": "text",
-      "id": "card_namespace",
-      "label": "Metafield namespace",
-      "default": "custom",
-      "info": "Namespace holding card_attributes, card_generation and card_color. Each falls back to data derived from the product, so the card works before they exist."
-    },
-    {
-      "type": "text",
-      "id": "card_descriptor",
-      "label": "Attribute pill descriptor",
-      "default": "CUT-RESISTANT",
-      "info": "Appended after the age group in the pill, e.g. 'SENIOR | CUT-RESISTANT'. Only used until the card_attributes metafield is set."
-    },
-    {
-      "type": "header",
-      "content": "Product card appearance"
-    },
-    {
-      "type": "color",
-      "id": "card_background",
-      "label": "Card background",
-      "default": "#1f232a"
-    },
-    {
-      "type": "color",
-      "id": "card_text_color",
-      "label": "Title",
-      "default": "#ffffff"
-    },
-    {
-      "type": "color",
-      "id": "card_muted_color",
-      "label": "Colourway & compare-at price",
-      "default": "#8b949e"
-    },
-    {
-      "type": "color",
-      "id": "card_accent_color",
-      "label": "Sale price & badge",
-      "default": "#d4ff32"
-    },
-    {
-      "type": "color",
-      "id": "card_price_color",
-      "label": "Regular price",
-      "default": "#8b949e"
-    },
-    {
-      "type": "color",
-      "id": "card_badge_new_color",
-      "label": "Label badge border",
-      "info": "Fallback only. A product that sets theme.label_color uses its own colour instead.",
-      "default": "#2ec5f6"
-    },
-    {
-      "type": "color",
-      "id": "card_badge_label_text_color",
-      "label": "Label badge text",
-      "info": "Fallback only. A product uses custom.product_label_text_color, else its theme.label_color.",
-      "default": "#2ec5f6"
-    },
-    {
-      "type": "text",
-      "id": "card_badge_last_chance_handle",
-      "label": "Last Chance collection handle",
-      "info": "A \"LAST CHANCE\" label only shows on products in this collection, so the label can stay on a product after the promotion ends.",
-      "default": "last-chance"
-    },
-    {
-      "type": "text",
-      "id": "card_badge_sale_label",
-      "label": "Sale badge text",
-      "default": "SALE"
-    },
-    {
-      "type": "text",
-      "id": "card_badge_sold_out_label",
-      "label": "Sold out badge text",
-      "default": "SOLD OUT"
-    },
-    {
-      "type": "color",
-      "id": "card_pill_main_color",
-      "label": "Pill colour",
-      "info": "Attribute background, attribute and generation borders, generation text.",
-      "default": "#dcdcdc"
-    },
-    {
-      "type": "color",
-      "id": "card_pill_text_color",
-      "label": "Attribute pill text",
-      "default": "#404040"
+      "content": "Age toggle: desktop"
     },
     {
       "type": "range",
-      "id": "card_content_padding",
-      "min": 0,
-      "max": 32,
-      "step": 2,
-      "unit": "px",
-      "default": 14,
-      "label": "Content padding"
-    },
-    {
-      "type": "range",
-      "id": "card_content_gap",
-      "min": 0,
-      "max": 16,
-      "step": 1,
-      "unit": "px",
-      "default": 5,
-      "label": "Space between lines"
-    },
-    {
-      "type": "range",
-      "id": "card_pill_font_size",
-      "min": 8,
-      "max": 16,
-      "step": 1,
-      "unit": "px",
-      "default": 10,
-      "label": "Attribute pill font size"
-    },
-    {
-      "type": "range",
-      "id": "card_title_font_size",
-      "min": 12,
-      "max": 32,
-      "step": 1,
-      "unit": "px",
-      "default": 20,
-      "label": "Title font size"
-    },
-    {
-      "type": "range",
-      "id": "card_color_font_size",
-      "min": 9,
-      "max": 20,
-      "step": 1,
-      "unit": "px",
-      "default": 13,
-      "label": "Colourway font size"
-    },
-    {
-      "type": "range",
-      "id": "card_price_font_size",
+      "id": "toggle_font_size_desktop",
       "min": 10,
       "max": 24,
       "step": 1,
       "unit": "px",
-      "default": 15,
-      "label": "Price font size"
+      "default": 14,
+      "label": "Desktop font size"
     },
     {
       "type": "range",
-      "id": "card_badge_font_size",
-      "min": 8,
-      "max": 16,
-      "step": 1,
-      "unit": "px",
-      "default": 10,
-      "label": "Badge font size"
-    },
-    {
-      "type": "header",
-      "content": "Filter sidebar"
-    },
-    {
-      "type": "text",
-      "id": "filter_pill_groups",
-      "label": "Filters shown as pills",
-      "default": "Size, Product Type",
-      "info": "Comma-separated filter names, exactly as they appear in Search & Discovery. These render as horizontal pills; every other filter keeps the default checkbox style."
-    },
-    {
-      "type": "text",
-      "id": "filter_size_label",
-      "label": "Size filter name",
-      "default": "Size",
-      "info": "The filter whose options get split into sub-groups below."
-    },
-    {
-      "type": "text",
-      "id": "filter_size_groups",
-      "label": "Size sub-groups",
-      "default": "YOUTH:YTH-, SENIOR:SR-",
-      "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. A heading with no matching options is not rendered, so a youth-only collection shows no SENIOR heading. Options matching no prefix stay at the end."
-    },
-    {
-      "type": "text",
-      "id": "filter_instock_label",
-      "label": "In-stock filter name",
-      "default": "In stock only",
-      "info": "This filter's on/off switch is replaced with two pills."
-    },
-    {
-      "type": "header",
-      "content": "Filter appearance"
-    },
-    {
-      "type": "color",
-      "id": "filter_accent_color",
-      "label": "Selected option",
-      "default": "#d4ff32",
-      "info": "Text, border and tick colour of a selected option."
-    },
-    {
-      "type": "color",
-      "id": "filter_muted_color",
-      "label": "Unselected option",
-      "default": "#8b949e"
-    },
-    {
-      "type": "color",
-      "id": "filter_heading_color",
-      "label": "Group heading",
-      "default": "#c0c0c0"
-    },
-    {
-      "type": "range",
-      "id": "filter_heading_font_size",
-      "min": 9,
-      "max": 22,
-      "step": 1,
-      "unit": "px",
-      "default": 13,
-      "label": "Group heading font size"
-    },
-    {
-      "type": "range",
-      "id": "filter_option_font_size",
-      "min": 9,
-      "max": 18,
+      "id": "toggle_padding_block_desktop",
+      "min": 4,
+      "max": 32,
       "step": 1,
       "unit": "px",
       "default": 12,
-      "label": "Checkbox option font size"
+      "label": "Desktop vertical padding"
     },
     {
       "type": "range",
-      "id": "filter_pill_gap",
-      "min": 2,
-      "max": 20,
-      "step": 1,
-      "unit": "px",
-      "default": 6,
-      "label": "Space between pills"
-    },
-    {
-      "type": "range",
-      "id": "filter_pill_padding_block",
-      "min": 2,
-      "max": 20,
-      "step": 1,
-      "unit": "px",
-      "default": 3,
-      "label": "Pill vertical padding"
-    },
-    {
-      "type": "range",
-      "id": "filter_pill_padding_inline",
-      "min": 4,
-      "max": 28,
-      "step": 1,
-      "unit": "px",
-      "default": 7,
-      "label": "Pill horizontal padding"
-    },
-    {
-      "type": "range",
-      "id": "filter_pill_font_size",
-      "min": 9,
-      "max": 18,
-      "step": 1,
-      "unit": "px",
-      "default": 13,
-      "label": "Pill font size"
-    },
-    {
-      "type": "range",
-      "id": "filter_subhead_font_size",
+      "id": "toggle_padding_inline",
       "min": 8,
-      "max": 16,
+      "max": 48,
       "step": 1,
       "unit": "px",
-      "default": 10,
-      "label": "Size sub-heading font size"
-    },
-    {
-      "type": "header",
-      "content": "Age toggle appearance"
+      "default": 24,
+      "label": "Desktop horizontal padding"
     },
     {
       "type": "range",
@@ -1736,7 +1469,46 @@
       "step": 10,
       "unit": "px",
       "default": 200,
-      "label": "Option min width"
+      "label": "Desktop min width",
+      "info": "On mobile the links share the row equally, so this applies on tablet and desktop only."
+    },
+    {
+      "type": "header",
+      "content": "Age toggle: mobile"
+    },
+    {
+      "type": "range",
+      "id": "toggle_font_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 14,
+      "label": "Mobile font size"
+    },
+    {
+      "type": "range",
+      "id": "toggle_padding_block",
+      "min": 4,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 8,
+      "label": "Mobile vertical padding"
+    },
+    {
+      "type": "range",
+      "id": "toggle_padding_inline_mobile",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 8,
+      "label": "Mobile horizontal padding"
+    },
+    {
+      "type": "header",
+      "content": "Age toggle: colours & spacing"
     },
     {
       "type": "range",
@@ -1747,36 +1519,6 @@
       "unit": "px",
       "default": 12,
       "label": "Space between options"
-    },
-    {
-      "type": "range",
-      "id": "toggle_padding_block",
-      "min": 4,
-      "max": 32,
-      "step": 1,
-      "unit": "px",
-      "default": 8,
-      "label": "Option vertical padding"
-    },
-    {
-      "type": "range",
-      "id": "toggle_padding_inline",
-      "min": 8,
-      "max": 48,
-      "step": 1,
-      "unit": "px",
-      "default": 24,
-      "label": "Option horizontal padding"
-    },
-    {
-      "type": "range",
-      "id": "toggle_font_size",
-      "min": 10,
-      "max": 24,
-      "step": 1,
-      "unit": "px",
-      "default": 14,
-      "label": "Option font size"
     },
     {
       "type": "color",
@@ -1797,55 +1539,8 @@
       "label": "Selected text"
     },
     {
-      "type": "select",
-      "id": "img_ratio",
-      "options": [
-        {
-          "value": "default",
-          "label": "t:sections.general_section_settings.img_ratio_option_default_label"
-        },
-        {
-          "value": "square",
-          "label": "t:sections.general_section_settings.img_ratio_option_square_label"
-        },
-        {
-          "value": "portrait",
-          "label": "t:sections.general_section_settings.img_ratio_option_portrait_label"
-        },
-        {
-          "value": "portrait-xl",
-          "label": "t:sections.general_section_settings.img_ratio_option_portrait_xl_label"
-        },
-        {
-          "value": "landscape",
-          "label": "t:sections.general_section_settings.img_ratio_option_landscape_label"
-        }
-      ],
-      "default": "default",
-      "label": "t:sections.general_section_settings.ratio_label"
-    },
-    {
-      "type": "select",
-      "id": "img_ratio_resize",
-      "options": [
-        {
-          "value": "fill",
-          "label": "t:sections.general_section_settings.card_img_resize_fill_label"
-        },
-        {
-          "value": "fit",
-          "label": "t:sections.general_section_settings.card_img_resize_fit_label"
-        }
-      ],
-      "default": "fill",
-      "label": "t:sections.general_section_settings.card_img_resize_label",
-      "visible_if": "{{ section.settings.img_ratio != 'default' }}"
-    },
-    {
-      "type": "text_alignment",
-      "id": "product_card_align",
-      "label": "t:sections.general_section_settings.heading_alignment_label",
-      "default": "center"
+      "type": "header",
+      "content": "Product grid"
     },
     {
       "type": "range",
@@ -2024,6 +1719,247 @@
     },
     {
       "type": "header",
+      "content": "Product card"
+    },
+    {
+      "type": "checkbox",
+      "id": "use_battlegear_card",
+      "default": true,
+      "label": "Use the Battlegear card",
+      "info": "Off falls back to the theme's standard product card. Both cards use the same hover behaviour and quick-view button, so this only changes the card's layout."
+    },
+    {
+      "type": "text",
+      "id": "card_namespace",
+      "label": "Metafield namespace",
+      "default": "custom",
+      "info": "Namespace holding card_attributes, card_generation and card_color. Each falls back to data derived from the product, so the card works before they exist."
+    },
+    {
+      "type": "text",
+      "id": "card_descriptor",
+      "label": "Attribute pill descriptor",
+      "default": "CUT-RESISTANT",
+      "info": "Appended after the age group in the pill, e.g. 'SENIOR | CUT-RESISTANT'. Only used until the card_attributes metafield is set."
+    },
+    {
+      "type": "header",
+      "content": "Product card: colours"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card background",
+      "default": "#1f232a"
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Title",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_muted_color",
+      "label": "Colourway & compare-at price",
+      "default": "#8b949e"
+    },
+    {
+      "type": "color",
+      "id": "card_accent_color",
+      "label": "Sale price & badge",
+      "default": "#d4ff32"
+    },
+    {
+      "type": "color",
+      "id": "card_price_color",
+      "label": "Regular price",
+      "default": "#8b949e"
+    },
+    {
+      "type": "color",
+      "id": "card_pill_main_color",
+      "label": "Pill colour",
+      "info": "Attribute background, attribute and generation borders, generation text.",
+      "default": "#dcdcdc"
+    },
+    {
+      "type": "color",
+      "id": "card_pill_text_color",
+      "label": "Attribute pill text",
+      "default": "#404040"
+    },
+    {
+      "type": "header",
+      "content": "Product card: badges"
+    },
+    {
+      "type": "color",
+      "id": "card_badge_new_color",
+      "label": "Label badge border",
+      "info": "Fallback only. A product that sets theme.label_color uses its own colour instead.",
+      "default": "#2ec5f6"
+    },
+    {
+      "type": "color",
+      "id": "card_badge_label_text_color",
+      "label": "Label badge text",
+      "info": "Fallback only. A product uses custom.product_label_text_color, else its theme.label_color.",
+      "default": "#2ec5f6"
+    },
+    {
+      "type": "range",
+      "id": "card_badge_font_size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "label": "Badge font size"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_last_chance_handle",
+      "label": "Last Chance collection handle",
+      "info": "A \"LAST CHANCE\" label only shows on products in this collection, so the label can stay on a product after the promotion ends.",
+      "default": "last-chance"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_sale_label",
+      "label": "Sale badge text",
+      "default": "SALE"
+    },
+    {
+      "type": "text",
+      "id": "card_badge_sold_out_label",
+      "label": "Sold out badge text",
+      "default": "SOLD OUT"
+    },
+    {
+      "type": "header",
+      "content": "Product card: sizes & spacing"
+    },
+    {
+      "type": "range",
+      "id": "card_content_padding",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 14,
+      "label": "Content padding"
+    },
+    {
+      "type": "range",
+      "id": "card_content_gap",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 5,
+      "label": "Space between lines"
+    },
+    {
+      "type": "range",
+      "id": "card_pill_font_size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "label": "Attribute pill font size"
+    },
+    {
+      "type": "range",
+      "id": "card_title_font_size",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 20,
+      "label": "Title font size"
+    },
+    {
+      "type": "range",
+      "id": "card_color_font_size",
+      "min": 9,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 13,
+      "label": "Colourway font size"
+    },
+    {
+      "type": "range",
+      "id": "card_price_font_size",
+      "min": 10,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "default": 15,
+      "label": "Price font size"
+    },
+    {
+      "type": "header",
+      "content": "Standard product card",
+      "info": "Image ratio, resize and alignment apply only to the theme's standard card, used when \"Use the Battlegear card\" is off."
+    },
+    {
+      "type": "select",
+      "id": "img_ratio",
+      "options": [
+        {
+          "value": "default",
+          "label": "t:sections.general_section_settings.img_ratio_option_default_label"
+        },
+        {
+          "value": "square",
+          "label": "t:sections.general_section_settings.img_ratio_option_square_label"
+        },
+        {
+          "value": "portrait",
+          "label": "t:sections.general_section_settings.img_ratio_option_portrait_label"
+        },
+        {
+          "value": "portrait-xl",
+          "label": "t:sections.general_section_settings.img_ratio_option_portrait_xl_label"
+        },
+        {
+          "value": "landscape",
+          "label": "t:sections.general_section_settings.img_ratio_option_landscape_label"
+        }
+      ],
+      "default": "default",
+      "label": "t:sections.general_section_settings.ratio_label",
+      "visible_if": "{{ section.settings.use_battlegear_card == false }}"
+    },
+    {
+      "type": "select",
+      "id": "img_ratio_resize",
+      "options": [
+        {
+          "value": "fill",
+          "label": "t:sections.general_section_settings.card_img_resize_fill_label"
+        },
+        {
+          "value": "fit",
+          "label": "t:sections.general_section_settings.card_img_resize_fit_label"
+        }
+      ],
+      "default": "fill",
+      "label": "t:sections.general_section_settings.card_img_resize_label",
+      "visible_if": "{{ section.settings.use_battlegear_card == false and section.settings.img_ratio != 'default' }}"
+    },
+    {
+      "type": "text_alignment",
+      "id": "product_card_align",
+      "label": "t:sections.general_section_settings.heading_alignment_label",
+      "default": "center",
+      "visible_if": "{{ section.settings.use_battlegear_card == false }}"
+    },
+    {
+      "type": "header",
       "content": "t:sections.products.filter_settings_header"
     },
     {
@@ -2150,6 +2086,131 @@
       "default": true,
       "label": "t:sections.products.label_for_enable_uppercase_title_setting",
       "visible_if": "{{ section.settings.enable_filtering == true }}"
+    },
+    {
+      "type": "header",
+      "content": "Filter sidebar: groups"
+    },
+    {
+      "type": "text",
+      "id": "filter_pill_groups",
+      "label": "Filters shown as pills",
+      "default": "Size, Product Type",
+      "info": "Comma-separated filter names, exactly as they appear in Search & Discovery. These render as horizontal pills; every other filter keeps the default checkbox style."
+    },
+    {
+      "type": "text",
+      "id": "filter_size_label",
+      "label": "Size filter name",
+      "default": "Size",
+      "info": "The filter whose options get split into sub-groups below."
+    },
+    {
+      "type": "text",
+      "id": "filter_size_groups",
+      "label": "Size sub-groups",
+      "default": "YOUTH:YTH-, SENIOR:SR-",
+      "info": "HEADING:PREFIX pairs, comma-separated. Options starting with the prefix are listed under that heading. A heading with no matching options is not rendered, so a youth-only collection shows no SENIOR heading. Options matching no prefix stay at the end."
+    },
+    {
+      "type": "text",
+      "id": "filter_instock_label",
+      "label": "In-stock filter name",
+      "default": "In stock only",
+      "info": "This filter's on/off switch is replaced with two pills."
+    },
+    {
+      "type": "header",
+      "content": "Filter sidebar: appearance"
+    },
+    {
+      "type": "color",
+      "id": "filter_accent_color",
+      "label": "Selected option",
+      "default": "#d4ff32",
+      "info": "Text, border and tick colour of a selected option."
+    },
+    {
+      "type": "color",
+      "id": "filter_muted_color",
+      "label": "Unselected option",
+      "default": "#8b949e"
+    },
+    {
+      "type": "color",
+      "id": "filter_heading_color",
+      "label": "Group heading",
+      "default": "#c0c0c0"
+    },
+    {
+      "type": "range",
+      "id": "filter_heading_font_size",
+      "min": 9,
+      "max": 22,
+      "step": 1,
+      "unit": "px",
+      "default": 13,
+      "label": "Group heading font size"
+    },
+    {
+      "type": "range",
+      "id": "filter_option_font_size",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 12,
+      "label": "Checkbox option font size"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_font_size",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 13,
+      "label": "Pill font size"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_padding_block",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 3,
+      "label": "Pill vertical padding"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_padding_inline",
+      "min": 4,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 7,
+      "label": "Pill horizontal padding"
+    },
+    {
+      "type": "range",
+      "id": "filter_pill_gap",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 6,
+      "label": "Space between pills"
+    },
+    {
+      "type": "range",
+      "id": "filter_subhead_font_size",
+      "min": 8,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 10,
+      "label": "Size sub-heading font size"
     },
     {
       "type": "header",
