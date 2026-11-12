@@ -26,7 +26,8 @@
 
     Fallbacks, all verified against the Senior BattleGear collection:
 
-      attributes  <- age from the Youth/Senior tag + "CUT-RESISTANT"
+      attributes  <- age from the Youth/Senior tag + "CUT-RESISTANT" when
+                     the product title contains it
       generation  <- the `generation:<n>` tag -> "GEN_3"
       title       <- product type only -> "BASELAYER" (no tags, no metafield)
       colour      <- the text after the last " - " in the title
@@ -139,11 +140,22 @@
 
 {%- liquid
   comment
-    Attribute pill. Falls back to the age group plus a configurable
-    descriptor, e.g. "SENIOR | CUT-RESISTANT".
+    Attribute pill. Falls back to the age group plus a descriptor, e.g.
+    "SENIOR | CUT-RESISTANT".
   endcomment
 
   assign pill_attributes = mf.card_attributes.value | default: mf.card_attributes
+
+  comment
+    TBG custom code
+    Descriptor comes from the product title: "CUT-RESISTANT" only when the
+    title contains it (any case), otherwise nothing - and no " | " either.
+  endcomment
+  assign card_descriptor = blank
+  assign title_downcase = product.title | downcase
+  if title_downcase contains 'cut-resistant'
+    assign card_descriptor = 'CUT-RESISTANT'
+  endif
 
   if pill_attributes == blank
     assign pill_parts = ''

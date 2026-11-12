@@ -1063,7 +1063,6 @@
                       {% render 'product-card-battlegear',
                         product: product,
                         card_namespace: options.card_namespace,
-                        card_descriptor: options.card_descriptor,
                         badge_last_chance_handle: options.card_badge_last_chance_handle,
                         badge_sale_label: options.card_badge_sale_label,
                         badge_sold_out_label: options.card_badge_sold_out_label
@@ -1734,13 +1733,6 @@
       "label": "Metafield namespace",
       "default": "custom",
       "info": "Namespace holding card_attributes, card_generation and card_color. Each falls back to data derived from the product, so the card works before they exist."
-    },
-    {
-      "type": "text",
-      "id": "card_descriptor",
-      "label": "Attribute pill descriptor",
-      "default": "CUT-RESISTANT",
-      "info": "Appended after the age group in the pill, e.g. 'SENIOR | CUT-RESISTANT'. Only used until the card_attributes metafield is set."
     },
     {
       "type": "header",
