@@ -347,7 +347,7 @@
         "show_product_count": true,
         "show_column_count_switcher": true,
         "use_battlegear_card": true,
-        "card_show_quick_view": true,
+        "card_show_quick_view": false,
         "card_namespace": "custom",
         "card_background": "#1f232a",
         "card_text_color": "#ffffff",
