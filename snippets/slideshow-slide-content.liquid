@@ -1,0 +1,205 @@
+{%- comment -%}
+  TBG custom code
+  Slideshow slide content. Based on image-banner-content / split-image-banner-content,
+  adds: element order, inline content image, heading tag, button new tab / arrow icon.
+  Spacing + image width come from --gsc-* vars set per .block-{id} in sections/slideshow.liquid.
+
+  Params:
+  - block, prefix ('image-banner' | 'split-image-banner')
+  - device ('desktop' | 'mobile' | blank), content_background
+  - btn_style, extra_btn_style (optional overrides)
+  - is_duplicate (hidden duplicate copy, tabindex -1)
+  - continue_observe_animation, remove_animation_class
+{%- endcomment -%}
+
+{%- liquid
+  assign s = block.settings
+  assign enable_content_slide_in = settings.enable_content_slide_in
+  assign continue_observe_animation = continue_observe_animation | default: false
+  assign heading_tag = s.heading_tag | default: 'h2'
+  assign btn_style = btn_style | default: s.btn_style
+  assign extra_btn_style = extra_btn_style | default: s.extra_btn_style
+
+  assign with_only_links = true
+  assign is_first_link = true
+  assign is_second_link = true
+  if s.btn_text != blank and btn_style != 'link'
+    assign with_only_links = false
+    assign is_first_link = false
+  endif
+  if s.extra_btn_text != blank and extra_btn_style != 'link'
+    assign with_only_links = false
+    assign is_second_link = false
+  endif
+  if s.text != blank
+    assign with_only_links = false
+  endif
+
+  assign caption_color_class = ''
+  assign text_color_class = ''
+  if prefix == 'split-image-banner'
+    assign caption_color_class = 'body-color'
+    if s.title != blank
+      assign text_color_class = 'body-color'
+    endif
+  elsif content_background == 'solid'
+    assign caption_color_class = device | append: '-body-color'
+    if s.title != blank
+      assign text_color_class = device | append: '-body-color'
+    endif
+  endif
+
+  assign element_keys = 'caption,title,text,image,buttons' | split: ','
+  assign btn_icon_class = prefix | append: '__btn-icon'
+-%}
+
+{%- for pos in (1..5) -%}
+  {%- for el in element_keys -%}
+    {%- liquid
+      assign order_key = el | append: '_order'
+      assign el_order = s[order_key] | default: forloop.index
+    -%}
+    {%- if el_order == pos -%}
+      {%- capture anim -%}
+        {%- if enable_content_slide_in -%}
+          style='--gsc-animation-order: {{ pos }};'
+          {%- if continue_observe_animation %} data-keep-observe-animation{% endif -%}
+          {%- if remove_animation_class %} data-remove-animation-class{% endif -%}
+        {%- endif -%}
+      {%- endcapture -%}
+
+      {%- case el -%}
+        {%- when 'caption' -%}
+          {%- if s.caption != blank -%}
+            <div
+              class='caption {{ prefix }}__caption {{ caption_color_class }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {{ anim }}
+            >
+              {{ s.caption }}
+            </div>
+          {%- endif -%}
+
+        {%- when 'title' -%}
+          {%- if s.title != blank -%}
+            <{{ heading_tag }}
+              class='{{ prefix }}__title {{ s.heading_size }} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {{ anim }}
+            >
+              {{ s.title }}
+            </{{ heading_tag }}>
+          {%- endif -%}
+
+        {%- when 'text' -%}
+          {%- if s.text != blank -%}
+            <div
+              class='rte {{ s.body_size }} {{ text_color_class }} {{ prefix }}__text body-font-weight-from-global-settings {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {{ anim }}
+            >
+              {{ s.text }}
+            </div>
+          {%- endif -%}
+
+        {%- when 'image' -%}
+          {%- if s.content_image != blank -%}
+            {%- liquid
+              assign img_w_d = s.desktop_content_image_width
+              assign img_w_m = s.mobile_content_image_width
+            -%}
+            {%- capture img_widths -%}{{ img_w_m }},{{ img_w_m | times: 2 }},{{ img_w_d }},{{ img_w_d | times: 2 }}{%- endcapture -%}
+            {%- capture img_sizes -%}(max-width: 767px) min({{ img_w_m }}px, 100vw), min({{ img_w_d }}px, 100vw){%- endcapture -%}
+            <div
+              class='{{ prefix }}__image {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {{ anim }}
+            >
+              {%- if s.content_image_link != blank -%}
+                <a
+                  href='{{ s.content_image_link }}'
+                  class='{{ prefix }}__image-link'
+                  {% if is_duplicate %}
+                    tabindex='-1'
+                  {% endif %}
+                >
+              {%- endif -%}
+              {{-
+                s.content_image
+                | image_url: width: 2000
+                | image_tag: loading: 'lazy', widths: img_widths, sizes: img_sizes, class: 'image'
+              -}}
+              {%- if s.content_image_link != blank -%}
+                </a>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+        {%- when 'buttons' -%}
+          {%- if s.btn_text != blank or s.extra_btn_text != blank -%}
+            <div
+              class='{{ prefix }}__btns {% if is_first_link %}{{ prefix }}__btns--with-first-button-link{% endif %} {% if is_second_link %}{{ prefix }}__btns--with-second-button-link{% endif %} {% if with_only_links %}{{ prefix }}__btns--with-only-links{% endif %} {% if enable_content_slide_in %}scroll-trigger animate--slide-in{% endif %}'
+              {{ anim }}
+            >
+              {%- for i in (1..2) -%}
+                {%- liquid
+                  if i == 1
+                    assign b_text = s.btn_text
+                    assign b_url = s.btn_url
+                    assign b_style = btn_style
+                    assign b_new_tab = s.btn_new_tab
+                    assign b_icon = s.btn_show_icon
+                  else
+                    assign b_text = s.extra_btn_text
+                    assign b_url = s.extra_btn_url
+                    assign b_style = extra_btn_style
+                    assign b_new_tab = s.extra_btn_new_tab
+                    assign b_icon = s.extra_btn_show_icon
+                  endif
+                -%}
+                {%- if b_text != blank -%}
+                  {%- if b_style == 'link' -%}
+                    <a
+                      class='link {{ prefix }}__btn-link'
+                      {% if b_url != blank %}
+                        href='{{ b_url }}'
+                      {% endif %}
+                      {% if b_new_tab %}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      {% endif %}
+                      {% if is_duplicate %}
+                        tabindex='-1'
+                      {% endif %}
+                      aria-label='{{ b_text | strip_html | escape }}'
+                    >
+                      <span class='link-parent-for-hover'>
+                        <span class='link__text'>{{ b_text }}</span>
+                      </span>
+                      {%- render 'icon', icon_name: 'link-chevron', class: 'link__chevron' -%}
+                    </a>
+                  {%- else -%}
+                    <a
+                      class='btn btn--{{ b_style }} {{ prefix }}__btn {% if b_icon %}{{ prefix }}__btn--with-icon{% endif %}'
+                      {% if b_url != blank %}
+                        href='{{ b_url }}'
+                      {% endif %}
+                      {% if b_new_tab %}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      {% endif %}
+                      {% if is_duplicate %}
+                        tabindex='-1'
+                      {% endif %}
+                      aria-label='{{ b_text | strip_html | escape }}'
+                    >
+                      {{- b_text -}}
+                      {%- if b_icon -%}
+                        {%- render 'icon', icon_name: 'arrow', class: btn_icon_class -%}
+                      {%- endif -%}
+                    </a>
+                  {%- endif -%}
+                {%- endif -%}
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+      {%- endcase -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endfor -%}

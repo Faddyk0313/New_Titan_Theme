@@ -39,6 +39,41 @@
   endif
 
   assign with_overlay = true
+
+  # TBG custom code: slideshow height modes (ratio / adapt / screen / screen minus header / custom)
+  assign desktop_height = options.desktop_height | default: 'ratio'
+  assign mobile_height = options.mobile_height | default: 'ratio'
+
+  assign first_block = blocks.first
+  assign first_desktop_img = blank
+  assign first_mobile_img = blank
+  if first_block.type == 'image-banner'
+    assign first_desktop_img = first_block.settings.desktop_image | default: first_block.settings.mobile_image
+    assign first_mobile_img = first_block.settings.mobile_image | default: first_block.settings.desktop_image
+  elsif first_block.type == 'split-image-banner'
+    assign first_desktop_img = first_block.settings.desktop_left_img | default: first_block.settings.desktop_right_img
+    assign first_mobile_img = first_block.settings.mobile_left_img | default: first_desktop_img
+  endif
+
+  assign desktop_min_height = '0px'
+  case desktop_height
+    when 'screen'
+      assign desktop_min_height = '100vh'
+    when 'screen_minus_header'
+      assign desktop_min_height = 'calc(100vh - var(--gsc-header-height, 0px))'
+    when 'custom'
+      assign desktop_min_height = options.desktop_height_custom | append: 'px'
+  endcase
+
+  assign mobile_min_height = '0px'
+  case mobile_height
+    when 'screen'
+      assign mobile_min_height = '100vh'
+    when 'screen_minus_header'
+      assign mobile_min_height = 'calc(100vh - var(--gsc-header-height, 0px))'
+    when 'custom'
+      assign mobile_min_height = options.mobile_height_custom | append: 'px'
+  endcase
 -%}
 
 {%- liquid
@@ -56,16 +91,89 @@
       --gsc-section-ratio: {{ mobile_ratio | times: 100 }}%;
       --gsc-section-spacing-top: var(--gsc-padding-block-{{ section_spacing_top }});
       --gsc-section-spacing-bottom: var(--gsc-padding-block-{{ section_spacing_bottom }});
+
+      /* TBG custom code: mobile height mode */
+      {% if mobile_height == 'adapt' and first_mobile_img != blank %}
+        --gsc-section-ratio: {{ 100 | divided_by: first_mobile_img.aspect_ratio }}%;
+      {% elsif mobile_height != 'ratio' and mobile_height != 'adapt' %}
+        --gsc-section-ratio: 0%;
+      {% endif %}
+      --gsc-slide-min-height: {{ mobile_min_height }};
     }
 
     @media {% render 'media-queries', screen: 'md' %} {
         .section-{{section.id}} {
             --gsc-section-ratio: {{ desktop_ratio | times: 100 }}%;
+
+            /* TBG custom code: desktop height mode */
+            {% if desktop_height == 'adapt' and first_desktop_img != blank %}
+              --gsc-section-ratio: {{ 100 | divided_by: first_desktop_img.aspect_ratio }}%;
+            {% elsif desktop_height != 'ratio' and desktop_height != 'adapt' %}
+              --gsc-section-ratio: 0%;
+            {% endif %}
+            --gsc-slide-min-height: {{ desktop_min_height }};
         }
+    }
+
+    /* TBG custom code: slide min height, content image, button icon */
+    .section-{{section.id}} .image-banner__container,
+    .section-{{section.id}} .split-image-banner__container {
+      min-height: var(--gsc-slide-min-height, 0px);
+    }
+
+    .section-{{section.id}} .image-banner__image,
+    .section-{{section.id}} .split-image-banner__image {
+      line-height: 0;
+    }
+
+    .section-{{section.id}} .image-banner__image img,
+    .section-{{section.id}} .split-image-banner__image img {
+      display: inline-block;
+      width: var(--gsc-content-image-width);
+      max-width: 100%;
+      height: auto;
+    }
+
+    .section-{{section.id}} .image-banner__btn--with-icon,
+    .section-{{section.id}} .split-image-banner__btn--with-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .section-{{section.id}} .image-banner__btn-icon,
+    .section-{{section.id}} .split-image-banner__btn-icon {
+      width: 1.6rem;
+      height: 1.6rem;
+      flex-shrink: 0;
     }
 
     {% for block in section.blocks %}
         {% assign options = block.settings %}
+
+        {%- comment -%} TBG custom code: element spacing + content image width {%- endcomment -%}
+        {%- liquid
+          assign prefix = 'image-banner'
+          if block.type == 'split-image-banner'
+            assign prefix = 'split-image-banner'
+          endif
+        -%}
+        .block-{{ block.id }} {
+          --gsc-content-image-width: {{ options.mobile_content_image_width }}px;
+        }
+
+        .block-{{ block.id }} .{{ prefix }}__caption { margin: 0 0 var(--gsc-padding-block-{{ options.caption_spacing }}); }
+        .block-{{ block.id }} .{{ prefix }}__title { margin: 0 0 var(--gsc-padding-block-{{ options.title_spacing }}); }
+        .block-{{ block.id }} .{{ prefix }}__text { margin: 0 0 var(--gsc-padding-block-{{ options.text_spacing }}); }
+        .block-{{ block.id }} .{{ prefix }}__image { margin: 0 0 var(--gsc-padding-block-{{ options.image_spacing }}); }
+        .block-{{ block.id }} .{{ prefix }}__btns { margin: 0 0 var(--gsc-padding-block-{{ options.buttons_spacing }}); }
+        .block-{{ block.id }} .{{ prefix }}__content > *:last-child { margin-bottom: 0; }
+
+        @media {% render 'media-queries', screen: 'md' %} {
+          .block-{{ block.id }} {
+            --gsc-content-image-width: {{ options.desktop_content_image_width }}px;
+          }
+        }
 
         {% if block.type == 'split-image-banner' %}
           .block-{{ block.id }}{
@@ -118,6 +226,12 @@
             assign mobile_overlay_opacity = options.mobile_overlay_opacity | divided_by: 100.00
 
             assign content_paddings_size = options.content_paddings_size
+
+            # TBG custom code: optional overlay color (defaults to color scheme background)
+            assign overlay_rgb = background_color.rgb | replace: ' ', ','
+            if options.overlay_color != blank
+              assign overlay_rgb = options.overlay_color.rgb | replace: ' ', ','
+            endif
           -%}
 
           .block-{{ block.id }}{
@@ -147,7 +261,7 @@
               {% endif %}
 
               {% if mobile_enable_overlay %}
-                --gsc-overlay-color-rgb: {{ background_color.rgb | replace: ' ', ',' }};
+                --gsc-overlay-color-rgb: {{ overlay_rgb }};
                 --gsc-overlay-opacity: {{mobile_overlay_opacity}};
               {% else %}
                 --gsc-overlay-color-rgb: 0,0,0;
@@ -168,9 +282,23 @@
               {% endif %}
           }
 
-          .block-{{ block.id }} .image-banner__content-wrap {
-              {{ options.mobile_content_position }}
-          }
+          {%- comment -%} TBG custom code: custom X/Y content position {%- endcomment -%}
+          {% if options.mobile_content_position == 'custom' %}
+            .block-{{ block.id }} .image-banner__content-wrap {
+              align-items: flex-start;
+              justify-content: flex-start;
+            }
+
+            .block-{{ block.id }} .image-banner__content--mobile {
+              left: {{ options.mobile_content_position_x }}%;
+              top: {{ options.mobile_content_position_y }}%;
+              transform: translate(-{{ options.mobile_content_position_x }}%, -{{ options.mobile_content_position_y }}%);
+            }
+          {% else %}
+            .block-{{ block.id }} .image-banner__content-wrap {
+                {{ options.mobile_content_position }}
+            }
+          {% endif %}
 
           @media {% render 'media-queries', screen: 'md' %} {
               .block-{{ block.id }}{
@@ -178,7 +306,7 @@
                   --gsc-content-align: {{ options.desktop_content_align }};
 
                   {% if desktop_enable_overlay %}
-                    --gsc-overlay-color-rgb: {{ background_color.rgb | replace: ' ', ',' }};
+                    --gsc-overlay-color-rgb: {{ overlay_rgb }};
                     --gsc-overlay-opacity: {{desktop_overlay_opacity}};
                   {% else %}
                     --gsc-overlay-color-rgb: 0,0,0;
@@ -199,9 +327,23 @@
             {% endif %}
               }
 
-              .block-{{ block.id }} .image-banner__content-wrap {
-                {{ options.desktop_content_position }}
-              }
+              {%- comment -%} TBG custom code: custom X/Y content position {%- endcomment -%}
+              {% if options.desktop_content_position == 'custom' %}
+                .block-{{ block.id }} .image-banner__content-wrap {
+                  align-items: flex-start;
+                  justify-content: flex-start;
+                }
+
+                .block-{{ block.id }} .image-banner__content--desktop {
+                  left: {{ options.desktop_content_position_x }}%;
+                  top: {{ options.desktop_content_position_y }}%;
+                  transform: translate(-{{ options.desktop_content_position_x }}%, -{{ options.desktop_content_position_y }}%);
+                }
+              {% else %}
+                .block-{{ block.id }} .image-banner__content-wrap {
+                  {{ options.desktop_content_position }}
+                }
+              {% endif %}
           }
         {% endif %}
     {% endfor %}
@@ -346,21 +488,19 @@
                           -%}
                         {%- endif -%}
 
-                        {%- render 'split-image-banner-content',
-                          heading_size: block.settings.heading_size,
-                          body_size: block.settings.body_size,
-                          title: block.settings.title,
-                          caption: block.settings.caption,
-                          text: block.settings.text,
-                          btn_text: block.settings.btn_text,
-                          btn_url: block.settings.btn_url,
-                          extra_btn_text: block.settings.extra_btn_text,
-                          extra_btn_url: block.settings.extra_btn_url,
-                          btn_style: block.settings.btn_style,
-                          extra_btn_style: block.settings.extra_btn_style,
-                          continue_observe_animation: continue_observe_animation,
-                          remove_animation_class: remove_animation_class
-                        -%}
+                        {%- comment -%} TBG custom code: ordered content (image, spacing, heading tag, button options) {%- endcomment -%}
+                        {%- if block.settings.caption != blank or block.settings.title != blank or block.settings.text != blank or block.settings.btn_text != blank or block.settings.extra_btn_text != blank or block.settings.content_image != blank -%}
+                          <div class='split-image-banner__content-wrap'>
+                            <div class='split-image-banner__content'>
+                              {%- render 'slideshow-slide-content',
+                                block: block,
+                                prefix: 'split-image-banner',
+                                continue_observe_animation: continue_observe_animation,
+                                remove_animation_class: remove_animation_class
+                              -%}
+                            </div>
+                          </div>
+                        {%- endif -%}
 
                         {%- if block.settings.image_proportion < 100 -%}
                           {%- render 'media-with-art-direction',
@@ -423,23 +563,36 @@
                           {%- endif -%}
                         {%- endif -%}
 
-                        {%- render 'image-banner-content',
-                          heading_size: block.settings.heading_size,
-                          body_size: block.settings.body_size,
-                          title: block.settings.title,
-                          caption: block.settings.caption,
-                          text: block.settings.text,
-                          btn_text: block.settings.btn_text,
-                          btn_url: block.settings.btn_url,
-                          extra_btn_text: block.settings.extra_btn_text,
-                          extra_btn_url: block.settings.extra_btn_url,
-                          btn_style: btn_style,
-                          extra_btn_style: extra_btn_style,
-                          mobile_content_background: block.settings.mobile_content_background,
-                          desktop_content_background: block.settings.desktop_content_background,
-                          continue_observe_animation: continue_observe_animation,
-                          remove_animation_class: remove_animation_class
-                        -%}
+                        {%- comment -%} TBG custom code: ordered content (image, spacing, heading tag, button options) {%- endcomment -%}
+                        {%- if block.settings.caption != blank or block.settings.title != blank or block.settings.text != blank or block.settings.btn_text != blank or block.settings.extra_btn_text != blank or block.settings.content_image != blank -%}
+                          <div class='image-banner__content-wrap'>
+                            <div class='image-banner__content image-banner__content--desktop image-banner__content--with-{{ block.settings.desktop_content_background }}-background'>
+                              {%- render 'slideshow-slide-content',
+                                block: block,
+                                prefix: 'image-banner',
+                                device: 'desktop',
+                                content_background: block.settings.desktop_content_background,
+                                btn_style: btn_style,
+                                extra_btn_style: extra_btn_style,
+                                continue_observe_animation: continue_observe_animation,
+                                remove_animation_class: remove_animation_class
+                              -%}
+                            </div>
+                            <div class='image-banner__content image-banner__content--mobile image-banner__content--with-{{ block.settings.mobile_content_background }}-background'>
+                              {%- render 'slideshow-slide-content',
+                                block: block,
+                                prefix: 'image-banner',
+                                device: 'mobile',
+                                content_background: block.settings.mobile_content_background,
+                                btn_style: btn_style,
+                                extra_btn_style: extra_btn_style,
+                                is_duplicate: true,
+                                continue_observe_animation: continue_observe_animation,
+                                remove_animation_class: remove_animation_class
+                              -%}
+                            </div>
+                          </div>
+                        {%- endif -%}
 
                         {%- render 'media-with-art-direction',
                           with_overlay: with_overlay,
@@ -501,7 +654,51 @@
   "name": "t:sections.slideshow.name",
   "tag": "section",
   "class": "place-under-transparent-header",
+  "max_blocks": 5,
   "settings": [
+    {
+      "type": "header",
+      "content": "Height"
+    },
+    {
+      "type": "select",
+      "id": "desktop_height",
+      "label": "Desktop height",
+      "options": [
+        {
+          "value": "ratio",
+          "label": "Aspect ratio"
+        },
+        {
+          "value": "adapt",
+          "label": "Adapt to first slide image"
+        },
+        {
+          "value": "screen",
+          "label": "Full screen height"
+        },
+        {
+          "value": "screen_minus_header",
+          "label": "Full screen minus header"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "ratio"
+    },
+    {
+      "type": "range",
+      "id": "desktop_height_custom",
+      "min": 200,
+      "max": 1200,
+      "step": 10,
+      "default": 650,
+      "unit": "px",
+      "label": "Desktop custom height",
+      "visible_if": "{{ section.settings.desktop_height == 'custom' }}"
+    },
     {
       "type": "range",
       "id": "desktop_ratio",
@@ -510,7 +707,47 @@
       "step": 0.1,
       "default": 0.4,
       "unit": "t:sections.slideshow.desktop_ratio.unit",
-      "label": "t:sections.slideshow.desktop_ratio.label"
+      "label": "t:sections.slideshow.desktop_ratio.label",
+      "visible_if": "{{ section.settings.desktop_height == 'ratio' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_height",
+      "label": "Mobile height",
+      "options": [
+        {
+          "value": "ratio",
+          "label": "Aspect ratio"
+        },
+        {
+          "value": "adapt",
+          "label": "Adapt to first slide image"
+        },
+        {
+          "value": "screen",
+          "label": "Full screen height"
+        },
+        {
+          "value": "screen_minus_header",
+          "label": "Full screen minus header"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        }
+      ],
+      "default": "ratio"
+    },
+    {
+      "type": "range",
+      "id": "mobile_height_custom",
+      "min": 200,
+      "max": 1000,
+      "step": 10,
+      "default": 500,
+      "unit": "px",
+      "label": "Mobile custom height",
+      "visible_if": "{{ section.settings.mobile_height == 'custom' }}"
     },
     {
       "type": "range",
@@ -520,7 +757,8 @@
       "step": 0.1,
       "default": 1.6,
       "unit": "t:sections.slideshow.mobile_ratio.unit",
-      "label": "t:sections.slideshow.mobile_ratio.label"
+      "label": "t:sections.slideshow.mobile_ratio.label",
+      "visible_if": "{{ section.settings.mobile_height == 'ratio' }}"
     },
     {
       "type": "header",
@@ -1036,7 +1274,12 @@
           "label": "t:sections.general_section_settings.opacity_label",
           "visible_if": "{{ block.settings.mobile_enable_overlay == true }}"
         },
-
+        {
+          "type": "color",
+          "id": "overlay_color",
+          "label": "Overlay color",
+          "info": "Leave empty to use color scheme background"
+        },
         {
           "type": "header",
           "content": "t:sections.image_banner.content_settings_header"
@@ -1052,6 +1295,47 @@
           "id": "title",
           "default": "Image with text",
           "label": "t:sections.image_banner.label_for_title_setting"
+        },
+        {
+          "type": "select",
+          "id": "heading_tag",
+          "label": "Heading tag",
+          "info": "SEO: use H1 only once per page",
+          "options": [
+            {
+              "value": "h1",
+              "label": "H1"
+            },
+            {
+              "value": "h2",
+              "label": "H2"
+            },
+            {
+              "value": "h3",
+              "label": "H3"
+            },
+            {
+              "value": "h4",
+              "label": "H4"
+            },
+            {
+              "value": "h5",
+              "label": "H5"
+            },
+            {
+              "value": "h6",
+              "label": "H6"
+            },
+            {
+              "value": "p",
+              "label": "p"
+            },
+            {
+              "value": "div",
+              "label": "div"
+            }
+          ],
+          "default": "h2"
         },
         {
           "type": "select",
@@ -1154,6 +1438,370 @@
         },
         {
           "type": "header",
+          "content": "Content image"
+        },
+        {
+          "type": "image_picker",
+          "id": "content_image",
+          "label": "Image"
+        },
+        {
+          "type": "url",
+          "id": "content_image_link",
+          "label": "Image link"
+        },
+        {
+          "type": "range",
+          "id": "desktop_content_image_width",
+          "min": 20,
+          "max": 1000,
+          "step": 10,
+          "default": 200,
+          "unit": "px",
+          "label": "Desktop image width"
+        },
+        {
+          "type": "range",
+          "id": "mobile_content_image_width",
+          "min": 20,
+          "max": 600,
+          "step": 10,
+          "default": 140,
+          "unit": "px",
+          "label": "Mobile image width"
+        },
+        {
+          "type": "header",
+          "content": "Content order and spacing",
+          "info": "Order 1 = top. Spacing = empty space below element."
+        },
+        {
+          "type": "range",
+          "id": "caption_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 1,
+          "label": "Subheading order"
+        },
+        {
+          "type": "select",
+          "id": "caption_spacing",
+          "label": "Space below subheading",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "xxxs"
+        },
+        {
+          "type": "range",
+          "id": "title_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 2,
+          "label": "Heading order"
+        },
+        {
+          "type": "select",
+          "id": "title_spacing",
+          "label": "Space below heading",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "xxxs"
+        },
+        {
+          "type": "range",
+          "id": "text_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 3,
+          "label": "Text order"
+        },
+        {
+          "type": "select",
+          "id": "text_spacing",
+          "label": "Space below text",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "s"
+        },
+        {
+          "type": "range",
+          "id": "image_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 4,
+          "label": "Image order"
+        },
+        {
+          "type": "select",
+          "id": "image_spacing",
+          "label": "Space below image",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "s"
+        },
+        {
+          "type": "range",
+          "id": "buttons_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5,
+          "label": "Buttons order"
+        },
+        {
+          "type": "select",
+          "id": "buttons_spacing",
+          "label": "Space below buttons",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "none"
+        },
+        {
+          "type": "header",
           "content": "t:sections.image_banner.content_position_settings_header"
         },
         {
@@ -1196,9 +1844,35 @@
             {
               "value": "align-items:flex-end;justify-content:flex-end;",
               "label": "t:sections.general_section_settings.position_option_bottom_right_label"
+            },
+            {
+              "value": "custom",
+              "label": "Custom"
             }
           ],
           "default": "align-items:center;justify-content:center;"
+        },
+        {
+          "type": "range",
+          "id": "desktop_content_position_x",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 50,
+          "unit": "%",
+          "label": "Horizontal position",
+          "visible_if": "{{ block.settings.desktop_content_position == 'custom' }}"
+        },
+        {
+          "type": "range",
+          "id": "desktop_content_position_y",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 50,
+          "unit": "%",
+          "label": "Vertical position",
+          "visible_if": "{{ block.settings.desktop_content_position == 'custom' }}"
         },
         {
           "type": "text_alignment",
@@ -1232,9 +1906,35 @@
             {
               "value": "align-items:flex-end;justify-content:center;",
               "label": "t:sections.general_section_settings.position_option_bottom_label"
+            },
+            {
+              "value": "custom",
+              "label": "Custom"
             }
           ],
           "default": "align-items:center;justify-content:center;"
+        },
+        {
+          "type": "range",
+          "id": "mobile_content_position_x",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 50,
+          "unit": "%",
+          "label": "Horizontal position",
+          "visible_if": "{{ block.settings.mobile_content_position == 'custom' }}"
+        },
+        {
+          "type": "range",
+          "id": "mobile_content_position_y",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 50,
+          "unit": "%",
+          "label": "Vertical position",
+          "visible_if": "{{ block.settings.mobile_content_position == 'custom' }}"
         },
         {
           "type": "text_alignment",
@@ -1436,6 +2136,19 @@
           "label": "t:sections.general_section_settings.buttons.style.style_label"
         },
         {
+          "type": "checkbox",
+          "id": "btn_new_tab",
+          "label": "Open link in new tab",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "btn_show_icon",
+          "label": "Show arrow icon",
+          "default": false,
+          "visible_if": "{{ block.settings.btn_style != 'link' }}"
+        },
+        {
           "type": "header",
           "content": "t:sections.general_section_settings.buttons.style.second_button_header"
         },
@@ -1472,6 +2185,19 @@
           ],
           "default": "secondary",
           "label": "t:sections.general_section_settings.buttons.style.style_label"
+        },
+        {
+          "type": "checkbox",
+          "id": "extra_btn_new_tab",
+          "label": "Open link in new tab",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "extra_btn_show_icon",
+          "label": "Show arrow icon",
+          "default": false,
+          "visible_if": "{{ block.settings.extra_btn_style != 'link' }}"
         },
         {
           "type": "header",
@@ -1746,6 +2472,47 @@
         },
         {
           "type": "select",
+          "id": "heading_tag",
+          "label": "Heading tag",
+          "info": "SEO: use H1 only once per page",
+          "options": [
+            {
+              "value": "h1",
+              "label": "H1"
+            },
+            {
+              "value": "h2",
+              "label": "H2"
+            },
+            {
+              "value": "h3",
+              "label": "H3"
+            },
+            {
+              "value": "h4",
+              "label": "H4"
+            },
+            {
+              "value": "h5",
+              "label": "H5"
+            },
+            {
+              "value": "h6",
+              "label": "H6"
+            },
+            {
+              "value": "p",
+              "label": "p"
+            },
+            {
+              "value": "div",
+              "label": "div"
+            }
+          ],
+          "default": "h2"
+        },
+        {
+          "type": "select",
           "id": "heading_size",
           "label": "t:sections.general_section_settings.label_for_heading_size_setting",
           "options": [
@@ -1845,6 +2612,370 @@
         },
         {
           "type": "header",
+          "content": "Content image"
+        },
+        {
+          "type": "image_picker",
+          "id": "content_image",
+          "label": "Image"
+        },
+        {
+          "type": "url",
+          "id": "content_image_link",
+          "label": "Image link"
+        },
+        {
+          "type": "range",
+          "id": "desktop_content_image_width",
+          "min": 20,
+          "max": 1000,
+          "step": 10,
+          "default": 200,
+          "unit": "px",
+          "label": "Desktop image width"
+        },
+        {
+          "type": "range",
+          "id": "mobile_content_image_width",
+          "min": 20,
+          "max": 600,
+          "step": 10,
+          "default": 140,
+          "unit": "px",
+          "label": "Mobile image width"
+        },
+        {
+          "type": "header",
+          "content": "Content order and spacing",
+          "info": "Order 1 = top. Spacing = empty space below element."
+        },
+        {
+          "type": "range",
+          "id": "caption_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 1,
+          "label": "Subheading order"
+        },
+        {
+          "type": "select",
+          "id": "caption_spacing",
+          "label": "Space below subheading",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "xxxs"
+        },
+        {
+          "type": "range",
+          "id": "title_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 2,
+          "label": "Heading order"
+        },
+        {
+          "type": "select",
+          "id": "title_spacing",
+          "label": "Space below heading",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "xxxs"
+        },
+        {
+          "type": "range",
+          "id": "text_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 3,
+          "label": "Text order"
+        },
+        {
+          "type": "select",
+          "id": "text_spacing",
+          "label": "Space below text",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "s"
+        },
+        {
+          "type": "range",
+          "id": "image_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 4,
+          "label": "Image order"
+        },
+        {
+          "type": "select",
+          "id": "image_spacing",
+          "label": "Space below image",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "s"
+        },
+        {
+          "type": "range",
+          "id": "buttons_order",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5,
+          "label": "Buttons order"
+        },
+        {
+          "type": "select",
+          "id": "buttons_spacing",
+          "label": "Space below buttons",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.none"
+            },
+            {
+              "value": "xxxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxs"
+            },
+            {
+              "value": "xxxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxs"
+            },
+            {
+              "value": "xxs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxs"
+            },
+            {
+              "value": "xs",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xs"
+            },
+            {
+              "value": "s",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.s"
+            },
+            {
+              "value": "m",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.m"
+            },
+            {
+              "value": "l",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.l"
+            },
+            {
+              "value": "xl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xl"
+            },
+            {
+              "value": "xxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxl"
+            },
+            {
+              "value": "xxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxl"
+            },
+            {
+              "value": "xxxxl",
+              "label": "t:sections.general_section_settings.paddings.section_spacing_top.options.xxxxl"
+            }
+          ],
+          "default": "none"
+        },
+        {
+          "type": "header",
           "content": "t:sections.split_image_banner.content_layout_settings_header"
         },
         {
@@ -1909,6 +3040,19 @@
           "label": "t:sections.general_section_settings.buttons.style.style_label"
         },
         {
+          "type": "checkbox",
+          "id": "btn_new_tab",
+          "label": "Open link in new tab",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "btn_show_icon",
+          "label": "Show arrow icon",
+          "default": false,
+          "visible_if": "{{ block.settings.btn_style != 'link' }}"
+        },
+        {
           "type": "header",
           "content": "t:sections.general_section_settings.buttons.style.second_button_header"
         },
@@ -1945,6 +3089,19 @@
           ],
           "default": "secondary",
           "label": "t:sections.general_section_settings.buttons.style.style_label"
+        },
+        {
+          "type": "checkbox",
+          "id": "extra_btn_new_tab",
+          "label": "Open link in new tab",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "extra_btn_show_icon",
+          "label": "Show arrow icon",
+          "default": false,
+          "visible_if": "{{ block.settings.extra_btn_style != 'link' }}"
         },
         {
           "type": "header",
