@@ -368,7 +368,7 @@
         "card_pill_font_size_mobile": 8,
         "card_title_font_size": 21,
         "card_title_font_size_mobile": 18,
-        "card_title_font_family": "button",
+        "card_title_font_family": "body",
         "card_color_font_size": 16,
         "card_price_font_size": 15,
         "img_ratio": "square",
