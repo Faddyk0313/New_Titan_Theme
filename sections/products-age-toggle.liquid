@@ -29,6 +29,11 @@
   assign option_style = options.option_style
   assign product_per_page = options.product_per_page | times: 1.0
   assign show_product_count = options.show_product_count
+  # TBG custom code - quick view toggle for product cards
+  assign hide_card_quick_view = true
+  if options.card_show_quick_view
+    assign hide_card_quick_view = false
+  endif
   assign show_column_count_switcher = options.show_column_count_switcher
   assign enable_sorting = options.enable_sorting
   assign show_divider = options.show_divider
@@ -811,6 +816,13 @@
         }
     }
 
+    /* TBG custom code - hide quick view on the standard card fallback (battlegear card skips rendering it) */
+    {%- unless options.card_show_quick_view -%}
+    .section-{{ section.id }} .shop__products-grid [id^='product-card-quick-view-btn-']{
+      display: none !important;
+    }
+    {%- endunless -%}
+
     {% endstyle %}
 {% endcapture %}
 
@@ -1060,9 +1072,11 @@
                     {% endif %}
                   >
                     {%- if options.use_battlegear_card -%}
+                      {%- comment -%} TBG custom code - hide_quick_view param {%- endcomment -%}
                       {% render 'product-card-battlegear',
                         product: product,
                         card_namespace: options.card_namespace,
+                        hide_quick_view: hide_card_quick_view,
                         badge_last_chance_handle: options.card_badge_last_chance_handle,
                         badge_sale_label: options.card_badge_sale_label,
                         badge_sold_out_label: options.card_badge_sold_out_label
@@ -1726,6 +1740,13 @@
       "default": true,
       "label": "Use the Battlegear card",
       "info": "Off falls back to the theme's standard product card. Both cards use the same hover behaviour and quick-view button, so this only changes the card's layout."
+    },
+    {
+      "type": "checkbox",
+      "id": "card_show_quick_view",
+      "default": true,
+      "label": "Show quick view",
+      "info": "Off hides the quick-view button on product cards in this section."
     },
     {
       "type": "text",

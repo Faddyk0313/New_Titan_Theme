@@ -247,6 +247,10 @@
   if settings.card_buttons_type != 'none' and product.available
     assign show_quick_view = true
   endif
+  # TBG custom code - section-level opt-out
+  if hide_quick_view
+    assign show_quick_view = false
+  endif
 -%}
 
 {%- comment -%}
