@@ -775,6 +775,42 @@
       letter-spacing: 0.01em;
       line-height: 1.05;
       text-transform: uppercase;
+      /* TBG custom code: title font picker (theme fonts only) */
+      {%- case options.card_title_font_family -%}
+        {%- when 'headings' -%}
+          font-family: var(--gsc-headings-font-family);
+        {%- when 'body' -%}
+          font-family: var(--gsc-body-font-family);
+        {%- when 'button' -%}
+          font-family: var(--gsc-button-font-family);
+        {%- when 'prohibition' -%}
+          font-family: 'Prohibition', sans-serif;
+          font-weight: 400;
+        {%- when 'prohibition_oblique' -%}
+          font-family: 'Prohibition-Oblique', sans-serif;
+          font-weight: 400;
+      {%- endcase -%}
+    }
+
+    /* TBG custom code: mobile - smaller title, tighter pill so full text shows */
+    @media (max-width: 767px){
+      .section-{{ section.id }} .bg-card__title{
+        font-size: {{ options.card_title_font_size_mobile }}px;
+      }
+      .section-{{ section.id }} .bg-card__pill-main,
+      .section-{{ section.id }} .bg-card__pill-gen{
+        padding: 1px 4px;
+        font-size: {{ options.card_pill_font_size_mobile }}px;
+        letter-spacing: 0;
+      }
+      .section-{{ section.id }} .bg-card__pill-main{
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
+      .section-{{ section.id }} .bg-card__pill-gen{
+        flex-shrink: 0;
+      }
     }
 
     .section-{{ section.id }} .bg-card__color{
@@ -1885,6 +1921,16 @@
     },
     {
       "type": "range",
+      "id": "card_pill_font_size_mobile",
+      "min": 6,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 8,
+      "label": "Attribute pill font size (mobile)"
+    },
+    {
+      "type": "range",
       "id": "card_title_font_size",
       "min": 12,
       "max": 32,
@@ -1892,6 +1938,30 @@
       "unit": "px",
       "default": 20,
       "label": "Title font size"
+    },
+    {
+      "type": "range",
+      "id": "card_title_font_size_mobile",
+      "min": 10,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 16,
+      "label": "Title font size (mobile)"
+    },
+    {
+      "type": "select",
+      "id": "card_title_font_family",
+      "label": "Title font family",
+      "default": "product_card",
+      "options": [
+        { "value": "product_card", "label": "Product card font (Rajdhani bold)" },
+        { "value": "headings", "label": "Headings font (Bebas Neue)" },
+        { "value": "body", "label": "Body font (Rajdhani)" },
+        { "value": "button", "label": "Button font (Rajdhani semibold)" },
+        { "value": "prohibition", "label": "Prohibition" },
+        { "value": "prohibition_oblique", "label": "Prohibition Oblique" }
+      ]
     },
     {
       "type": "range",
