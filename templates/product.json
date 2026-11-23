@@ -539,6 +539,7 @@
         "media_type": "external",
         "video_file": "shopify://files/videos/Screenshot HD.mp4",
         "video_url": "https://youtu.be/uKYO0jMzbK4",
+        "cover_image": "shopify://shop_images/adam_thumbnail_youtube.png",
         "first_btn_text": "reviews",
         "first_btn_url": "",
         "first_btn_style": "primary",
