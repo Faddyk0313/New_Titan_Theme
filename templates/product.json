@@ -557,7 +557,7 @@
         "cards_column_width": 0.5,
         "card_gap": 18,
         "column_gap": 40,
-        "container_size": "large",
+        "container_size": "page-width",
         "round_level": "default",
         "color_scheme_variant": "own",
         "color_scheme": "3",
