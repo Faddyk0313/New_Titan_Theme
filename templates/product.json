@@ -258,7 +258,7 @@
         "media_to_content_ratio": "60-40",
         "fixed_content_width": "48",
         "img_ratio": "portrait",
-        "img_ratio_resize": "fit",
+        "img_ratio_resize": "fill",
         "layout": "thumbnails-left",
         "space_between_cards": "s",
         "thumbnails_size": 98,
@@ -493,7 +493,7 @@
           "type": "feature",
           "settings": {
             "icon_image": "shopify://shop_images/titanotex_aero_181f01f0-d378-4e30-8026-b5fdd25543cf.svg",
-            "title": "<p>MAXIMUM </p><p>CUT RESISTANCE</p>",
+            "title": "<p>MAXIMUM&nbsp;</p><p>CUT RESISTANCE</p>",
             "title_size": "h4",
             "text": "<p><strong>TITANOTEX™ cut-resistant Fabric</strong> – Rated up to ANSI A9, (scale of A1-A9), while the other products in the market average an A3</p>"
           }
