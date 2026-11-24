@@ -584,7 +584,7 @@
         "desktop_image_ratio": 1,
         "mobile_image_ratio": 1,
         "mobile_columns": 4,
-        "mobile_font_size": 12,
+        "mobile_font_size": 11.5,
         "desktop_font_size": 15,
         "mobile_row_height": 40,
         "desktop_row_height": 54,
