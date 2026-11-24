@@ -2,7 +2,9 @@
   comment
     Battlegear product card.
 
-    Rendered by sections/products-age-toggle.liquid. The product image is
+    Rendered by sections/products-age-toggle.liquid and, site-wide, by
+    snippets/product-card.liquid (TBG custom code). Global styles live in
+    snippets/product-card-battlegear-styles.liquid. The product image is
     already transparent, so the card sits on a flat panel with no media
     treatment of its own.
 
@@ -35,6 +37,11 @@
                      `theme.label_color` / `custom.product_label_text_color`;
                      falls back to the sale state, then sold out
   endcomment
+
+  # TBG custom code - defaults so the card works when rendered from snippets/product-card.liquid (site-wide)
+  assign badge_last_chance_handle = badge_last_chance_handle | default: 'last-chance'
+  assign badge_sale_label = badge_sale_label | default: 'SALE'
+  assign badge_sold_out_label = badge_sold_out_label | default: 'SOLD OUT'
 
   assign ns = card_namespace | default: 'custom'
   assign mf = product.metafields[ns]

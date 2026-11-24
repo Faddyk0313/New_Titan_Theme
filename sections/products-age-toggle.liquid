@@ -614,167 +614,50 @@
     }
 
     /* ---------------------------------------------------------------
-       Battlegear product card.
-
-       The product image is already transparent, so the card is a flat
-       panel with the image sitting directly on it.
+       TBG custom code
+       Battlegear product card: section-setting overrides only. Base
+       layout/shape lives in snippets/product-card-battlegear-styles.liquid.
        --------------------------------------------------------------- */
 
     .section-{{ section.id }} .bg-card{
       --gsc-bg-card-accent: {{ options.card_accent_color }};
       --gsc-bg-card-muted: {{ options.card_muted_color }};
-      height: 100%;
       background: {{ options.card_background }};
     }
 
-    .section-{{ section.id }} .bg-card{
-      display: flex;
-      flex-direction: column;
-    }
-
-    .section-{{ section.id }} .bg-card__content{
-      color: {{ options.card_text_color }};
-      text-decoration: none;
-    }
-
-    .section-{{ section.id }} .bg-card__media-wrap{
-      position: relative;
-      overflow: hidden;
-    }
-
-    .section-{{ section.id }} .bg-card__media-link{
-      display: block;
-    }
-
-    .section-{{ section.id }} .bg-card__media{
-      position: relative;
-      aspect-ratio: 1 / 1;
-    }
-
-    .section-{{ section.id }} .bg-card__image{
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    /* Zoom on hover, matching the theme's own img_hover setting. */
-    .section-{{ section.id }} .bg-card--zoom .bg-card__image{
-      transition: transform 0.4s ease;
-    }
-
-    .section-{{ section.id }} .bg-card--zoom:hover .bg-card__image{
-      transform: scale(1.06);
-    }
-
-    .section-{{ section.id }} .bg-card--sold-out .bg-card__media{
-      opacity: 0.5;
-    }
-
-    /*
-     * Quick view is deliberately unstyled here: the card reuses the theme's
-     * own `product-card__btn` markup so the theme's stylesheet positions and
-     * reveals it. Restyling it was never part of this redesign.
-     */
-
-    /* ---- Corner badges ---- */
-    /*
-     * Badge text and colour come from the product's own metafields
-     * (`theme.label`, `theme.label_color`, `custom.product_label_text_color`),
-     * applied inline by the card. The rules here only set the shape, so an
-     * inline colour always wins; the colours below are the fallbacks used
-     * when a product sets no colour of its own.
-     *
-     * `theme.label` is a list, so the stack handles a product with several.
-     */
-    .section-{{ section.id }} .bg-card__badges{
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-    }
-
     .section-{{ section.id }} .bg-card__badge{
-      padding: 4px 10px;
-      color: #000;
-      background: var(--gsc-bg-card-accent);
       font-size: {{ options.card_badge_font_size }}px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      line-height: 1.2;
-      text-transform: uppercase;
-      white-space: nowrap;
     }
 
-    /* Labels are outlined: coloured border + text, never a fill. */
+    /* Fallbacks only; a product's own label colours are applied inline. */
     .section-{{ section.id }} .bg-card__badge--label{
-      border: 1px solid {{ options.card_badge_new_color }};
+      border-color: {{ options.card_badge_new_color }};
       color: {{ options.card_badge_label_text_color }};
-      background: transparent;
     }
 
-    .section-{{ section.id }} .bg-card__badge--sale{
-      color: #000;
-      background: var(--gsc-bg-card-accent);
-    }
-
-    .section-{{ section.id }} .bg-card__badge--sold-out{
-      color: #fff;
-      background: {{ options.card_muted_color }};
-    }
-
-    /* ---- Content ---- */
     .section-{{ section.id }} .bg-card__content{
-      display: flex;
-      flex-direction: column;
       gap: {{ options.card_content_gap }}px;
       padding: {{ options.card_content_padding }}px;
-    }
-
-    /* Attribute pill: long segment + short generation chip. */
-    .section-{{ section.id }} .bg-card__pill{
-      display: flex;
-      align-items: stretch;
-      /*gap: 2px;*/
-      width: fit-content;
-      max-width: 100%;
+      color: {{ options.card_text_color }};
     }
 
     .section-{{ section.id }} .bg-card__pill-main,
     .section-{{ section.id }} .bg-card__pill-gen{
-      padding: 0px 7px;
-      border: 1px solid {{ options.card_pill_main_color }};
+      border-color: {{ options.card_pill_main_color }};
       font-size: {{ options.card_pill_font_size }}px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      line-height: 1.3;
-      text-transform: uppercase;
-      white-space: nowrap;
     }
 
-    /* TBG custom code: one pill colour = attribute fill + both borders + gen text; attribute text separate. */
     .section-{{ section.id }} .bg-card__pill-main{
       color: {{ options.card_pill_text_color }};
       background: {{ options.card_pill_main_color }};
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .section-{{ section.id }} .bg-card__pill-gen{
       color: {{ options.card_pill_main_color }};
-      background: transparent;
     }
 
     .section-{{ section.id }} .bg-card__title{
-      margin: 0;
       font-size: {{ options.card_title_font_size }}px;
-      font-weight: 700;
-      letter-spacing: 0.01em;
-      line-height: 1.05;
-      text-transform: uppercase;
       /* TBG custom code: title font picker (theme fonts only) */
       {%- case options.card_title_font_family -%}
         {%- when 'headings' -%}
@@ -792,57 +675,31 @@
       {%- endcase -%}
     }
 
-    /* TBG custom code: mobile - smaller title, tighter pill so full text shows */
     @media (max-width: 767px){
       .section-{{ section.id }} .bg-card__title{
         font-size: {{ options.card_title_font_size_mobile }}px;
       }
       .section-{{ section.id }} .bg-card__pill-main,
       .section-{{ section.id }} .bg-card__pill-gen{
-        padding: 1px 4px;
         font-size: {{ options.card_pill_font_size_mobile }}px;
-        letter-spacing: 0;
-      }
-      .section-{{ section.id }} .bg-card__pill-main{
-        white-space: normal;
-        overflow: visible;
-        text-overflow: clip;
-      }
-      .section-{{ section.id }} .bg-card__pill-gen{
-        flex-shrink: 0;
       }
     }
 
     .section-{{ section.id }} .bg-card__color{
-      color: var(--gsc-bg-card-muted);
       font-size: {{ options.card_color_font_size }}px;
-      letter-spacing: 0.02em;
-      line-height: 1.2;
-      text-transform: uppercase;
     }
 
-    /* ---- Price: muted by default, accent when discounted ---- */
     .section-{{ section.id }} .bg-card__price{
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      /* margin-top: 2px; */
       font-size: {{ options.card_price_font_size }}px;
-      font-weight: 700;
     }
 
     .section-{{ section.id }} .bg-card__price-current{
       color: {{ options.card_price_color }};
     }
 
+    /* Kept here: must out-rank the price-current colour above. */
     .section-{{ section.id }} .bg-card__price--on-sale .bg-card__price-current{
       color: var(--gsc-bg-card-accent);
-    }
-
-    .section-{{ section.id }} .bg-card__price-compare{
-      color: var(--gsc-bg-card-muted);
-      font-weight: 400;
-      text-decoration: line-through;
     }
 
 
@@ -1118,7 +975,9 @@
                         badge_sold_out_label: options.card_badge_sold_out_label
                       %}
                     {%- else -%}
+                      {%- comment -%} TBG custom code - use_standard_card: product-card now defaults to the battlegear card {%- endcomment -%}
                       {% render 'product-card',
+                        use_standard_card: true,
                         with_bottom_spacing: true,
                         product: product,
                         img_ratio: img_ratio,

@@ -32,6 +32,9 @@
     
     {% render 'fonts' %}
 
+    {%- comment -%} TBG custom code - global Battlegear product card styles {%- endcomment -%}
+    {% render 'product-card-battlegear-styles' %}
+
     {{ content_for_header }}
   </head>
   <body class='color-{{ settings.default_color_scheme }} round-level-{{ settings.round_level }} {% if settings.round_level != "0" %} round-style {% endif %}'>

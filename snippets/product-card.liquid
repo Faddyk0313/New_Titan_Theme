@@ -1,3 +1,12 @@
+{%- comment -%}
+  TBG custom code
+  Battlegear card is now the site-wide product card. Real products render
+  snippets/product-card-battlegear.liquid; the standard card below is kept for
+  placeholders (no product) and for callers passing `use_standard_card: true`.
+{%- endcomment -%}
+{%- if product.id != blank and use_standard_card != true -%}
+  {%- render 'product-card-battlegear', product: product, hide_quick_view: hide_quick_view -%}
+{%- else -%}
 {% liquid
   assign price = product.price | default: 0
   if settings.show_currency_code
@@ -1455,3 +1464,4 @@
     </div>
   </div>
 {% endif %}
+{%- endif -%}
