@@ -14,12 +14,12 @@
       "name": "t:sections.breadcrumbs.name",
       "settings": {
         "show_breadcrumbs_product_title": false,
-        "container_size": "large",
+        "container_size": "page-width",
         "round_level": "default",
         "color_scheme_variant": "own",
         "color_scheme": "3",
         "show_background": true,
-        "add_desktop_side_paddings": false,
+        "add_desktop_side_paddings": true,
         "add_mobile_side_paddings": true,
         "section_spacing_top": "xxxs",
         "section_spacing_bottom": "none"
