@@ -20,6 +20,16 @@
     overflow: hidden;
   }
 
+  /*
+    TBG custom code
+    Quick view hidden on every product card (desktop + mobile). Markup is
+    still rendered, so deleting this rule brings the button back.
+  */
+  .product-card [id^='product-card-quick-view-btn-'],
+  .product-card [data-product-card-quick-view-button]{
+    display: none !important;
+  }
+
   .bg-card__media-link{
     display: block;
   }
